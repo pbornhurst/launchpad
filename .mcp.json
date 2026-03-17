@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "intercom": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://mcp.intercom.com/mcp"
+      ],
+      "env": {}
+    }
+  }
+}

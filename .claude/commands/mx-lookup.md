@@ -18,10 +18,15 @@ Cross-reference a merchant across Master Hub, volume data, support history, and 
       - `user_google_email: "philip.bornhurst@doordash.com"`
       - Find the mx row. Extract: current volume, previous volume, trend
 
-   c. **Slack** — Use `mcp__slack__slack_search_public_and_private` with the mx name
-      - Search #pathfinder-support for recent mentions
+   c. **Intercom** (primary support) — Use `mcp__intercom__search_conversations` with the mx name
+      - Search for recent support conversations
+      - If contact isn't clearly identifiable, use `mcp__intercom__get_contact` and cross-reference against Master Hub by business name, phone, or email
+      - Note open/closed status and issue summaries
 
-   d. **Snowflake** (optional) — Use `mcp__ask-data-ai__ask_data_mx` or `mcp__ask-data-ai__ExecuteSnowflakeQuery`
+   d. **Slack** (escalations only) — Use `mcp__slack__slack_search_public_and_private` with the mx name
+      - Search #pathfinder-support for recent escalations
+
+   e. **Snowflake** (optional) — Use `mcp__ask-data-ai__ask_data_mx` or `mcp__ask-data-ai__ExecuteSnowflakeQuery`
       - Pull recent order metrics if Store ID is known
 
 3. Compile into a unified mx profile:
@@ -38,7 +43,8 @@ Cross-reference a merchant across Master Hub, volume data, support history, and 
 - Score: X/5 | Last surveyed: date
 
 ### Recent Support
-- [date] Issue summary from #pathfinder-support
+- **Intercom:** [date] Issue summary (status: open/closed)
+- **Slack escalation:** [date] Issue summary from #pathfinder-support
 
 ### Running Notes
 - [Link to Google Doc if found in Master Hub]

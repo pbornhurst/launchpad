@@ -13,7 +13,8 @@ Prepare a comprehensive brief for a merchant call.
 2. **Run a full mx-lookup** (follow mx-lookup skill instructions):
    - Master Hub data (tier, status, MSAT, AM, notes link)
    - Volume Drop Data (current/previous volume, trend)
-   - Slack mentions in #pathfinder-support
+   - Intercom conversations (primary support — all mx inbound texts)
+   - Slack mentions in #pathfinder-support (escalations only — critical subset)
    - Snowflake data if Store ID is known
 
 3. **Pull additional context:**
@@ -29,7 +30,12 @@ Prepare a comprehensive brief for a merchant call.
       - `user_google_email: "philip.bornhurst@doordash.com"`
       - Filter for this mx's feedback entries
 
-   c. **Running notes doc** — If a notes link is in Master Hub, use `mcp__google-workspace__get_doc_as_markdown` to read it:
+   c. **Intercom tickets** (primary support channel) — Use `mcp__intercom__search_conversations` to search for recent conversations mentioning this mx:
+      - Search by mx name or contact email
+      - If contact isn't clearly identifiable, use `mcp__intercom__get_contact` and cross-reference against Master Hub by business name, phone, or email
+      - Summarize any open/recent tickets — this is where most support activity lives
+
+   d. **Running notes doc** — If a notes link is in Master Hub, use `mcp__google-workspace__get_doc_as_markdown` to read it:
       - `user_google_email: "philip.bornhurst@doordash.com"`
 
 4. **Compile into call prep brief:**
@@ -47,7 +53,8 @@ Prepare a comprehensive brief for a merchant call.
 
 ### Recent Activity
 - Last email: [date] — subject/summary
-- Last support ticket: [date] — issue/resolution
+- Last Slack escalation: [date] — issue/resolution
+- Last Intercom ticket: [date] — issue/status
 - Last volume change: [date] — details
 
 ### Open Product Feedback

@@ -15,6 +15,7 @@ Run these in sequence (calendar and Slack first, then email per rate-limit rule)
 ### 2. Slack Activity
 - Use `mcp__slack__slack_search_public_and_private` for Phil's mentions this week
 - Use `mcp__slack__slack_read_channel` on #pathfinder-support (C067SSZ1AMT) for the week's escalations
+  - **CRITICAL:** The `oldest` and `latest` parameters MUST be **Unix epoch timestamps** (integer seconds since Jan 1, 1970), NOT date strings. Compute the timestamp first (e.g., for 7 days ago: `int((datetime.now() - timedelta(days=7)).timestamp())`).
 - Summarize key threads and outcomes
 
 ### 3. Email Summary

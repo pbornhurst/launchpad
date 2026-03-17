@@ -3,7 +3,7 @@ name: briefing-compiler
 description: |
   Background briefing compiler agent. Use this agent when the user wants their daily or weekly briefing compiled, especially when they want it done in the background while they work on other things.
 
-  This agent pulls from all data sources (Volume Drop Data, Google Calendar, Gmail, Slack #pathfinder-support) and compiles a polished, structured briefing. It's the background-capable version of the /daily-brief command.
+  This agent pulls from all data sources (Volume Drop Data, Google Calendar, Gmail, Slack #pathfinder-support, Intercom) and compiles a polished, structured briefing. It's the background-capable version of the /daily-brief command.
 
   <example>
   Context: User starting their morning routine
@@ -85,14 +85,35 @@ Use `mcp__google-workspace__search_gmail_messages`:
 - Flag anything urgent or time-sensitive
 - Group by category if helpful (mx communication, internal, sales handoffs)
 
-### Step 4: Support Channel
+### Step 4: Slack Escalations
 Use `mcp__slack__slack_read_channel`:
 - Channel: C067SSZ1AMT (#pathfinder-support)
 - Scan last 24 hours
+- **CRITICAL:** The `oldest` and `latest` parameters MUST be **Unix epoch timestamps** (integer seconds since Jan 1, 1970), NOT date strings. Passing a date string like `"2026-02-14"` will silently return messages from 2023. Compute the timestamp first (e.g., for 24h ago: `int((datetime.now() - timedelta(days=1)).timestamp())`).
 - Identify escalations, especially those mentioning Phil's or Mallory's mx
 - Note unresolved issues needing response
 
-### Step 5: Compile the Briefing
+### Step 5: Intercom Inbounds
+Use `mcp__intercom__search_conversations`:
+- Search for conversations from last 24 hours
+- For each conversation, use `mcp__intercom__get_conversation` to read the full thread
+- **Triage**: classify each as `support_issue`, `inquiry`, `phone_log`, `greeting_only`, or `noise` based on the full thread content
+- Only count `support_issue` and `inquiry` as valid inbounds. Exclude phone logs, greetings, and noise from counts.
+- For valid inbounds, extract the ORIGINAL issue from the mx's first substantive messages (not the latest reply)
+- Identify the mx for each valid inbound:
+  - Check contact's company/business name
+  - If unclear, use `mcp__intercom__get_contact` for full details
+  - Cross-reference against Master Hub (`spreadsheet_id: "1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4"`, `user_google_email: "philip.bornhurst@doordash.com"`) by business name, phone, or email
+- Highlight notable tickets: ICP/T1 mx, Phil/Mallory's accounts, repeat contacts, urgent themes
+
+### Step 6: Pattern Alerts (from Support Intelligence Tracker)
+If the SIT spreadsheet exists (check CLAUDE.md Key Spreadsheets for "Support Intelligence Tracker"):
+- Read "Pattern Alerts" tab — filter for Status = "new"
+- Read "Contact Frequency" tab — filter for Risk Flag = "yes"
+- Include in the briefing output below
+- If SIT doesn't exist yet, skip this step (no error)
+
+### Step 7: Compile the Briefing
 
 **Output Format:**
 
@@ -130,12 +151,26 @@ Use `mcp__slack__slack_read_channel`:
 
 ---
 
-## Support Escalations (#pathfinder-support)
+## Support
+### Escalations (#pathfinder-support)
 - **[Store ID / mx name]** — Issue summary (posted by @user, X hours ago) — NEEDS RESPONSE
 - Issue summary (posted by @user) — resolved/informational
 - ...
 
 (If no escalations: "No new escalations in the last 24 hours.")
+
+### Intercom Inbounds (N valid inbounds, X open)
+- **[mx name]** (ICP) — Issue summary (open, X hours ago) — NOTABLE
+- **[mx name]** — Issue summary (closed)
+- + N more routine tickets
+(Excluded: Y phone logs/greetings/noise)
+
+(If no Intercom activity: "No new Intercom conversations in the last 24 hours.")
+
+### Pattern Alerts (from Support Intelligence Tracker)
+- **REPEAT CONTACT** [HIGH] — **Pizza Palace** (Store 12345) — 5 inbounds in 12 days
+- **CROSS-MX ISSUE** [MEDIUM] — POS sync failures across 3 mx
+(If no SIT or no alerts: "No active pattern alerts.")
 
 ---
 
