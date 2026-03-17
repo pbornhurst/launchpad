@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__google-workspace__*",
+      "mcp__slack__*",
+      "mcp__ask-data-ai__*",
+      "mcp__nanobanana__*",
+      "mcp__gemini__*",
+      "Bash(python3 *)",
+      "Bash(date *)",
+      "Bash(ls *)",
+      "WebSearch",
+      "WebFetch"
+    ]
+  }
+}
