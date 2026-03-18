@@ -134,6 +134,12 @@ Key tools by domain:
 | `proddb.public.pathfinder_merchant_database_from_gsheet_cleaned` | Mx lifecycle dates: close/win (CW) date, onboarding call date |
 | `edw.merchant.dimension_store` | Store name, cuisine type |
 | `edw.merchant.dimension_business` | Business-level attributes: management type (grouped and detailed) |
+| `edw.merchant.fact_merchant_orders_portal` | Order-level data with channel, operations (avoidable wait, cancellations, errors), customer type (new/repeat), ratings — primary table for QBRs |
+| `edw.merchant.fact_merchant_order_items` | Item-level product mix: item name, category, subtotal, quantity, missing/incorrect flags |
+| `edw.merchant.fact_merchant_transactions_details_portal` | Financial transaction details: subtotal, fees, commissions, discount breakdowns by channel — source of merchant Financial Report CSV |
+| `edw.ads.fact_promo_campaign_performance` | Promo marketing campaigns: orders, sales, mx/DD/3rd-party funded discounts, marketing fees, ROAS, CX acquisition. Amounts in cents. Filter: `report_type='campaign_store' AND timezone_type='utc' AND daypart_name='day'` |
+| `edw.ads.fact_sl_campaign_performance` | Sponsored listing campaigns: impressions, clicks, orders, sales, ad fees, ROAS, CX acquisition. Amounts in cents. Same filter as promo table. |
+| `proddb.public.ddoo_mp_geo_cuisine_performance` | Monthly per-store marketplace performance by city/cuisine: orders, GOV, AOV, customers, ratings, promo spend. Used by location-scout agent for competitive benchmarking. |
 
 These are the **executive-level** Pathfinder POS business tables. Use them for total business reporting: active stores, card volume, card GOV, period-over-period trends. Query via `mcp__ask-data-ai__ExecuteSnowflakeQuery`.
 
@@ -286,6 +292,7 @@ Focus extra attention on ICP and Tier 1 for proactive outreach and issue resolut
 | `/weekly-recap` | Weekly summary across all tools |
 | `/card-metrics` | Pathfinder card volume metrics: active stores, volume, GOV with period-over-period changes |
 | `/feedback-log` | Log product feedback to the tracker |
+| `/location-scout` | 360° location analysis: demographics, competition, traffic drivers, DoorDash market data |
 
 ---
 
@@ -298,6 +305,8 @@ Agents run as isolated subprocesses — they pull from multiple data sources in 
 | `mx-researcher` | "Research [mx]", "Deep dive on [mx]", "Give me everything on [mx]" | Comprehensive mx dossier: Master Hub + Volume + Slack + Email + Feedback + Running Notes + Snowflake. Auto-creates a formatted Google Doc in the `mx deep dives` folder and shares with doordash.com. |
 | `briefing-compiler` | "Compile my morning brief", "Run my daily brief in the background" | Polished daily/weekly briefing compiled from all sources. Ideal for background execution. |
 | `support-intel` | "Run a deep support analysis", "Build the support intelligence baseline" | Deep pattern analysis across Intercom conversations. Detects repeat inbounders, cross-mx issues, sentiment risks. Produces Google Doc report. |
+| `qbr-generator` | "Generate a QBR for [mx]", "QBR for Store 12345, Jan-Mar 2026" | Full QBR data package via 4 parallel sub-agents: channel performance, operations, product mix, customer data, marketing. Opus-powered strategic insights. Outputs local .md (for NotebookLM) + Google Doc. |
+| `location-scout` | "Research [address] for [cuisine]", "Scout [city] for burgers", "Location analysis for [address]" | 360° location research: demographics + competition + traffic drivers + DoorDash marketplace data via 4 parallel sub-agents. Produces merchant-facing Google Doc with GO/CONDITIONAL/NO-GO recommendation. |
 
 **Usage:** Just describe what you want naturally, or be explicit ("Use the mx-researcher agent"). Add "in the background" to run while you keep working.
 
