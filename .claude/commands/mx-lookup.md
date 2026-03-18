@@ -26,8 +26,10 @@ Cross-reference a merchant across Master Hub, volume data, support history, and 
    d. **Slack** (escalations only) — Use `mcp__slack__slack_search_public_and_private` with the mx name
       - Search #pathfinder-support for recent escalations
 
-   e. **Snowflake** (optional) — Use `mcp__ask-data-ai__ask_data_mx` or `mcp__ask-data-ai__ExecuteSnowflakeQuery`
-      - Pull recent order metrics if Store ID is known
+   e. **Snowflake** (if Store ID is known) — Use `mcp__ask-data-ai__ExecuteSnowflakeQuery`
+      - Run the **POS Cohort Query** from CLAUDE.md (Key Data Tables section) filtered to this mx's Store ID
+      - Add `WHERE pf.store_id = [STORE_ID]` to the final SELECT
+      - Extract: Lifetime OSW, Lifetime GOV Store Week, AOV, lifecycle dates (CW, OB, install, go-active), cuisine type, management type, activation status
 
 3. Compile into a unified mx profile:
 
@@ -50,7 +52,10 @@ Cross-reference a merchant across Master Hub, volume data, support history, and 
 - [Link to Google Doc if found in Master Hub]
 
 ### Snowflake Data
-- GOV: $X | Orders: Y | Period: last 30 days
+- **Lifetime OSW:** X orders/week | **Lifetime GOV/Week:** $X
+- **AOV:** $X | **Cuisine:** Type | **Mgmt Type:** Type
+- **Lifecycle:** CW [date] → OB [date] → Install [date] → Go-Active [date]
+- **Activation:** Met threshold: yes/no | Sustained in first 7d: yes/no
 ```
 
 ## Example usage

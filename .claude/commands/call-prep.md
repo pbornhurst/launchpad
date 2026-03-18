@@ -15,7 +15,7 @@ Prepare a comprehensive brief for a merchant call.
    - Volume Drop Data (current/previous volume, trend)
    - Intercom conversations (primary support — all mx inbound texts)
    - Slack mentions in #pathfinder-support (escalations only — critical subset)
-   - Snowflake data if Store ID is known
+   - Snowflake data via POS Cohort Query (see CLAUDE.md Key Data Tables) — Lifetime OSW, GOV/week, AOV, lifecycle dates, activation status
 
 3. **Pull additional context:**
 
@@ -47,9 +47,11 @@ Prepare a comprehensive brief for a merchant call.
 **Portal:** https://www.doordash.com/merchant/sales?store_id=XXXXX
 
 ### Quick Stats
-- Volume: X orders/week (trend)
-- MSAT: X/5
-- Status: Live since [date]
+- **Lifetime OSW:** X orders/week | **Lifetime GOV/Week:** $X
+- **Volume:** X orders/week (trend) | **AOV:** $X
+- **MSAT:** X/5
+- **Status:** Live since [date]
+- **Lifecycle:** CW [date] → OB [date] → Install [date] → Go-Active [date]
 
 ### Recent Activity
 - Last email: [date] — subject/summary

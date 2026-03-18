@@ -69,7 +69,67 @@ Use `mcp__google-workspace__read_sheet_values`:
 - Identify mx with significant drops (> 50%)
 - Cross-reference flagged mx against Master Hub (`spreadsheet_id: "1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4"`) to get Tier, AM, Store ID
 
-### Step 2: Calendar
+### Step 2: Card Metrics (executive-level)
+Run the daily-only card metrics query via `mcp__ask-data-ai__ExecuteSnowflakeQuery`:
+
+```sql
+with
+  kiosk_only as (
+    select store_id, store_name,
+      min(submit_platform) as min_submit_platform,
+      max(submit_platform) as max_submit_platform
+    from edw.pathfinder.fact_pathfinder_orders
+    where active_date >= '2023-01-01' and store_id not in (30553809)
+    group by 1, 2
+    having min_submit_platform = 'self_kiosk' and max_submit_platform = 'self_kiosk'
+  ),
+  base_daily as (
+    select psd.calendar_date, psd.store_id,
+      psd.total_card_orders as card_volume,
+      psd.total_card_gov as card_gov
+    from edw.pathfinder.agg_pathfinder_stores_daily psd
+    where psd.calendar_date >= dateadd(day, -14, current_date)
+      and psd.store_id not in (select store_id from kiosk_only)
+  ),
+  per_store_daily as (
+    select date_trunc('day', calendar_date) as period_date,
+      store_id,
+      sum(card_volume) as store_card_volume,
+      sum(card_gov) as store_card_gov
+    from base_daily
+    group by 1, 2
+  ),
+  agg as (
+    select period_date,
+      count(distinct iff(store_card_volume >= 70, store_id, null)) as n_active_stores,
+      sum(store_card_volume) as card_volume,
+      sum(store_card_gov) as card_gov
+    from per_store_daily
+    group by 1
+  )
+select period_date, n_active_stores, card_volume, card_gov,
+  lag(n_active_stores) over (order by period_date) as prev_active_stores,
+  lag(card_volume) over (order by period_date) as prev_card_volume,
+  lag(card_gov) over (order by period_date) as prev_card_gov,
+  (n_active_stores - prev_active_stores) / nullif(prev_active_stores, 0) as pct_chg_active_stores,
+  (card_volume - prev_card_volume) / nullif(prev_card_volume, 0) as pct_chg_card_volume,
+  (card_gov - prev_card_gov) / nullif(prev_card_gov, 0) as pct_chg_card_gov,
+  lag(n_active_stores, 7) over (order by period_date) as prev_active_stores_7d,
+  lag(card_volume, 7) over (order by period_date) as prev_card_volume_7d,
+  lag(card_gov, 7) over (order by period_date) as prev_card_gov_7d,
+  (n_active_stores - prev_active_stores_7d) / nullif(prev_active_stores_7d, 0) as pct_chg_active_stores_7d,
+  (card_volume - prev_card_volume_7d) / nullif(prev_card_volume_7d, 0) as pct_chg_card_volume_7d,
+  (card_gov - prev_card_gov_7d) / nullif(prev_card_gov_7d, 0) as pct_chg_card_gov_7d
+from agg
+order by period_date desc
+limit 1
+```
+
+- **Data freshness check:** The latest `period_date` should be yesterday (today - 1). If it's older, display "Card metrics data not yet available for yesterday. Latest: [actual date]." instead of the table. Do NOT present stale data as current.
+- Present the latest daily row as a table (see output format below)
+- Flag any metric with >10% day-over-day swing or >15% vs 7 days ago
+
+### Step 3: Calendar
 Use `mcp__google-workspace__get_events`:
 - `user_google_email: "philip.bornhurst@doordash.com"`
 - `time_min`: today's start in RFC3339 (PST timezone)
@@ -77,7 +137,7 @@ Use `mcp__google-workspace__get_events`:
 - List all events chronologically
 - Flag: first meeting, mx calls needing prep, conflicts/double-bookings
 
-### Step 3: Email (AFTER calendar — rate limit rule)
+### Step 4: Email (AFTER calendar — rate limit rule)
 Use `mcp__google-workspace__search_gmail_messages`:
 - `user_google_email: "philip.bornhurst@doordash.com"`
 - `query: "is:unread"`
@@ -85,7 +145,7 @@ Use `mcp__google-workspace__search_gmail_messages`:
 - Flag anything urgent or time-sensitive
 - Group by category if helpful (mx communication, internal, sales handoffs)
 
-### Step 4: Slack Escalations
+### Step 5: Slack Escalations
 Use `mcp__slack__slack_read_channel`:
 - Channel: C067SSZ1AMT (#pathfinder-support)
 - Scan last 24 hours
@@ -93,7 +153,7 @@ Use `mcp__slack__slack_read_channel`:
 - Identify escalations, especially those mentioning Phil's or Mallory's mx
 - Note unresolved issues needing response
 
-### Step 5: Intercom Inbounds
+### Step 6: Intercom Inbounds
 Use `mcp__intercom__search_conversations`:
 - Search for conversations from last 24 hours
 - For each conversation, use `mcp__intercom__get_conversation` to read the full thread
@@ -106,14 +166,14 @@ Use `mcp__intercom__search_conversations`:
   - Cross-reference against Master Hub (`spreadsheet_id: "1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4"`, `user_google_email: "philip.bornhurst@doordash.com"`) by business name, phone, or email
 - Highlight notable tickets: ICP/T1 mx, Phil/Mallory's accounts, repeat contacts, urgent themes
 
-### Step 6: Pattern Alerts (from Support Intelligence Tracker)
+### Step 7: Pattern Alerts (from Support Intelligence Tracker)
 If the SIT spreadsheet exists (check CLAUDE.md Key Spreadsheets for "Support Intelligence Tracker"):
 - Read "Pattern Alerts" tab — filter for Status = "new"
 - Read "Contact Frequency" tab — filter for Risk Flag = "yes"
 - Include in the briefing output below
 - If SIT doesn't exist yet, skip this step (no error)
 
-### Step 7: Compile the Briefing
+### Step 8: Compile the Briefing
 
 **Output Format:**
 
@@ -130,6 +190,16 @@ If the SIT spreadsheet exists (check CLAUDE.md Key Spreadsheets for "Support Int
 
 ### All Clear
 (If no alerts, say "No volume alerts today.")
+
+---
+
+## Card Metrics (daily)
+| Metric | Today ([date]) | Prior Day | Δ | 7 Days Ago | Δ |
+|--------|----------------|-----------|---|------------|---|
+| Active Stores (≥70) | X | Y | +Z.Z% | A | +B.B% |
+| Card Volume | X | Y | +Z.Z% | A | +B.B% |
+| Card GOV | $X | $Y | +Z.Z% | $A | +B.B% |
+[Flag notable movements: >10% DoD or >15% vs 7d ago]
 
 ---
 
