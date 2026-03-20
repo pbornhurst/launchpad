@@ -17,6 +17,14 @@ Run these in sequence (calendar and Slack first, then email per rate-limit rule)
 - Use `mcp__slack__slack_read_channel` on #pathfinder-support (C067SSZ1AMT) for the week's escalations
   - **CRITICAL:** The `oldest` and `latest` parameters MUST be **Unix epoch timestamps** (integer seconds since Jan 1, 1970), NOT date strings. Compute the timestamp first (e.g., for 7 days ago: `int((datetime.now() - timedelta(days=7)).timestamp())`).
 - Summarize key threads and outcomes
+- Use `mcp__slack__slack_read_channel` on #pathfinder-sales-team (C06SJUZ41V2) for the week's CW submissions
+  - Same Unix epoch timestamp rules apply
+  - Extract: mx name, rep name, t-shirt size, ICP flag, deal terms, next steps
+  - Count total new deals closed-won
+- Use `mcp__slack__slack_read_channel` on #pathfinder-onboarding-team (C073ZFYBMFT) for the week's onboarding updates
+  - Same Unix epoch timestamp rules apply
+  - Extract: mx being onboarded, install status, launch dates, any issues/blockers
+  - Count mx in active onboarding
 
 ### 3. Email Summary
 - Use `mcp__google-workspace__search_gmail_messages`:
@@ -49,6 +57,18 @@ Run these in sequence (calendar and Slack first, then email per rate-limit rule)
 - Support escalations: X (Y resolved)
 - Volume alerts: X new drops
 - Feedback logged: X new entries
+- New deals: X closed-won this week
+- Onboarding: X mx in progress
+
+### Sales Pipeline (#pathfinder-sales-team)
+- **[mx name]** — Rep: [name], T-shirt: [size], ICP: Y/N, Terms: [deal terms]
+- ...
+(If no CW submissions: "No new deals submitted this week.")
+
+### Onboarding Activity (#pathfinder-onboarding-team)
+- **[mx name]** — [status: scheduled/installing/launched/blocked] — [details]
+- ...
+(If no onboarding activity: "No onboarding updates this week.")
 
 ### Merchant Highlights
 - [mx name] — notable event (call, escalation, volume change)

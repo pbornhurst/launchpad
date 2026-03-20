@@ -47,6 +47,8 @@ You are an expert location research analyst helping restaurant concepts evaluate
 
 **IMPORTANT: This is a merchant-facing document.** The output will be shared directly with the merchant. All language must be professional, use the merchant's name (never "mx"), and avoid any internal DoorDash jargon.
 
+**Competitor Anonymization:** The merchant-facing Google Doc anonymizes all competitor names and addresses — replaced with generic labels ("Competitor A", "Competitor B", etc.). A separate private Google Doc (the "Internal Key") preserves the full mapping for Phil's reference. Metrics (GOV, orders, AOV, ratings, distances, grades) remain fully visible in both documents.
+
 **Phil's Info (internal — do not expose in output):**
 - Email: philip.bornhurst@doordash.com
 - Role: Head of Account Management for Pathfinder
@@ -67,11 +69,33 @@ Extract from the user's request:
 - **ADDRESS** — Full address, or city/state. Normalize aliases: "SF" → "San Francisco", "NYC" → "New York", "LA" → "Los Angeles", "Philly" → "Philadelphia"
 - **STATE** — Two-letter abbreviation. Normalize full names: "New Jersey" → "NJ", "Texas" → "TX"
 - **CITY** — Full city name (extracted from address or provided directly)
-- **CUISINE TYPE(S)** — One or more categories (e.g., "burgers and cheesesteaks", "chicken", "pizza")
-- **MERCHANT NAME** — If provided (e.g., "for Smash Bros"), otherwise use "Merchant" as placeholder
+- **CONCEPT CATEGORIES** — Extract ALL categories the merchant competes in, not just one cuisine:
+  - If user says "for Burgerrunn" or "for burgers, cheesesteaks, chicken fingers, and wings" → `CONCEPT_CATEGORIES = ['Burger', 'Cheesesteak', 'Chicken', 'Wing']`
+  - If user says "for a chicken concept" → `CONCEPT_CATEGORIES = ['Chicken']`
+  - Map natural language to CUISINE_TAG patterns: "chicken fingers" → `'%Chicken%'`, "wings" → `'%Wing%'`, "burgers" → `'%Burger%'`, "cheesesteaks" → `'%Cheesesteak%'` or `'%Steak%'`
+  - The per-cuisine leaderboard (Query 2) runs for each category individually. Query 5 (TAO) aggregates across all categories.
+- **MERCHANT NAME** — If provided (e.g., "for Burgerrunn"), otherwise use "Merchant" as placeholder
+
+### Determine Area Type
+
+Classify the location as **urban** or **suburban** to set ring distances for demographics:
+- **Urban/Dense**: Cities with population >250k or known dense areas (Manhattan, downtown Chicago, SF, downtown Boston, downtown DC, etc.)
+  - Ring 1 = 0.25 mi, Ring 2 = 0.5 mi, Ring 3 = 1 mi
+- **Suburban**: Everything else (most NJ towns, suburban TX, residential areas)
+  - Ring 1 = 1 mi, Ring 2 = 3 mi, Ring 3 = 5 mi
+
+Use a web search or local knowledge if unsure. When in doubt, default to suburban.
+
+### Geocode the Address
+
+Use `WebSearch` to find the latitude/longitude of the target address:
+- Search: `"[address] latitude longitude"` or `"[address] coordinates"`
+- This is needed for distance-based demographics and marketplace analysis
+
+Pass area type, ring distances, lat/long, and CONCEPT_CATEGORIES to all sub-agents.
 
 Confirm parsed values:
-> Analyzing: **[ADDRESS or CITY, STATE]** | Concept: **[CUISINE(S)]** | Merchant: **[NAME]**
+> Analyzing: **[ADDRESS]** | Concept: **[MERCHANT NAME]** | Categories: **Burgers, Cheesesteaks, Chicken, Wings** | Area Type: **[URBAN/SUBURBAN]** | Rings: **[X] / [Y] / [Z] mi**
 
 ---
 
@@ -161,46 +185,171 @@ Prompt the sub-agent with these exact instructions and SQL:
 > LIMIT 25
 > ```
 >
+> **Query 4 — National & State Benchmarking for Local Enterprise Stores:**
+> How do the local enterprise stores rank against their own brand nationally? Grades each local store A/B/C/D.
+> ```sql
+> WITH local_enterprise AS (
+>   SELECT DISTINCT gc.business_id, gc.business_name
+>   FROM proddb.public.ddoo_mp_geo_cuisine_performance gc
+>   JOIN edw.merchant.dimension_store ds ON gc.store_id = ds.store_id
+>   WHERE UPPER(gc.city) = UPPER('[CITY]')
+>     AND UPPER(gc.state) = UPPER('[STATE]')
+>     AND ds.management_type_grouped = 'ENTERPRISE'
+>     AND ds.is_restaurant = 1
+>     AND gc.report_month >= DATEADD('month', -3, DATE_TRUNC('month', CURRENT_DATE))
+> ),
+> national_stores AS (
+>   SELECT gc.business_id, gc.business_name, gc.store_id, gc.city, gc.state,
+>     SUM(gc.total_orders) AS total_orders,
+>     SUM(gc.gov) AS total_gov
+>   FROM proddb.public.ddoo_mp_geo_cuisine_performance gc
+>   JOIN local_enterprise le ON gc.business_id = le.business_id
+>   WHERE gc.report_month >= DATEADD('month', -3, DATE_TRUNC('month', CURRENT_DATE))
+>     AND gc.country = 'United States'
+>   GROUP BY 1,2,3,4,5
+> ),
+> ranked AS (
+>   SELECT *,
+>     PERCENT_RANK() OVER (PARTITION BY business_id ORDER BY total_gov) AS natl_pct_rank,
+>     COUNT(*) OVER (PARTITION BY business_id) AS natl_store_count,
+>     AVG(total_gov) OVER (PARTITION BY business_id) AS natl_avg_gov,
+>     PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY total_gov)
+>       OVER (PARTITION BY business_id) AS natl_median_gov,
+>     PERCENT_RANK() OVER (PARTITION BY business_id, state ORDER BY total_gov) AS state_pct_rank,
+>     COUNT(*) OVER (PARTITION BY business_id, state) AS state_store_count,
+>     AVG(total_gov) OVER (PARTITION BY business_id, state) AS state_avg_gov,
+>     CASE
+>       WHEN PERCENT_RANK() OVER (PARTITION BY business_id ORDER BY total_gov) >= 0.75 THEN 'A'
+>       WHEN PERCENT_RANK() OVER (PARTITION BY business_id ORDER BY total_gov) >= 0.50 THEN 'B'
+>       WHEN PERCENT_RANK() OVER (PARTITION BY business_id ORDER BY total_gov) >= 0.25 THEN 'C'
+>       ELSE 'D'
+>     END AS store_grade
+>   FROM national_stores
+> )
+> SELECT business_name, store_id, city, state,
+>   total_orders, total_gov, store_grade,
+>   ROUND(natl_pct_rank * 100, 1) AS natl_percentile,
+>   natl_store_count, ROUND(natl_avg_gov, 2) AS natl_avg_gov,
+>   ROUND(natl_median_gov, 2) AS natl_median_gov,
+>   ROUND(state_pct_rank * 100, 1) AS state_percentile,
+>   state_store_count, ROUND(state_avg_gov, 2) AS state_avg_gov
+> FROM ranked
+> WHERE UPPER(city) = UPPER('[CITY]') AND UPPER(state) = UPPER('[STATE]')
+> ORDER BY business_name, total_gov DESC
+> LIMIT 50
+> ```
+> **Grade key:** A = top 25% nationally | B = 50-75th pctl | C = 25-50th pctl | D = bottom 25%
+>
+> **Query 5 — Total Addressable Opportunity across all concept categories:**
+> This is the "zoom out" view — what's the total market for everything this merchant sells? Replace the ILIKE patterns below with the actual CONCEPT_CATEGORIES provided.
+> ```sql
+> WITH concept_stores AS (
+>   SELECT
+>     gc.cuisine_tag,
+>     gc.store_id,
+>     gc.business_name,
+>     ds.management_type_grouped,
+>     SUM(gc.total_orders) AS total_orders,
+>     SUM(gc.gov) AS total_gov,
+>     SUM(gc.unique_customers) AS unique_customers,
+>     SUM(gc.repeat_customer_count) AS repeat_customers
+>   FROM proddb.public.ddoo_mp_geo_cuisine_performance gc
+>   JOIN edw.merchant.dimension_store ds ON gc.store_id = ds.store_id
+>   WHERE UPPER(gc.city) = UPPER('[CITY]')
+>     AND UPPER(gc.state) = UPPER('[STATE]')
+>     AND (
+>       UPPER(gc.cuisine_tag) ILIKE '%BURGER%'
+>       OR UPPER(gc.cuisine_tag) ILIKE '%CHEESESTEAK%'
+>       OR UPPER(gc.cuisine_tag) ILIKE '%STEAK SUB%'
+>       OR UPPER(gc.cuisine_tag) ILIKE '%CHICKEN%'
+>       OR UPPER(gc.cuisine_tag) ILIKE '%WING%'
+>       OR UPPER(gc.cuisine_tag) ILIKE '%TENDER%'
+>       OR UPPER(gc.cuisine_tag) ILIKE '%FINGER%'
+>     )
+>     AND gc.report_month >= DATEADD('month', -3, DATE_TRUNC('month', CURRENT_DATE))
+>     AND ds.is_restaurant = 1
+>   GROUP BY 1,2,3,4
+> )
+> SELECT
+>   cuisine_tag,
+>   COUNT(DISTINCT store_id) AS store_count,
+>   SUM(total_orders) AS category_orders,
+>   SUM(total_gov) AS category_gov,
+>   SUM(total_gov) / NULLIF(SUM(total_orders), 0) AS category_aov,
+>   SUM(unique_customers) AS category_customers,
+>   SUM(CASE WHEN management_type_grouped = 'ENTERPRISE' THEN total_gov ELSE 0 END) AS enterprise_gov,
+>   SUM(CASE WHEN management_type_grouped != 'ENTERPRISE' THEN total_gov ELSE 0 END) AS smb_gov
+> FROM concept_stores
+> GROUP BY cuisine_tag
+> ORDER BY category_gov DESC
+> LIMIT 20
+> ```
+> The orchestrator computes **combined totals** by summing across all categories: Total Addressable GOV, Total Competing Stores (distinct), Enterprise vs SMB split, and per-category share of total.
+>
 > If Query 1 returns 0 rows, try with `gc.city ILIKE '%[CITY]%'` instead. If still 0, report that no DoorDash marketplace data exists for this city.
 >
-> **Return format:** All raw query results in a structured format. Include the matched cuisine_tag(s) from Query 1 that best match the user's requested cuisine(s).
+> **Return format:** All raw query results (Queries 1-5) in a structured format. Include the matched cuisine_tag(s) from Query 1 that best match the user's requested cuisine(s).
 
 **Model:** haiku
 
 ---
 
-### Sub-Agent B: Demographics Research
+### Sub-Agent B: Demographics Research (3-Ring Analysis)
 
-> You are a demographics researcher. Research the following location and return structured demographic data.
+> You are a demographics researcher. Research the following location at THREE distance rings.
 >
-> **Location:** [CITY], [STATE] ([FULL ADDRESS if available])
+> **Location:** [FULL ADDRESS or CITY, STATE]
+> **Coordinates:** [LAT], [LONG] (if available from Step 0 geocoding)
+> **Area Type:** [URBAN / SUBURBAN]
+> **Ring Distances:** Ring 1 = [X] mi, Ring 2 = [Y] mi, Ring 3 = [Z] mi
 >
-> **Use these sources** (try in order, extract from the first 2-3 that work):
+> **Strategy for obtaining ring-level demographics (try in order):**
 >
-> 1. **Census.gov QuickFacts** — Search for: `[City] [State] census quickfacts`
->    - URL pattern: `https://www.census.gov/quickfacts/[cityname][state]`
-> 2. **WorldPopulationReview** — Search for: `[City] [State] worldpopulationreview`
->    - URL pattern: `https://worldpopulationreview.com/us-cities/[state]/[city]`
-> 3. **Point2Homes** — Search for: `[City] [State] point2homes demographics`
->    - URL pattern: `https://www.point2homes.com/US/Neighborhood/[STATE]/[City]-Demographics.html`
-> 4. **CensusReporter.org** — Search for: `censusreporter [City] [State]`
+> 1. **Best source: Commercial real estate demographic reports**
+>    Search: `"[address]" demographics radius`, `"[city] [state]" demographics "1 mile" "3 mile" "5 mile"`, `"[address]" trade area demographics`
+>    These often appear on LoopNet, Crexi, CoStar previews, offering memorandums, and retail site selection reports. They typically show 1/3/5 mile ring data.
 >
-> Also run: `"[City] [State] demographics median income"` as a general web search.
+> 2. **ESRI / ArcGIS community tools**
+>    Search: `site:arcgis.com "[city]" demographics`, or `esri demographics "[city] [state]"`
+>    ESRI powers most commercial RE demographic reports.
 >
-> **Required data to extract:**
-> - Median household income (city-wide; 2-mile and 5-mile radius if available)
+> 3. **Statistical Atlas**
+>    Search: `statisticalatlas.com "[city]" "[state]"`
+>    Provides neighborhood-level demographic maps and data.
+>
+> 4. **Census Reporter (tract/place level)**
+>    Search: `censusreporter.org "[city]" "[state]"`
+>    Use census tracts near the address as a proxy for ring data.
+>
+> 5. **Fallback: City-level sources** (if ring data unavailable)
+>    Census.gov QuickFacts, WorldPopulationReview, Point2Homes
+>    Label clearly as "city-wide" not ring-specific.
+>
+> **For EACH ring, extract:**
+> - Population
+> - Households
+> - Median household income
 > - Average household income (if available)
-> - Population (current estimate)
-> - Household count (if available)
+> - Daytime population (if available — critical for lunch traffic estimates)
+>
+> **Also extract once (city or nearest ring):**
 > - Poverty rate
-> - Education: % with bachelor's degree or higher
+> - Education: % bachelor's degree or higher
 > - Homeownership rate
 > - Median age
 > - Consumer spending on food & alcohol (if available)
 >
 > **Cross-reference:** Check 2-3 sources for median income to ensure consistency. Flag if sources disagree by >20%. Note data year.
 >
-> **Return format:** Structured data with each metric, its value, source name, and source URL. If a metric is not found, say so explicitly.
+> **Return format:**
+> ```
+> Ring 1 ([X] mi): Population: XX,XXX | Households: X,XXX | Median HH Income: $XXX,XXX | Avg HH Income: $XXX,XXX | Daytime Pop: XX,XXX
+> Ring 2 ([Y] mi): Population: XX,XXX | Households: X,XXX | Median HH Income: $XXX,XXX | Avg HH Income: $XXX,XXX | Daytime Pop: XX,XXX
+> Ring 3 ([Z] mi): Population: XX,XXX | Households: X,XXX | Median HH Income: $XXX,XXX | Avg HH Income: $XXX,XXX | Daytime Pop: XX,XXX
+> City-wide: Poverty: X.X% | Education: XX.X% BA+ | Homeownership: XX.X% | Median Age: XX
+> Sources: [list with URLs]
+> Data quality: [RING-LEVEL / CITY-FALLBACK] — note if ring data was found or if city-level was used as proxy
+> ```
 
 **Model:** sonnet
 
@@ -326,13 +475,19 @@ Prompt the sub-agent with these exact instructions and SQL:
 
 After all 4 sub-agents return, organize and cross-reference the data:
 
-### 2a. Cross-Reference DoorDash Data with Web Research
+### 2a. Cross-Reference All Data Layers
 - Match enterprise brands from Snowflake (Sub-Agent A Query 3) with chains found via web (Sub-Agent C)
 - Where both sources have data on the same brand, combine: DoorDash order volume + web-sourced distance/pricing
 - This creates a uniquely powerful view: "McDonald's is 0.5 miles away AND doing 4,200 orders/month on DoorDash"
+- **Use Query 4 store grades to strengthen market validation** — A-stores nearby = "proven, above-average demand for this brand"; D-stores = "this location underperforms nationally, investigate why"
+- **Use ring demographics for pricing recommendations** — reference the closest ring for primary pricing: "Ring 1 median income is $128k, supporting premium $12-16 pricing"
+- **Lead with Total Addressable Opportunity (Query 5)** — "This market represents $4.8M in delivery GOV across your 4 categories" should be the headline insight in the Executive Summary
+- **Highlight multi-concept advantage** — if cheesesteak competition is LOW but burger competition is MODERATE, the dual concept captures white space that burger-only shops miss. This is a key differentiator.
+- **Use category share to recommend emphasis** — "Burgers are 52% of the opportunity — lead with burgers, cross-sell cheesesteaks and chicken"
+- **Build the competitor registry** — While cross-referencing, build a unified list of every unique restaurant competitor entity (brand name + store name + address) found across all sub-agent results. Track each competitor's category (Burger, Chicken, etc.) and segment (Enterprise/SMB). This registry is used in Step 3 for anonymization.
 
 ### 2b. Assess Income Tier & Pricing Recommendations
-Using demographics from Sub-Agent B:
+Using **Ring 1** demographics from Sub-Agent B (closest ring = primary trade area):
 - **$150k+** (VERY HIGH): Supports premium pricing ($12-16 burgers, $12-16 cheesesteaks)
 - **$120-150k** (HIGH): Mid-premium ($10-14 burgers, $11-15 cheesesteaks)
 - **$90-120k** (MODERATE-HIGH): Competitive ($9-13 burgers, $10-13 cheesesteaks)
@@ -362,203 +517,184 @@ Based on the competitive landscape and demographics:
 
 ---
 
-## Step 3: Write Local Markdown File
+## Step 3: Build Anonymization Registry
 
-Save to `projects/location-briefs/[city-slug]-[cuisine]-[YYYY-MM-DD].md`
+After synthesis is complete, build the **COMPETITOR_REGISTRY** — a mapping of every competitor entity to an anonymized label. This registry is applied in Step 4 when generating the merchant-facing Google Doc.
 
-Create the `projects/location-briefs/` directory if it doesn't exist.
+### 3a. Extract All Competitor Entities
 
-Use this template (adapt sections based on available data):
+Scan the synthesized data from Step 2 and extract every unique restaurant/brand that appears in:
+- Cuisine leaderboards (Sub-Agent A, Query 2) — enterprise and SMB stores
+- Top Enterprise Brands (Sub-Agent A, Query 3)
+- Enterprise Store Grades (Sub-Agent A, Query 4)
+- Competitive Landscape chains and local players (Sub-Agent C)
+- White Space Analysis mentions (closed competitors, etc.)
 
-```markdown
-# Location Research Brief — [ADDRESS/CITY, STATE]
-**Prepared for:** [MERCHANT NAME] | **Date:** [DATE]
-**Concept:** [CUISINE TYPE(S)]
+For each competitor, capture: **brand name**, **store name** (if different), **address(es)**, **category** (Burger, Chicken, etc.), **segment** (Enterprise/SMB).
 
----
+### 3b. Assign Anonymized Labels
 
-## Executive Summary
-[2-3 paragraph assessment covering the key findings across all dimensions]
+Assign labels in order of first appearance in the document (top to bottom): **"Competitor A"**, **"Competitor B"**, **"Competitor C"**, etc.
 
-**Bottom Line:** [RECOMMENDED / CONDITIONAL / NOT RECOMMENDED] — [one sentence why]
+Rules:
+- **Same brand = same label everywhere.** If "Shake Shack" appears in the leaderboard AND the competitive landscape, it's the same "Competitor A" in both.
+- **Multi-location brands:** Use one label with location differentiators in tables: "Competitor B (Loc. 1)", "Competitor B (Loc. 2)". The legend lists all addresses.
+- **>26 competitors:** Extend to "Competitor AA", "Competitor AB", etc. (unlikely in practice).
 
----
+### 3c. What Is NOT Anonymized
 
-## Location & Setting
-- **Address:** [full address or city/state]
-- **Area Character:** [description — downtown, strip mall, highway corridor, suburban, etc.]
+Do NOT anonymize:
+- The target **merchant's own name** (e.g., BurgerRunn)
+- **Traffic driver entities** — employers, hospitals, schools, shopping centers, retail anchors (these are in the Traffic Drivers section, not competitive data)
+- **Generic category references** — "smash burger concept", "premium fast-casual", cuisine types
+- **Market-level aggregates** — total market stats, cuisine breakdowns (Query 1, Query 5 totals)
 
----
+### 3d. Anonymization Mapping for Tables
 
-## Market Demographics
+When generating the merchant-facing Google Doc HTML in Step 4, apply the registry:
 
-| Metric | Value | Source |
-|--------|-------|--------|
-| Median HH Income | $XXX,XXX | [source] |
-| Average HH Income | $XXX,XXX | [source] |
-| Population | XX,XXX | [source] |
-| Households | XX,XXX | [source] |
-| Poverty Rate | X.X% | [source] |
-| Bachelor's Degree+ | XX.X% | [source] |
-| Homeownership | XX.X% | [source] |
-| Median Age | XX | [source] |
+| Section | Name/Brand column becomes | Address column becomes |
+|---------|--------------------------|----------------------|
+| Cuisine Leaderboard — Enterprise | **"Competitor"** (merge Store + Brand into one column) | **"Distance"** (show ~X.X mi from site) |
+| Cuisine Leaderboard — SMB | **"Competitor"** | **"Distance"** |
+| Top Enterprise Brands | **"Competitor"** | — (no address column) |
+| Enterprise Store Grades | **"Competitor"** | — (no address column) |
+| Competitive Landscape — National Chains | **"Competitor"** | **"Distance"** |
+| Competitive Landscape — Local & Regional | **"Competitor"** | **"Distance"** |
 
-**Key Insight:** [What demographics mean for pricing and positioning]
+All metrics columns remain unchanged: GOV, orders, AOV, rating, repeat rate, grades, percentiles, price range.
 
-**Income Tier:** [VERY HIGH / HIGH / MODERATE-HIGH / MODERATE / LOW]
-**Recommended Price Range:** $X-$X per [item]
+### 3e. Anonymization for Inline Prose
 
----
+In all narrative sections (Executive Summary, Insights, Opportunities, Challenges, Success Factors, Final Recommendation), replace every occurrence of a competitor name with its label:
+- "Shake Shack" → "Competitor A"
+- "Shake Shack's" → "Competitor A's"
+- "the local Shake Shack" → "the local Competitor A"
+- "Smashburger: CLOSED" → "Competitor L: CLOSED"
 
-## DoorDash Marketplace Performance
+**Preserve the analytical substance** — the insight should read identically except with labels. E.g.:
+- BEFORE: "The local Shake Shack is an A-store — outperforming 82% of all Shake Shacks nationally."
+- AFTER: "The local Competitor A is an A-store — outperforming 82% of its brand's locations nationally."
 
-### Market Overview — [CITY], [STATE] (Last 3 Months)
+### 3f. Edge Cases
 
-| Cuisine | Stores | Orders | GOV | Avg AOV | Avg Rating |
-|---------|--------|--------|-----|---------|------------|
-[Top 10 cuisines from Query 1]
-
-**Total Market:** X stores | X,XXX orders | $X.XM GOV
-
-### [CUISINE] Leaderboard
-
-**Enterprise Brands** (Top 10)
-| Rank | Store | Brand | Address | Orders | GOV | AOV | Rating | Repeat Rate |
-|------|-------|-------|---------|--------|-----|-----|--------|-------------|
-[Top 10 enterprise rows from Query 2]
-
-**SMB Players** (Top 10)
-| Rank | Store | Address | Orders | GOV | AOV | Rating | Repeat Rate |
-|------|-------|---------|--------|-----|-----|--------|-------------|
-[Top 10 SMB rows from Query 2]
-
-### Top Enterprise Brands — All Cuisines
-*Strong enterprise presence = proven market with consumer demand and delivery infrastructure.*
-
-| Rank | Brand | Cuisine(s) | Locations | Orders | GOV | AOV |
-|------|-------|-----------|-----------|--------|-----|-----|
-[Top 15 from Query 3]
+| Scenario | Handling |
+|----------|---------|
+| Brand in BOTH Snowflake + web data | Same label (deduped by brand name) |
+| Closed competitor (no address) | Gets a label; legend shows "N/A (closed)" for address |
+| Food hall with competing sub-concepts | Food hall venue name stays visible in Traffic Drivers; restaurant concepts inside are anonymized in Competitive Landscape |
+| Brand is also an employer | Anonymize in competitive sections, keep real name in Traffic Drivers. Note in legend: "Competitor X also appears as [Real Name] in Traffic Drivers." |
 
 ---
 
-## Competitive Landscape: [CATEGORY 1]
+## Step 4: Create Merchant-Facing Google Doc (Anonymized)
 
-**Competition Level:** [LOW / MODERATE / HEAVY]
+Build the full brief as HTML, applying the COMPETITOR_REGISTRY from Step 3 to anonymize all competitor names and addresses throughout.
 
-### National Chains
-| Chain | Distance | Price Range | Positioning | DoorDash Volume |
-|-------|----------|-------------|-------------|-----------------|
-[Each chain found, with DoorDash data where available]
+### 4a. Folder Setup
 
-### Local & Regional Players
-| Restaurant | Distance | Price Range | Notes |
-|-----------|----------|-------------|-------|
-[Each local player found]
+Use `mcp__google-workspace__search_drive_files` to check if a "Location Briefs" folder exists under 2026/ (`folder_id: "1xPRPSJUWBtJDbeISgOxJiTX0Y8znczf_"`). If not, create it with `mcp__google-workspace__create_drive_folder` (parent: `1xPRPSJUWBtJDbeISgOxJiTX0Y8znczf_`).
 
-### White Space Analysis
-[Assessment of category gaps and opportunities]
+### 4b. Generate Anonymized HTML
 
----
+Build the complete brief as well-formatted HTML. Use all synthesized data from Step 2, but **apply the COMPETITOR_REGISTRY** — every competitor name becomes its label ("Competitor A", etc.) and every competitor address becomes a distance ("~X.X mi from site").
 
-## Competitive Landscape: [CATEGORY 2]
-[Same structure repeated for additional categories]
+**HTML styling:**
+- Headings: dark slate `#2C3E50` for H1/H2, `#34495E` for H3
+- Table headers: `background-color: #2C3E50; color: white; padding: 8px 12px;`
+- Alternating rows: even rows `background-color: #f9f9f9;`
+- Recommendation colors:
+  - RECOMMENDED: green `#2E7D32` background on the tag
+  - CONDITIONAL: amber `#F9A825` background
+  - NOT RECOMMENDED: red `#D63B2F` background
+- Use emojis for visual hierarchy: ✅ RECOMMENDED, ⚠️ CONDITIONAL, 🔴 NOT RECOMMENDED
+- Section emojis: 📋 Executive Summary, 📍 Location, 💰 Demographics, 🎯 Total Addressable Opportunity, 📊 DoorDash Performance, 🏆 Enterprise Store Grades, 🍔 Competition, 🏢 Traffic Drivers, 🚀 Opportunities, ⚠️ Challenges, 🎯 Success Factors, ✅ Final Recommendation
+- Body font: Arial, `color: #333`
+- Footer: `color: #999; font-size: 11px; text-align: center;` — "Prepared by Philip Bornhurst | Pathfinder Account Management | [date]"
 
----
+**Anonymization disclaimer** — add immediately below the H1 title, before the Executive Summary:
+> `<p style="color: #666; font-style: italic; border-left: 3px solid #2C3E50; padding-left: 12px;">Competitor identities have been anonymized in this report. Performance metrics, distances, and market data are accurate and unmodified.</p>`
 
-## Traffic Drivers
+**Brief structure** (same sections as before, with anonymized competitor references):
 
-### Corporate & Employment
-| Employer | Employees | Distance | Walkability |
-|----------|-----------|----------|-------------|
-[Each employer]
+1. **Executive Summary** — 2-3 paragraph assessment. All competitor names replaced with labels.
+2. **Location & Setting** — Address, area character.
+3. **Market Demographics** — 3-ring table, income tier, pricing recommendation. No anonymization needed here.
+4. **DoorDash Marketplace Performance:**
+   - Total Addressable Opportunity table (aggregated — no competitor names, no changes needed)
+   - By Category breakdown (aggregated — no changes needed)
+   - Market Overview cuisine table (aggregated — no changes needed)
+   - **Cuisine Leaderboard — Enterprise** (anonymized: "Competitor" column replaces Store+Brand, "Distance" replaces Address)
+   - **Cuisine Leaderboard — SMB** (anonymized: "Competitor" replaces Store, "Distance" replaces Address)
+   - **Top Enterprise Brands** (anonymized: "Competitor" replaces Brand)
+   - **Enterprise Store Grades** (anonymized: "Competitor" replaces Brand. Insight text uses labels: "Competitor A is an A-store — outperforming 82% of its brand's locations nationally.")
+5. **Competitive Landscape per category:**
+   - National Chains table (anonymized: "Competitor" replaces Chain, "Distance" replaces Address)
+   - Local & Regional Players table (anonymized: "Competitor" replaces Restaurant, "Distance" replaces Address)
+   - White Space Analysis (anonymized: labels in prose)
+6. **Traffic Drivers** — NOT anonymized. Keep real employer names, hospitals, schools, retail anchors.
+7. **Opportunities** — Labels in prose where competitors are mentioned.
+8. **Challenges** — Labels in prose.
+9. **Success Factors** — Labels in prose.
+10. **Final Recommendation** — GO/CONDITIONAL/NO-GO with labels in prose.
 
-### Healthcare
-| Facility | Beds | Est. Staff | Distance |
-|----------|------|-----------|----------|
-[Each hospital/medical center]
+### 4c. Import to Google Docs
 
-### Education
-| Institution | Students | Distance | Type |
-|-------------|----------|----------|------|
-[Each university/school]
+Use `mcp__google-workspace__import_to_google_doc` with:
+- `source_format: "html"`
+- `title: "Location Brief — [City, State] | [Cuisine] | [Date]"`
+- `folder_id:` the Location Briefs folder ID
+- `user_google_email: "philip.bornhurst@doordash.com"`
 
-### Retail & Commercial
-[Shopping centers, malls, major retail anchors]
+### 4d. Share with Domain
 
-### Transportation
-[Major roads, commuter corridors, traffic counts]
-
----
-
-## Opportunities
-1. [Specific, data-backed opportunity]
-2. [Specific, data-backed opportunity]
-[4-6 total]
-
-## Challenges
-1. [Specific, honest challenge]
-2. [Specific, honest challenge]
-[3-5 total]
-
-## Success Factors
-1. **[Strategy Name]** — [How to win]
-2. **[Strategy Name]** — [How to win]
-[4-6 total]
-
----
-
-## Final Recommendation
-
-**[RECOMMENDED / CONDITIONAL / NOT RECOMMENDED]**
-
-[2-3 paragraphs of supporting reasoning]
-
-**Next Steps:**
-1. [Specific action item]
-2. [Specific action item]
-3. [Specific action item]
+Share with doordash.com domain using `mcp__google-workspace__manage_drive_access`:
+- `user_google_email: "philip.bornhurst@doordash.com"`
+- `role: "reader"`, `type: "domain"`, `domain: "doordash.com"`
 
 ---
 
-*Prepared by Philip Bornhurst | Pathfinder Account Management | [date]*
-```
+## Step 4.5: Create Internal Legend Google Doc (Private)
 
----
+After creating the merchant-facing doc, create a SECOND Google Doc containing the anonymization key. This is Phil's private reference — it maps every "Competitor X" label back to the real identity.
 
-## Step 4: Create Google Doc
+### Legend Doc Content
 
-1. Use `mcp__google-workspace__search_drive_files` to check if a "Location Briefs" folder exists under 2026/ (`folder_id: "1xPRPSJUWBtJDbeISgOxJiTX0Y8znczf_"`). If not, create it with `mcp__google-workspace__create_drive_folder` (parent: `1xPRPSJUWBtJDbeISgOxJiTX0Y8znczf_`).
+Build HTML with the same styling conventions (dark slate headers, alternating rows). Structure:
 
-2. Convert the Markdown brief to well-formatted HTML:
-   - Headings: dark slate `#2C3E50` for H1/H2, `#34495E` for H3
-   - Table headers: `background-color: #2C3E50; color: white; padding: 8px 12px;`
-   - Alternating rows: even rows `background-color: #f9f9f9;`
-   - Recommendation colors:
-     - RECOMMENDED: green `#2E7D32` background on the tag
-     - CONDITIONAL: amber `#F9A825` background
-     - NOT RECOMMENDED: red `#D63B2F` background
-   - Use emojis for visual hierarchy: ✅ RECOMMENDED, ⚠️ CONDITIONAL, 🔴 NOT RECOMMENDED
-   - Section emojis: 📋 Executive Summary, 📍 Location, 💰 Demographics, 📊 DoorDash Performance, 🍔 Competition, 🏢 Traffic Drivers, 🚀 Opportunities, ⚠️ Challenges, 🎯 Success Factors, ✅ Final Recommendation
-   - Body font: Arial, `color: #333`
-   - Footer: `color: #999; font-size: 11px; text-align: center;` — "Prepared by Philip Bornhurst | Pathfinder Account Management | [date]"
+1. **Title (H1):** "INTERNAL KEY — Location Brief — [City, State] | [Cuisine] | [Date]"
+2. **Confidential notice:**
+   > `<p style="color: #D63B2F; font-weight: bold; font-size: 14px; border: 2px solid #D63B2F; padding: 10px; border-radius: 4px;">CONFIDENTIAL — Do not share with merchants. This document maps anonymized competitor labels to real identities.</p>`
+3. **Link to merchant-facing doc:**
+   > `<p>Merchant-facing brief: <a href="[GOOGLE_DOC_URL]">[TITLE]</a></p>`
+4. **Competitor Legend table:**
 
-3. Use `mcp__google-workspace__import_to_google_doc` with:
-   - `source_format: "html"`
-   - `title: "Location Brief — [City, State] | [Cuisine] | [Date]"`
-   - `folder_id:` the Location Briefs folder ID
-   - `user_google_email: "philip.bornhurst@doordash.com"`
+| Label | Real Brand Name | Store Name(s) | Address(es) | Category | Segment |
+|-------|----------------|---------------|-------------|----------|---------|
+| Competitor A | Shake Shack | Shake Shack Cherry Hill | 795 Haddonfield Rd | Burger | Enterprise |
+| Competitor B | McDonald's | McDonald's (Route 38), McDonald's (Marlton Pike) | 801 NJ-38; 24 Marlton Pike W | Burger | Enterprise |
+| ... | ... | ... | ... | ... | ... |
 
-4. Share with doordash.com domain using `mcp__google-workspace__manage_drive_access`:
-   - `user_google_email: "philip.bornhurst@doordash.com"`
-   - `role: "reader"`, `type: "domain"`, `domain: "doordash.com"`
+5. **Footer:** Same style as other docs.
+
+### Legend Doc Creation
+
+Use `mcp__google-workspace__import_to_google_doc` with:
+- `source_format: "html"`
+- `title: "INTERNAL KEY — Location Brief — [City, State] | [Cuisine] | [Date]"`
+- `folder_id:` same Location Briefs folder ID
+- `user_google_email: "philip.bornhurst@doordash.com"`
+
+**CRITICAL: Do NOT share this doc with the doordash.com domain.** Do NOT call `manage_drive_access` for this document. It remains private to Phil's account only.
 
 ---
 
 ## Step 5: Return Results
 
 Return to the parent:
-- Local MD file path
-- Google Doc link
+- **Merchant-facing Google Doc link** (anonymized) — shareable with the merchant
+- **Internal Legend Google Doc link** (private — NOT shared with mx)
+- **Competitors anonymized:** count and label range (e.g., "16 competitors anonymized as Competitor A–P")
 - Summary of key findings (3-5 bullet points)
 - The GO/CONDITIONAL/NO-GO recommendation with one-line reasoning
 
@@ -571,3 +707,4 @@ Return to the parent:
 - All percentages include the % symbol
 - Cross-reference data between sub-agents wherever possible
 - **Never include in the output:** "mx" terminology, internal DoorDash classifications (management type, tier), Master Hub references, "Generated by Claude Agent"
+- **Anonymization integrity:** Double-check that NO real competitor names or addresses appear anywhere in the merchant-facing Google Doc. Scan all table cells and inline text before finalizing.
