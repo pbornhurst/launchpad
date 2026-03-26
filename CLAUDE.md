@@ -43,6 +43,10 @@
 | DRI | Directly Responsible Individual |
 | xfn | Cross-functional |
 | SIT | Support Intelligence Tracker (pattern detection spreadsheet) |
+| Puck | M2 Stripe card reader (newer hardware, replacing Wise readers) |
+| Wise | WisePOS card reader (legacy hardware, being phased out) |
+| M2 | Stripe M2 reader, also called "puck" |
+| CFD | Customer-Facing Display |
 
 ---
 
@@ -74,6 +78,7 @@ Key tools by domain:
 - **CRITICAL — `oldest`/`latest` parameters:** The `slack_read_channel` tool's `oldest` and `latest` parameters require **Unix epoch timestamps** (integer seconds since Jan 1, 1970), NOT date strings. Passing a date string like `"2026-02-14"` will silently fail and return messages from the beginning of the channel. Always compute the Unix timestamp first (e.g., 2026-02-14 00:00:00 PST → `1739520000`). Use Python or shell `date` to compute if needed.
 - **Key channels:**
   - #pathfinder-support (C067SSZ1AMT) — escalations
+  - #pathfinder-mxonboarding (C067E67HNAZ) — onboarding coordination
   - #phils-gumloop-agent (C0AC2NK50QN) — test/posting channel
 
 ### ask-data-ai (HTTP, global)
@@ -106,11 +111,29 @@ Key tools by domain:
 |---------|------|---------------|
 | Intercom | Primary inbound | ALL mx support texts. Every mx inquiry comes through here. High volume. |
 | #pathfinder-support (C067SSZ1AMT) | Escalation layer | Critical, novel, or internally-escalated issues only. Small subset of Intercom. |
+| #pathfinder-mxonboarding (C067E67HNAZ) | Onboarding coordination | New mx onboarding, hardware installs, launcher visits. |
 
 - "Support texts" / "inbounds" / "tickets" → check **Intercom**
 - "Escalations" → check **Slack #pathfinder-support**
-- For a full picture, check both
+- "Onboarding" / "installs" / "launches" → check **Slack #pathfinder-mxonboarding**
+- For a full picture, check both support channels (Intercom + #pathfinder-support)
 - **mx identification:** Intercom contacts may not always show business name. Cross-reference against Master Hub by business name, phone, or contact email when needed.
+
+---
+
+## Card Readers (Hardware)
+
+Pathfinder uses Stripe-powered card readers for in-store credit card payments. There are two types in the field:
+
+| Reader | Also Called | Status | Notes |
+|--------|-----------|--------|-------|
+| **M2 Stripe Reader** | Puck, M2 Puck | **Current** — actively deploying | Newer hardware, replacing Wise. Connects via USB to the Elo POS. |
+| **WisePOS Reader** | Wise, Wise reader | **Legacy** — being phased out | Older hardware. Some setups are not compatible with M2, so Wise remains in use at those locations. |
+
+- "Puck" and "M2 reader" are interchangeable — both refer to the Stripe M2 reader.
+- The rollout strategy is to replace all Wise readers with Pucks over time.
+- Card reader issues are among the most common support inbounds (disconnection, chip failures, hardware defects).
+- For card reader troubleshooting, common steps include: reboot POS, unplug/replug USB, check USB port color (blue vs orange on A14 devices), unlock ports in EloView, unplug power strip entirely.
 
 ---
 
@@ -136,10 +159,12 @@ Key tools by domain:
 | `edw.merchant.dimension_business` | Business-level attributes: management type (grouped and detailed) |
 | `edw.merchant.fact_merchant_orders_portal` | Order-level data with channel, operations (avoidable wait, cancellations, errors), customer type (new/repeat), ratings — primary table for QBRs |
 | `edw.merchant.fact_merchant_order_items` | Item-level product mix: item name, category, subtotal, quantity, missing/incorrect flags |
-| `edw.merchant.fact_merchant_transactions_details_portal` | Financial transaction details: subtotal, fees, commissions, discount breakdowns by channel — source of merchant Financial Report CSV |
+| `edw.merchant.fact_menu_performance_daily` | Menu conversion funnel: visits, checkouts, deliveries, photo coverage by store/day |
+| `edw.merchant.fact_merchant_transactions_details_portal` | Financial transaction details: subtotal, fees, commissions, discount breakdowns by channel — source of merchant Financial Report CSV. **Key columns:** `channel` (Marketplace, In-store, Kiosk, Storefront), `subtotal`, `tax_amount`, `discount_paid_by_doordash/mx/third_party_contribution`. **Critical:** In-store/Kiosk orders have `final_order_status = 'Picked Up'`, not `'Delivered'`. Always filter `final_order_status IN ('Delivered', 'Picked Up')` to include all completed orders across channels. |
 | `edw.ads.fact_promo_campaign_performance` | Promo marketing campaigns: orders, sales, mx/DD/3rd-party funded discounts, marketing fees, ROAS, CX acquisition. Amounts in cents. Filter: `report_type='campaign_store' AND timezone_type='utc' AND daypart_name='day'` |
 | `edw.ads.fact_sl_campaign_performance` | Sponsored listing campaigns: impressions, clicks, orders, sales, ad fees, ROAS, CX acquisition. Amounts in cents. Same filter as promo table. |
 | `proddb.public.ddoo_mp_geo_cuisine_performance` | Monthly per-store marketplace performance by city/cuisine: orders, GOV, AOV, customers, ratings, promo spend. Used by location-scout agent for competitive benchmarking. |
+| `edw.merchant.fact_merchant_sales` | Near-realtime order-level data (~minutes latency). Used by mx-alert-monitor for intraday volume checks. **Key columns:** `store_id`, `channel` (In-store, Kiosk, Marketplace, Storefront), `transaction_created_at_local`, `subtotal`. POS channels = `channel IN ('In-store', 'Kiosk')`. |
 
 These are the **executive-level** Pathfinder POS business tables. Use them for total business reporting: active stores, card volume, card GOV, period-over-period trends. Query via `mcp__ask-data-ai__ExecuteSnowflakeQuery`.
 
@@ -265,10 +290,21 @@ Focus extra attention on ICP and Tier 1 for proactive outreach and issue resolut
 
 ## Daily Briefing
 
-- **Command:** `/daily-brief` or "Generate daily briefing"
-- **Post to:** #phils-gumloop-agent (C0AC2NK50QN)
+- **Command:** `/daily-brief` or "Compile my morning brief"
+- **Architecture:** 4 parallel sub-agents (Volume+Metrics, Calendar+Email, Slack+Intercom, Pattern Alerts) orchestrated by the `briefing-compiler` agent
+- **Delivery:** Styled HTML email to Phil + condensed Slack summary to #phils-gumloop-agent (C0AC2NK50QN)
+- **Automation:** macOS launchd runs `scripts/daily-briefing.sh` at 8am daily (fires on wake if Mac was asleep). Future: Claude Agent SDK server-side deployment.
 - **Sections:** Volume Alerts → Card Metrics → Today's Calendar → Email Summary → Slack Escalations → Intercom Inbounds → Pattern Alerts → Action Items
-- **Timing:** Designed for 6-7am PST before my workday starts
+- **Error handling:** Each sub-agent runs independently. If any data source fails, that section shows "unavailable" — the rest of the briefing still delivers. No retries.
+
+---
+
+## Proactive Monitoring
+
+- **Persistent:** macOS launchd runs `scripts/mx-alert-monitor.sh` 3x daily (10:30am, 2:30pm, 5:30pm PST). Uses intraday Snowflake data (`fact_merchant_sales`) to compare today-so-far vs same time window last week. Channel-specific alerting: POS dark + Marketplace active = HIGH alarm (possible churn).
+- **Ad-hoc:** Say "Watch my portfolio" to create a CronCreate job (session-only, 3-day expiry) for more frequent checks.
+- **On-demand:** `/mx-alert-monitor` runs a single check immediately.
+- **Full analysis:** `/churn-risk` runs the full health score agent with Google Doc output.
 
 ---
 
@@ -293,6 +329,9 @@ Focus extra attention on ICP and Tier 1 for proactive outreach and issue resolut
 | `/card-metrics` | Pathfinder card volume metrics: active stores, volume, GOV with period-over-period changes |
 | `/feedback-log` | Log product feedback to the tracker |
 | `/location-scout` | 360° location analysis: demographics, competition, traffic drivers, DoorDash market data |
+| `/calendly-prep` | Prep for today's Calendly calls: scan calendar, match Master Hub, create folders/docs, internet research, Slack summary |
+| `/churn-risk` | Portfolio health scores: composite RED/YELLOW/GREEN per mx with churn risk ranking |
+| `/mx-alert-monitor` | Intraday anomaly check: POS-dark detection, channel-specific churn signals, volume drops >40%. Uses real-time Snowflake data. |
 
 ---
 
@@ -303,10 +342,12 @@ Agents run as isolated subprocesses — they pull from multiple data sources in 
 | Agent | Trigger | What it does |
 |-------|---------|-------------|
 | `mx-researcher` | "Research [mx]", "Deep dive on [mx]", "Give me everything on [mx]" | Comprehensive mx dossier: Master Hub + Volume + Slack + Email + Feedback + Running Notes + Snowflake. Auto-creates a formatted Google Doc in the `mx deep dives` folder and shares with doordash.com. |
-| `briefing-compiler` | "Compile my morning brief", "Run my daily brief in the background" | Polished daily/weekly briefing compiled from all sources. Ideal for background execution. |
+| `briefing-compiler` | "Compile my morning brief", "Run my daily brief in the background" | Daily/weekly briefing via 4 parallel sub-agents (Volume+Metrics, Calendar+Email, Slack+Intercom, Pattern Alerts). Outputs styled HTML email + Slack summary. Graceful degradation if any source fails. |
 | `support-intel` | "Run a deep support analysis", "Build the support intelligence baseline" | Deep pattern analysis across Intercom conversations. Detects repeat inbounders, cross-mx issues, sentiment risks. Produces Google Doc report. |
 | `qbr-generator` | "Generate a QBR for [mx]", "QBR for Store 12345, Jan-Mar 2026" | Full QBR data package via 4 parallel sub-agents: channel performance, operations, product mix, customer data, marketing. Opus-powered strategic insights. Outputs local .md (for NotebookLM) + Google Doc. |
 | `location-scout` | "Research [address] for [cuisine]", "Scout [city] for burgers", "Location analysis for [address]" | 360° location research: demographics + competition + traffic drivers + DoorDash marketplace data via 4 parallel sub-agents. Produces merchant-facing Google Doc with GO/CONDITIONAL/NO-GO recommendation. |
+| `calendly-call-prep` | "Prep my Calendly calls", "Run Calendly prep", `/calendly-prep` | Scans today's calendar for Calendly events, matches to Master Hub, creates account management folder + Running Notes doc, runs Opus-powered internet research, sends Slack notification with links and restaurant brief. |
+| `churn-risk` | "Run churn risk analysis", "Health score report", "Which mx are at risk" | Portfolio health scoring: 3 parallel sub-agents (volume, support, engagement). Composite RED/YELLOW/GREEN per mx. NEW vs. ONGOING risk detection. Opus-powered scoring + recommendations. Google Doc report + daily brief summary. |
 
 **Usage:** Just describe what you want naturally, or be explicit ("Use the mx-researcher agent"). Add "in the background" to run while you keep working.
 
@@ -342,6 +383,7 @@ When creating Google Docs (dossiers, reports, briefs, etc.), always use the `imp
 | 2026 | `1xPRPSJUWBtJDbeISgOxJiTX0Y8znczf_` | My Drive |
 | mx deep dives | `1LC-N9ib_c43jJeXkbRm0iO_3FswL-wrn` | 2026/ |
 | support intelligence | `12HiJU4UPLifS11vy8066LmnYBR9LK5z8` | 2026/ |
+| Account Management | `1-ZfbMtwlJaj-6Hx2LqrTIysvPNxMF7MK` | My Drive |
 
 ---
 
@@ -353,6 +395,8 @@ launchpad/
   .claude/commands/      — Slash command definitions
   .claude/agents/        — Agent definitions (subprocesses)
   .claude/settings.local.json — MCP tool permissions
+  scripts/               — Automation scripts (daily-briefing.sh)
+  logs/                  — Automation logs (gitignored)
   credentials/           — OAuth tokens and secrets (gitignored)
   projects/              — Sub-projects built from this workspace
 ```

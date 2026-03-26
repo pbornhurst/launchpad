@@ -139,7 +139,8 @@ Prompt the sub-agent with these exact instructions and SQL:
 > You are a data analyst. Execute the following Snowflake queries using `mcp__ask-data-ai__ExecuteSnowflakeQuery` and return the structured results. ALL queries require an ORDER BY and LIMIT clause.
 >
 > **Store ID(s):** [STORE_ID or STORE_ID_LIST]
-> **Period:** [START] to [END]
+> **Current period:** [START] to [END]
+> **Comparison period:** [COMP_START] to [COMP_END]
 > **Multi-location:** [yes/no]
 >
 > **Query 1 — Top items by revenue:**
@@ -172,12 +173,53 @@ Prompt the sub-agent with these exact instructions and SQL:
 > LIMIT 50
 > ```
 >
+> **Query 4 — Menu conversion rate (current period):**
+> ```sql
+> SELECT [store_id,]
+>   SUM(visits) as total_menu_visits,
+>   SUM(checkouts) as total_checkouts,
+>   SUM(deliveries) as total_deliveries,
+>   ROUND(100.0 * SUM(checkouts) / NULLIF(SUM(visits), 0), 2) as menu_conversion_rate_pct,
+>   ROUND(100.0 * SUM(deliveries) / NULLIF(SUM(checkouts), 0), 2) as checkout_completion_rate_pct,
+>   ROUND(AVG(items_photo_coverage), 2) as avg_photo_coverage
+> FROM edw.merchant.fact_menu_performance_daily
+> WHERE store_id IN ([STORE_IDS])
+>   AND active_date BETWEEN '[START]' AND '[END]'
+> GROUP BY [store_id]
+> ORDER BY [store_id]
+> LIMIT 50
+> ```
+>
+> **Query 5 — Menu conversion rate (comparison period):**
+> Same query as Query 4 but with dates [COMP_START] to [COMP_END].
+>
+> **Query 6 — Weekly conversion trend:**
+> ```sql
+> SELECT [store_id,]
+>   DATE_TRUNC('week', active_date) as week_start,
+>   SUM(visits) as menu_visits,
+>   SUM(checkouts) as checkouts,
+>   SUM(deliveries) as deliveries,
+>   ROUND(100.0 * SUM(checkouts) / NULLIF(SUM(visits), 0), 2) as conversion_rate_pct
+> FROM edw.merchant.fact_menu_performance_daily
+> WHERE store_id IN ([STORE_IDS])
+>   AND active_date BETWEEN '[START]' AND '[END]'
+> GROUP BY [store_id,] DATE_TRUNC('week', active_date)
+> ORDER BY [store_id,] week_start
+> LIMIT 200
+> ```
+>
 > **Return format:**
 > - Top 25 items table (holistic across all locations) with rank, name, category, units, revenue, avg price, missing/incorrect counts
 > - If multi-location: also top 10 items per store
 > - Category breakdown with SKU count, units, revenue, and revenue share %
 > - Total unique SKU count across all categories
 > - Operations: average wait time (minutes), cancellation rate %, error rate %
+> - Menu conversion (current period): visitors, checkouts, deliveries, conversion rate %, checkout completion rate %, avg photo coverage
+> - Menu conversion (comparison period): same metrics, with period-over-period % changes
+> - Weekly conversion trend: week-by-week visitors, checkouts, conversion rate %
+> - Note: menu conversion reflects the online ordering funnel (Marketplace/Storefront). If no data is returned, note it explicitly.
+> - If multi-location: return conversion data per store_id
 
 ---
 
@@ -279,6 +321,7 @@ Cross-section metrics:
 - **Total Performance:** Sum all channels for the headline numbers
 - **In-Store combined:** Merge In-store + Kiosk into a single "In-Store" row, with sub-rows for each
 - **Period-over-period:** Calculate % changes between current and comparison periods
+- **Menu Conversion:** Aggregate conversion rates across locations by summing visitors and checkouts, then recalculating the rate — do NOT average percentages
 
 ---
 
@@ -288,8 +331,8 @@ Analyze ALL collected data and generate these strategic sections. **Write as rec
 
 Be specific — cite actual numbers, name specific items/campaigns, and provide actionable recommendations:
 
-- **Key Findings:** Highlight the most important trends — strong growth areas, areas needing attention, notable changes from comparison period. Flag high discount rates (>8%), declining channels, operational concerns (wait time >5 min, error rate >2%), underperforming marketing campaigns (ROAS <3x).
-- **Recommendations:** Specific, actionable items: menu engineering (remove/reprice low performers), discount optimization, operational improvements, marketing adjustments (pause low-ROAS, increase high-ROAS budgets), channel growth opportunities, customer retention tactics.
+- **Key Findings:** Highlight the most important trends — strong growth areas, areas needing attention, notable changes from comparison period. Flag high discount rates (>8%), declining channels, operational concerns (wait time >5 min, error rate >2%), underperforming marketing campaigns (ROAS <3x), low menu conversion rates (<15%), declining conversion trends week-over-week, or low photo coverage (<70%).
+- **Recommendations:** Specific, actionable items: menu engineering (remove/reprice low performers), menu conversion optimization (photo coverage improvements, menu simplification if conversion is low), discount optimization, operational improvements, marketing adjustments (pause low-ROAS, increase high-ROAS budgets), channel growth opportunities, customer retention tactics.
 - **Growth Opportunities:** Channel growth headroom, catering/upsell potential (based on AOV and product mix), new customer acquisition strategies, marketing ROAS optimization.
 - **Targets for Next Period:** Propose 4-6 measurable KPI targets based on current trajectory (e.g., "Reduce average wait time to under 3 minutes", "Grow Storefront orders by 25%", "Achieve 7.0+ ROAS on promotions").
 
@@ -366,6 +409,25 @@ Save to `projects/qbrs/[business-name-slug]-[start-date]-to-[end-date].md` (e.g.
 | Average Wait Time | X min | < 3 min |
 | Cancellation Rate | X% | < 1% |
 | Order Accuracy (Error Rate) | X% | < 2% |
+
+---
+
+## Menu Conversion
+
+*Online ordering funnel (Marketplace/Storefront) — how effectively menu viewers convert to orders.*
+
+| Metric | Current Period | Comparison Period | Change |
+|--------|---------------|-------------------|--------|
+| Menu Visitors | X | Y | +/-Z% |
+| Checkouts | X | Y | +/-Z% |
+| Conversion Rate | X% | Y% | +/-Z pp |
+| Checkout Completion | X% | Y% | +/-Z pp |
+| Photo Coverage | X% | -- | -- |
+
+### Weekly Trend
+| Week | Visitors | Checkouts | Conversion Rate |
+|------|----------|-----------|-----------------|
+[Weekly rows]
 
 ---
 
@@ -490,7 +552,7 @@ Use the same structure as above, but:
 | Mission St | 700 | $21,000 | $30.00 | +31.0% |
 ```
 
-This "holistic + by location" pattern repeats for: Channel Performance, Operations, Product Mix (top items per location), Customer Data, Ratings, Marketing.
+This "holistic + by location" pattern repeats for: Channel Performance, Operations, Menu Conversion, Product Mix (top items per location), Customer Data, Ratings, Marketing.
 
 For **Channel Performance by Location**, use a compact table:
 ```markdown

@@ -1,95 +1,27 @@
 # /weekly-recap — Weekly Summary
 
-Generate a comprehensive weekly summary across all tools and data sources.
+Generate a comprehensive weekly summary across all tools and data sources. Uses the same briefing-compiler agent in weekly mode — expanded time windows, extra Slack channels, product feedback, and weekly-specific sections.
 
 ## Instructions
 
-Run these in sequence (calendar and Slack first, then email per rate-limit rule):
+Dispatch the `briefing-compiler` agent in **weekly mode**. Tell the agent: "Compile a weekly briefing."
 
-### 1. Calendar Review
-- Use `mcp__google-workspace__get_events` for the past 7 days:
-  - `user_google_email: "philip.bornhurst@doordash.com"`
-- Count: total meetings, mx calls, internal meetings
-- List mx calls with brief outcome if notes available
+The agent expands to include:
+- 7-day time windows (instead of 24h)
+- #pathfinder-sales-team for CW submissions
+- #pathfinder-onboarding-team for install/launch updates
+- Product Feedback Tracker for new entries
+- Weekly-only sections: By the Numbers, Sales Pipeline, Onboarding Activity, Wins, Open Items, Next Week Preview
 
-### 2. Slack Activity
-- Use `mcp__slack__slack_search_public_and_private` for Phil's mentions this week
-- Use `mcp__slack__slack_read_channel` on #pathfinder-support (C067SSZ1AMT) for the week's escalations
-  - **CRITICAL:** The `oldest` and `latest` parameters MUST be **Unix epoch timestamps** (integer seconds since Jan 1, 1970), NOT date strings. Compute the timestamp first (e.g., for 7 days ago: `int((datetime.now() - timedelta(days=7)).timestamp())`).
-- Summarize key threads and outcomes
-- Use `mcp__slack__slack_read_channel` on #pathfinder-sales-team (C06SJUZ41V2) for the week's CW submissions
-  - Same Unix epoch timestamp rules apply
-  - Extract: mx name, rep name, t-shirt size, ICP flag, deal terms, next steps
-  - Count total new deals closed-won
-- Use `mcp__slack__slack_read_channel` on #pathfinder-onboarding-team (C073ZFYBMFT) for the week's onboarding updates
-  - Same Unix epoch timestamp rules apply
-  - Extract: mx being onboarded, install status, launch dates, any issues/blockers
-  - Count mx in active onboarding
+Results are delivered as a styled HTML email + Slack summary, same as the daily brief.
 
-### 3. Email Summary
-- Use `mcp__google-workspace__search_gmail_messages`:
-  - `user_google_email: "philip.bornhurst@doordash.com"`
-  - `query: "after:YYYY/MM/DD before:YYYY/MM/DD"`
-- Count total, highlight important threads
-
-### 4. Volume Trends
-- Read Volume Drop Data spreadsheet (same as /volume-alert):
-  - `spreadsheet_id: "1bu0fWwKWQQeI8nrkhGKA68dTzKRtIh_MXAPeqze0NX0"`
-  - `user_google_email: "philip.bornhurst@doordash.com"`
-- Compare this week vs last week
-- Flag any new gone-dark mx
-
-### 5. Product Feedback
-- Read Product Feedback Tracker for entries added this week:
-  - `spreadsheet_id: "1-EylRCLxhpStfEoj-8ga9Ex_26dHBoWgxU6Yr_hT0Y4"`
-  - `range_name: "The Final Final Boss"`
-  - `user_google_email: "philip.bornhurst@doordash.com"`
-- Count new entries, summarize themes
-
-### 6. Compile
-
-```
-## Weekly Recap: [date range]
-
-### By the Numbers
-- Meetings: X total (Y mx calls, Z internal)
-- Emails: X received, Y sent
-- Support escalations: X (Y resolved)
-- Volume alerts: X new drops
-- Feedback logged: X new entries
-- New deals: X closed-won this week
-- Onboarding: X mx in progress
-
-### Sales Pipeline (#pathfinder-sales-team)
-- **[mx name]** — Rep: [name], T-shirt: [size], ICP: Y/N, Terms: [deal terms]
-- ...
-(If no CW submissions: "No new deals submitted this week.")
-
-### Onboarding Activity (#pathfinder-onboarding-team)
-- **[mx name]** — [status: scheduled/installing/launched/blocked] — [details]
-- ...
-(If no onboarding activity: "No onboarding updates this week.")
-
-### Merchant Highlights
-- [mx name] — notable event (call, escalation, volume change)
-- ...
-
-### Wins
-- [positive outcomes this week]
-
-### Open Items
-- [ ] Things that still need attention
-- ...
-
-### Next Week Preview
-- [upcoming mx calls from calendar]
-- [pending follow-ups]
-```
+If the user says "in the background", dispatch the agent in the background.
 
 ## Example usage
 
 ```
 /weekly-recap
+/weekly-recap in the background
 /weekly-recap last 2 weeks
 /weekly-recap Mallory's accounts only
 ```
