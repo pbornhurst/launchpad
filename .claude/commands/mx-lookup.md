@@ -26,7 +26,7 @@ Cross-reference a merchant across Master Hub, volume data, support history, and 
    d. **Slack** (escalations only) — Use `mcp__slack__slack_search_public_and_private` with the mx name
       - Search #pathfinder-support for recent escalations
 
-   e. **Snowflake** (if Store ID is known) — Use `mcp__ask-data-ai__ExecuteSnowflakeQuery`
+   e. **Snowflake** (if Store ID is known) — Use Bash: `python3 scripts/snowflake_query.py --json "SQL_HERE"` (direct Snowflake, no OAuth)
       - Run the **POS Cohort Query** from CLAUDE.md (Key Data Tables section) filtered to this mx's Store ID
       - Add `WHERE pf.store_id = [STORE_ID]` to the final SELECT
       - Extract: Lifetime OSW, Lifetime GOV Store Week, AOV, lifecycle dates (CW, OB, install, go-active), cuisine type, management type, activation status

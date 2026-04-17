@@ -1,5 +1,17 @@
 {
   "mcpServers": {
+    "ask-data-ai": {
+      "type": "http",
+      "url": "https://cybertron-service-gateway-mcp.doordash.team/ask-data-ai/mcp"
+    },
+    "google-workspace": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "workspace-mcp"
+      ],
+      "env": {}
+    },
     "intercom": {
       "type": "stdio",
       "command": "npx",

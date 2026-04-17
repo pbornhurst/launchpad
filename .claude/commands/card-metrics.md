@@ -6,7 +6,7 @@ Show active stores, card volume, and card GOV at daily/weekly/monthly granularit
 
 ### Step 1: Run the Query
 
-Execute the following SQL via `mcp__ask-data-ai__ExecuteSnowflakeQuery`:
+Execute the following SQL via Bash: `python3 scripts/snowflake_query.py --json "SQL_HERE"` (direct Snowflake connection, no OAuth needed):
 
 ```sql
 with

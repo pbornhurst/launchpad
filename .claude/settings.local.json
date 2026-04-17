@@ -11,7 +11,12 @@
       "Bash(date *)",
       "Bash(ls *)",
       "WebSearch",
-      "WebFetch"
+      "WebFetch",
+      "mcp__granola__list_meetings",
+      "mcp__granola__get_meetings",
+      "Bash(pip3 install *)",
+      "mcp__granola__get_meeting_transcript",
+      "Bash(git add *)"
     ]
   }
 }

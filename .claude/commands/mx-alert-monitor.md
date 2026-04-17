@@ -21,7 +21,7 @@ Collect all numeric Store IDs from the Live rows. Skip any rows where Store ID i
 
 ### Step 2: Query Intraday Volume (Snowflake)
 
-Run **three separate queries** via `mcp__ask-data-ai__ExecuteSnowflakeQuery` — one per alert type. This avoids MCP result size limits that silently drop large payloads. Run all three in parallel.
+Run **three separate queries** via Bash: `python3 scripts/snowflake_query.py --json "SQL_HERE"` (direct Snowflake connection, no OAuth needed) — one per alert type. Run all three in parallel.
 
 **CRITICAL — Data source:** Uses `order_data.public.flink_ingest_store_order_cart` — a Flink CDC streaming table with ~15 minute latency. This is the fastest available source. Do NOT use `proddb.public.maindb_store_order_cart` (~5 hour replication lag) or `edw.merchant.fact_merchant_sales` (T+1 ETL lag). This table captures ALL POS transactions (card + cash).
 
@@ -103,8 +103,12 @@ LIMIT 30
 
 **If all three queries return 0 rows:**
 - Query Snowflake for current PST time: `SELECT TO_CHAR(CONVERT_TIMEZONE('UTC', 'America/Los_Angeles', CURRENT_TIMESTAMP()), 'HH12:MI AM') AS t, TO_CHAR(CONVERT_TIMEZONE('UTC', 'America/Los_Angeles', CURRENT_TIMESTAMP()), 'YYYY-MM-DD') AS d`
-- Log: "No anomalies detected at [t] PST on [d]"
-- Do NOT post to Slack
+- Log: "No anomalies detected at [t] PST on [d]. No Slack post needed."
+- Post an "all clear" to Slack (same channel, `C0AC2NK50QN`):
+```
+:white_check_mark: *Mx Alert — [t] PST* — All clear. [N] live stores checked, no anomalies detected.
+```
+  Where [N] is the count of Live store IDs from Step 1.
 - EXIT
 
 ### Step 3: Classify and Post Slack Alert

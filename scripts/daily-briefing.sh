@@ -47,6 +47,19 @@ while ! ifconfig 2>/dev/null | grep -q "inet 100\.\|inet 10\.39\."; do
 done
 echo "Tailscale VPN connected (waited ${WAITED}s)" >> "${LOG_FILE}"
 
+# MCP warm-up: force Google Workspace MCP server init and OAuth token refresh
+# before the main briefing. Uses haiku for speed. Failure here is non-fatal —
+# the retry logic below handles persistent MCP issues.
+echo "Warming up MCP servers..." >> "${LOG_FILE}"
+cd "${WORKSPACE}"
+"${CLAUDE_BIN}" \
+  --print \
+  --dangerously-skip-permissions \
+  --model haiku \
+  "Use the google-workspace list_calendars tool with user_google_email philip.bornhurst@doordash.com. Just confirm it works." \
+  >> "${LOG_FILE}" 2>&1 || echo "WARN: MCP warm-up failed (non-fatal, will retry)" >> "${LOG_FILE}"
+echo "MCP warm-up complete." >> "${LOG_FILE}"
+
 # Build the prompt based on mode
 if [ "${MODE}" = "weekly" ]; then
   PROMPT="Compile a weekly briefing. Use the briefing-compiler agent in weekly mode. Send the HTML email and Slack summary."
@@ -58,7 +71,6 @@ fi
 # --print: non-interactive output
 # --dangerously-skip-permissions: needed for unattended execution
 # --model sonnet: match the agent's model
-cd "${WORKSPACE}"
 "${CLAUDE_BIN}" \
   --print \
   --dangerously-skip-permissions \
@@ -68,9 +80,38 @@ cd "${WORKSPACE}"
 
 EXIT_CODE=$?
 
-echo "=== Briefing run completed: $(date) (exit code: ${EXIT_CODE}) ===" >> "${LOG_FILE}"
+# Detect partial failure: email not sent due to MCP issues
+# If detected, wait 60s for transient issues to clear and retry once
+if grep -qi "could not be sent\|email.*unavailable\|Google Workspace MCP.*unresponsive\|email.*blocked" "${LOG_FILE}" 2>/dev/null; then
+  echo "" >> "${LOG_FILE}"
+  echo "=== RETRY: Email send failure detected. Waiting 60s then retrying... ===" >> "${LOG_FILE}"
+  sleep 60
+
+  RETRY_PROMPT="My morning brief partially failed — Google Workspace MCP was down. Please compile and send a fresh ${MODE} briefing now. Send the HTML email and Slack summary."
+  "${CLAUDE_BIN}" \
+    --print \
+    --dangerously-skip-permissions \
+    --model sonnet \
+    "${RETRY_PROMPT}" \
+    >> "${LOG_FILE}" 2>&1 || true
+
+  echo "=== RETRY completed: $(date) ===" >> "${LOG_FILE}"
+fi
+
+# Determine final exit code based on email delivery
+# Exit 1 if email was never successfully sent (grep for success signals)
+FINAL_EXIT=0
+if grep -qi "could not be sent\|email.*unavailable\|email.*blocked" "${LOG_FILE}" 2>/dev/null; then
+  # Check if a later successful send overrode the failure
+  if ! grep -qi "email sent\|message sent successfully\|Full HTML briefing sent" "${LOG_FILE}" 2>/dev/null; then
+    echo "ERROR: Email was never successfully sent (even after retry)." >> "${LOG_FILE}"
+    FINAL_EXIT=1
+  fi
+fi
+
+echo "=== Briefing run completed: $(date) (exit code: ${FINAL_EXIT}) ===" >> "${LOG_FILE}"
 
 # Keep only last 30 days of logs
 find "${LOG_DIR}" -name "briefing-*.log" -mtime +30 -delete 2>/dev/null || true
 
-exit ${EXIT_CODE}
+exit ${FINAL_EXIT}

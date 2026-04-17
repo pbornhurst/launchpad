@@ -124,7 +124,7 @@ Send a SINGLE message with 3 Agent tool calls. Each sub-agent is `subagent_type:
 >
 > **Task 3 — Snowflake trailing volume:**
 >
-> Execute via `mcp__ask-data-ai__ExecuteSnowflakeQuery`:
+> Execute via Bash: `python3 scripts/snowflake_query.py --json "SQL_HERE"` (direct Snowflake connection, no OAuth needed):
 >
 > ```sql
 > select
@@ -272,7 +272,7 @@ Send a SINGLE message with 3 Agent tool calls. Each sub-agent is `subagent_type:
 >
 > **Task 2 — Snowflake lifecycle data:**
 >
-> Execute via `mcp__ask-data-ai__ExecuteSnowflakeQuery`:
+> Execute via Bash: `python3 scripts/snowflake_query.py --json "SQL_HERE"` (direct Snowflake connection, no OAuth needed):
 >
 > ```sql
 > with kiosk_only as (

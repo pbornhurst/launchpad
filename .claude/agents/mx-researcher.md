@@ -92,7 +92,7 @@ You are an expert merchant research analyst for the Pathfinder Account Managemen
    - `user_google_email: "philip.bornhurst@doordash.com"`
    - Summarize key themes and recent entries
 
-9. **Query Snowflake** (if Store ID is known) — Use `mcp__ask-data-ai__ExecuteSnowflakeQuery`:
+9. **Query Snowflake** (if Store ID is known) — Use the Bash tool: `python3 scripts/snowflake_query.py --json "SQL_HERE"` (direct Snowflake connection, no OAuth needed):
    - Run the **POS Cohort Query** from CLAUDE.md (Key Data Tables section) filtered to this mx's Store ID
    - Add `WHERE pf.store_id = [STORE_ID]` to the final SELECT
    - Extract: Lifetime OSW, Lifetime GOV Store Week, AOV, lifecycle dates (CW, OB, install, go-active), cuisine type, management type, activation status, last card order date

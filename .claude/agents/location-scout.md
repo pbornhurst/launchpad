@@ -111,7 +111,7 @@ CRITICAL: All 4 Task calls MUST be in the same message to run in parallel.
 
 Prompt the sub-agent with these exact instructions and SQL:
 
-> You are a data analyst. Execute the following Snowflake queries using `mcp__ask-data-ai__ExecuteSnowflakeQuery` and return the structured results.
+> You are a data analyst. Execute the following Snowflake queries using the Bash tool: `python3 scripts/snowflake_query.py --json "SQL_HERE"` (direct Snowflake connection via Okta SSO + keychain caching, no OAuth needed). Return the structured results.
 >
 > **City:** [CITY]
 > **State:** [STATE_ABBREV]

@@ -114,7 +114,7 @@ Prompt the sub-agent with these exact instructions:
 >
 > **Task 2 — Card Metrics:**
 >
-> Execute via `mcp__ask-data-ai__ExecuteSnowflakeQuery`:
+> Execute via Bash: `python3 scripts/snowflake_query.py --json "SQL_HERE"` (direct Snowflake connection, no OAuth needed):
 >
 > ```sql
 > with

@@ -93,7 +93,7 @@ CRITICAL: All 4 Task calls MUST be in the same message to run in parallel.
 
 Prompt the sub-agent with these exact instructions and SQL:
 
-> You are a data analyst. Execute the following Snowflake queries using `mcp__ask-data-ai__ExecuteSnowflakeQuery` and return the structured results. ALL queries require an ORDER BY and LIMIT clause.
+> You are a data analyst. Execute the following Snowflake queries using the Bash tool: `python3 scripts/snowflake_query.py --json "SQL_HERE"` (direct Snowflake connection via Okta SSO + keychain caching, no OAuth needed). Return the structured results. ALL queries require an ORDER BY and LIMIT clause.
 >
 > **Store ID(s):** [STORE_ID or STORE_ID_LIST]
 > **Current period:** [START] to [END]
@@ -136,7 +136,7 @@ Prompt the sub-agent with these exact instructions and SQL:
 
 ### Sub-agent B: Product Mix & Operations
 
-> You are a data analyst. Execute the following Snowflake queries using `mcp__ask-data-ai__ExecuteSnowflakeQuery` and return the structured results. ALL queries require an ORDER BY and LIMIT clause.
+> You are a data analyst. Execute the following Snowflake queries using the Bash tool: `python3 scripts/snowflake_query.py --json "SQL_HERE"` (direct Snowflake connection via Okta SSO + keychain caching, no OAuth needed). Return the structured results. ALL queries require an ORDER BY and LIMIT clause.
 >
 > **Store ID(s):** [STORE_ID or STORE_ID_LIST]
 > **Current period:** [START] to [END]
@@ -225,7 +225,7 @@ Prompt the sub-agent with these exact instructions and SQL:
 
 ### Sub-agent C: Customer & Ratings
 
-> You are a data analyst. Execute the following Snowflake queries using `mcp__ask-data-ai__ExecuteSnowflakeQuery` and return the structured results. ALL queries require an ORDER BY and LIMIT clause.
+> You are a data analyst. Execute the following Snowflake queries using the Bash tool: `python3 scripts/snowflake_query.py --json "SQL_HERE"` (direct Snowflake connection via Okta SSO + keychain caching, no OAuth needed). Return the structured results. ALL queries require an ORDER BY and LIMIT clause.
 >
 > **Store ID(s):** [STORE_ID or STORE_ID_LIST]
 > **Period:** [START] to [END]
@@ -271,7 +271,7 @@ Prompt the sub-agent with these exact instructions and SQL:
 
 ### Sub-agent D: Marketing Performance
 
-> You are a data analyst. Execute the following Snowflake queries using `mcp__ask-data-ai__ExecuteSnowflakeQuery` and return the structured results. ALL queries require an ORDER BY and LIMIT clause.
+> You are a data analyst. Execute the following Snowflake queries using the Bash tool: `python3 scripts/snowflake_query.py --json "SQL_HERE"` (direct Snowflake connection via Okta SSO + keychain caching, no OAuth needed). Return the structured results. ALL queries require an ORDER BY and LIMIT clause.
 >
 > **CRITICAL:** Both tables have amounts in CENTS. Divide all monetary values by 100 to get dollars in your return.
 > **CRITICAL:** Both tables require these filters to get the correct grain: `report_type = 'campaign_store' AND timezone_type = 'utc' AND daypart_name = 'day'`

@@ -141,7 +141,7 @@ Launch with `subagent_type: "general-purpose"`, `model: "sonnet"`.
 >
 > **Task 1b: Query Snowflake for Recent Card Metrics**
 >
-> **Only if Store ID was matched (not "TBD").** Run this query via `mcp__ask-data-ai__ExecuteSnowflakeQuery`:
+> **Only if Store ID was matched (not "TBD").** Run this query via Bash: `python3 scripts/snowflake_query.py --json "SQL_HERE"` (direct Snowflake connection, no OAuth needed):
 >
 > ```sql
 > SELECT

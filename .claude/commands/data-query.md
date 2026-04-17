@@ -9,7 +9,7 @@ Access the DoorDash data warehouse via ask-data-ai for metrics, tables, and dash
    - **Metrics / KPIs:** Use `mcp__ask-data-ai__ask_firefly` for standard metrics
    - **Table discovery:** Use `mcp__ask-data-ai__search_data_catalog` to find relevant tables
    - **Table schema:** Use `mcp__ask-data-ai__DescribeTable` for column details
-   - **Custom SQL:** Use `mcp__ask-data-ai__ExecuteSnowflakeQuery` for specific queries
+   - **Custom SQL:** Use Bash: `python3 scripts/snowflake_query.py --json "SQL_HERE"` (direct Snowflake, no OAuth). Fallback: `mcp__ask-data-ai__ExecuteSnowflakeQuery`
    - **Dashboards:** Use `mcp__ask-data-ai__discover_sigma_dashboards` to find dashboards
    - **Finance data:** Use `mcp__ask-data-ai__ask_finance_ai` for P&L, revenue, cost questions
    - **Merchant data:** Use `mcp__ask-data-ai__ask_data_mx` for mx-specific metrics
