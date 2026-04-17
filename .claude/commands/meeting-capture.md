@@ -143,80 +143,103 @@ PRISM-TnA gives you the content. Parse it into this structured form in memory be
 }
 ```
 
-**h. Prepend to the Running Notes doc using real Google Docs formatting** — NOT plaintext markdown.
+**h. Prepend to the Running Notes doc — real Docs formatting, minimal API cost.**
 
-The reference for target format is doc ID `1odvvOQpOm_m0G7WR8hlwKTzZYxI_j74JoSA8W2d3Trs`. It uses real H1/H2 styles, real Docs tables with header rows, real bulleted lists, and Arial body. Raw markdown pipes and `#` symbols are NOT acceptable — they render as literal text and look terrible.
+The reference target format is doc `1odvvOQpOm_m0G7WR8hlwKTzZYxI_j74JoSA8W2d3Trs`. Real H1/H2, real Docs tables, real bullets, Arial 11 body. Raw markdown as text is not acceptable.
 
-Execute the following phases in order. Between phases, re-call `inspect_doc_structure` with `detailed=true` to get fresh indices.
+**Design constraint: 3 API calls per meeting, zero intermediate `inspect_doc_structure` calls.** Positions are precomputed with the table-span formula below and applied in a single order-sensitive pipeline.
 
-**Phase 1 — Insert text skeleton with paragraph styles (single `batch_update_doc` call).**
-
-Build an ops list that inserts all heading and narrative text at incrementing indices starting at `cursor = 1`. For each block, `insert_text` with `text = content + "\n"`, then apply the paragraph style with `update_paragraph_style` over `[cursor, cursor + len(text)]`, then advance `cursor += len(text)`.
-
-Insert, in this order, with these styles (all text lines terminated with `\n`):
-
-1. `"{title}\n"` → `HEADING_1`
-2. `"Metadata\n"` → `HEADING_2`
-3. `"\n"` → `NORMAL_TEXT` (placeholder paragraph — Phase 2 will insert the metadata table here)
-4. `"Detailed Bullet Notes\n"` → `HEADING_2`
-5. For each bullet: `"{bullet_text}\n"` → `NORMAL_TEXT` (we'll convert to real bullets in Phase 3)
-6. `"Action Items\n"` → `HEADING_2`
-7. `"\n"` → placeholder for action_items table
-8. `"Feature Requests, Gaps & Product Feedback\n"` → `HEADING_2`
-9. `"\n"` → placeholder for feature_requests table
-10. `"Tone & Character\n"` → `HEADING_2`
-11. `"\n"` → placeholder for tone table
-12. `"Insights or Flags\n"` → `HEADING_2`
-13. `"{insights_text}\n"` → `NORMAL_TEXT`
-14. `"Growth Advisory\n"` → `HEADING_2`
-15. If `has_topics`: `"\n"` placeholder for topics table, `"\n"` missed opportunity paragraph (if any), `"\n"` placeholder for score table, `"{composite_line}\n"`. Else if `missed_opportunity` only: missed opportunity paragraph + `"\n"` placeholder for score table + composite line. Else: a single paragraph `"No growth advisory topics were discussed in this call. No missed opportunities identified. Score: N/A\n"`.
-16. `"Gut Check\n"` → `HEADING_2`
-17. `"{gut_check_text}\n"` → `NORMAL_TEXT`
-18. `"MSAT Prediction\n"` → `HEADING_2`
-19. `"{msat_line}\n"` → `NORMAL_TEXT`
-20. `"===\n"` → `NORMAL_TEXT`
-21. `"\n"` → `NORMAL_TEXT` (trailing breathing room above the existing doc body)
-
-**Phase 2 — Insert real Docs tables at every placeholder (BOTTOM-UP).**
-
-Call `inspect_doc_structure` with `detailed=true` on the target doc. Identify each placeholder paragraph by its position (the blank `\n` lines immediately after each table-owning H2 heading, plus the GA topics/score placeholders inside the Growth Advisory block). Record their `start_index` values.
-
-Process tables from BOTTOM (highest `start_index`) to TOP (lowest). For each table, call `mcp__google-workspace__create_table_with_data`:
-
-- `document_id: "{doc_id}"`
-- `user_google_email: "philip.bornhurst@doordash.com"`
-- `index: {placeholder.start_index}`
-- `bold_headers: true`
-- `table_data: {2D array, first row = header}`
-
-Processing bottom-up means earlier placeholders' indices remain valid as we insert. If you mix things up, re-call `inspect_doc_structure` between tables rather than guessing.
-
-Tables to insert:
-- Metadata table — 4 rows × 2 cols, no bold header (or `bold_headers: false` since this is key-value, not tabular). Use `bold_headers: false` for Metadata specifically; `true` for all others.
-- Action Items — header row + N rows × 3 cols
-- Feature Requests — header row + N rows × 3 cols
-- Tone & Character — header row + N rows × 3 cols
-- GA Topics (if present) — header row + N rows × 4 cols
-- GA Score (if present) — header row + N rows × 3 cols
-
-**Phase 3 — Convert bullet lines into real Docs bullets (single `batch_update_doc` call).**
-
-Re-call `inspect_doc_structure` with `detailed=true`. Locate the range covering the Detailed Bullet Notes body (all paragraphs between the "Detailed Bullet Notes" heading and the "Action Items" heading). Apply `create_bullet_list` over that range:
+**Table-span formula.** A `create_table_with_data` insert at position `P` with `R` rows × `C` cols and `S` total characters of cell content (sum of `len(cell)` across all cells, no newlines counted) occupies this many indices:
 
 ```
-{
-  "type": "create_bullet_list",
-  "start_index": {first_bullet.start_index},
-  "end_index": {last_bullet.end_index},
-  "list_type": "UNORDERED"
-}
+span = 3 + R + 2*R*C + S
 ```
 
-**Phase 4 — Body font (single `batch_update_doc` call).**
+Derivation (verified empirically on a 4×2 / 90-char-content table that shifted subsequent indices by 113): 3 bytes for the table header/footer structural tokens, `R` bytes for row markers, 2 bytes per cell for the cell marker plus its paragraph's trailing newline, plus the raw content chars.
 
-Apply `format_text` with `font_family: "Arial"` and `font_size: 11` across the entire prepended block (from `start_index = 1` to the end of the trailing blank line). Heading styles already carry their own font settings; this step ensures body text and table cells render in Arial 11 to match Launchpad doc conventions. Do NOT override heading colors or sizes — let named styles win.
+Use this to precompute, ahead of Call 1, exactly where every future position lands after all 6 tables are inserted.
 
-**If ANY phase fails** (permissions, doc deleted, schema error), mark the meeting `failed-doc-write`, log the phase that failed, and continue to the next meeting without rollback. Partial prepends are acceptable — Phil can clean them up manually, whereas failing the whole batch loses the rest of the captures.
+**Call 1 — `batch_update_doc`: text skeleton + paragraph styles + bullets + fonts (single call, all at pre-table positions).**
+
+Why at pre-table positions: format operations on a range attach character formatting to those characters. Subsequently inserting tables shifts the characters to higher indices but they retain the formatting. So applying bullets and font to the original range works — the formatting moves with the text.
+
+Walk the content in document order with a forward cursor starting at `cursor = 1`. For each block `(text, style)`:
+
+1. Append `insert_text` op at `cursor` with `text + "\n"`.
+2. If `style` is a heading, append `update_paragraph_style` over `[cursor, cursor + len(text+"\n")]` with the named style.
+3. `cursor += len(text + "\n")`.
+
+Block order (same as before, with placeholder blank lines where tables will land):
+
+| # | Text | Style |
+|---|---|---|
+| 1 | `{title}` | HEADING_1 |
+| 2 | `Metadata` | HEADING_2 |
+| 3 | `` (blank) | NORMAL_TEXT — metadata table placeholder |
+| 4 | `Detailed Bullet Notes` | HEADING_2 |
+| 5-N | each bullet text | NORMAL_TEXT |
+| N+1 | `Action Items` | HEADING_2 |
+| N+2 | `` (blank) | NORMAL_TEXT — action items table placeholder |
+| N+3 | `Feature Requests, Gaps & Product Feedback` | HEADING_2 |
+| N+4 | `` (blank) | NORMAL_TEXT — placeholder |
+| N+5 | `Tone & Character` | HEADING_2 |
+| N+6 | `` (blank) | NORMAL_TEXT — placeholder |
+| N+7 | `Insights or Flags` | HEADING_2 |
+| N+8 | `{insights_text}` | NORMAL_TEXT |
+| N+9 | `Growth Advisory` | HEADING_2 |
+| N+10..11 | blank placeholders for GA topics + GA score (only if GA has data; else skip both and write the "No GA discussed" paragraph directly) | NORMAL_TEXT |
+| N+12 | `{ga_composite_line}` | NORMAL_TEXT |
+| N+13 | `Gut Check` | HEADING_2 |
+| N+14 | `{gut_check_text}` | NORMAL_TEXT |
+| N+15 | `MSAT Prediction` | HEADING_2 |
+| N+16 | `{msat_line}` | NORMAL_TEXT |
+| N+17 | `===` | NORMAL_TEXT |
+| N+18 | `` (blank) | NORMAL_TEXT |
+
+Track during this walk:
+- `bullet_first_index` = start_index of first bullet paragraph
+- `bullet_last_end` = end_index of last bullet paragraph
+- `prepend_end` = final cursor value
+
+At the end of the op list for Call 1, append these operations (all referencing the positions just computed, which are still valid because no tables have been inserted yet):
+
+- `create_bullet_list` over `[bullet_first_index, bullet_last_end]`, `list_type: UNORDERED`
+- `format_text` over `[1, prepend_end]` with `font_family: "Arial"`, `font_size: 11`
+- `format_text` over the title's range with `font_size: 22`, `bold: true` (H1 override — named style alone doesn't carry font size in this tool)
+- `format_text` over each H2's range with `font_size: 14`, `bold: true`
+
+Fire this as ONE `batch_update_doc` call.
+
+**Calls 2-7 — `create_table_with_data` × 6, bottom-up.**
+
+Insert tables in DESCENDING placeholder-index order so earlier placeholders' indices remain valid as later tables are inserted. Given the placeholder positions tracked in Call 1, the order is typically:
+
+1. GA score placeholder (highest index)
+2. GA topics placeholder
+3. Tone & Character placeholder
+4. Feature Requests placeholder
+5. Action Items placeholder
+6. Metadata placeholder (lowest index)
+
+For each table:
+
+```
+mcp__google-workspace__create_table_with_data
+  document_id: {doc_id}
+  user_google_email: philip.bornhurst@doordash.com
+  tab_id: t.0                         # or the actual tab id if different
+  index: {placeholder.start_index}
+  bold_headers: true                  # false for Metadata (key-value, not tabular)
+  table_data: [[headers], [row], ...]
+```
+
+Because bullets and font were applied to the original range in Call 1, the formatting stays with the text as tables push it down. Tables get their own default formatting, which is fine — the Launchpad reference doc's tables are not specially formatted beyond bold headers.
+
+**Call 8 — `modify_sheet_values` to append the tracker row** (unchanged from step i below).
+
+**Cost accounting.** 1 super-batch + 6 table inserts + 1 tracker append = 8 API calls per meeting. No `inspect_doc_structure` calls required. If GA has no topics and score, the table count drops to 4 and total calls drop to 6.
+
+**If ANY call fails** (permissions, schema, etc.), mark the meeting `failed-doc-write`, log which call failed, and continue to the next meeting without rollback. Partial prepends are acceptable.
 
 **i. Append to tracker.** Use `mcp__google-workspace__modify_sheet_values`:
 
