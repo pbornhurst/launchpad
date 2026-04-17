@@ -637,7 +637,7 @@ The briefing must **always deliver something**. A partial briefing is infinitely
 ### No retries:
 - If any data source fails, skip it and move on. Do NOT retry.
 - The briefing is time-sensitive — retries waste time.
-- Phil can always run the individual command (`/intercom`, `/card-metrics`, `/volume-alert`) separately to backfill.
+- Phil can always run the individual command (`/intercom`, `/card-metrics`, `/mx-alert-monitor`) separately to backfill.
 
 ### Email send failure:
 - If `send_gmail_message` fails, return the full HTML to the parent conversation so it can still be viewed.

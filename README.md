@@ -178,7 +178,6 @@ Each file in `.claude/commands/` defines a reusable skill invoked with `/command
 | `/data-query` | Query data warehouse via ask-data-ai |
 | `/mx-lookup` | Cross-reference a merchant across all data sources |
 | `/call-prep` | Prepare for a merchant call with full context |
-| `/volume-alert` | Check for volume drops and merchants going dark |
 | `/intercom` | Check Intercom inbounds or search support history |
 | `/support-scan` | Combined support scan: Slack + Intercom + pattern alerts |
 | `/support-intel` | Support pattern analysis: repeat issues, risk flags |

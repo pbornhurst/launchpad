@@ -340,7 +340,6 @@ Focus extra attention on ICP and Tier 1 for proactive outreach and issue resolut
 | `/data-query`       | Query DoorDash data warehouse via ask-data-ai                                                                                 |
 | `/mx-lookup`        | Cross-reference a mx across all data sources                                                                                  |
 | `/call-prep`        | Prepare for a mx call with full context                                                                                       |
-| `/volume-alert`     | Check for volume drops and mx going dark                                                                                      |
 | `/intercom`         | Check Intercom inbounds (all mx support texts) or search mx support history                                                   |
 | `/support-scan`     | Combined support scan: Slack escalations + Intercom highlights + pattern alerts                                               |
 | `/support-intel`    | Support pattern analysis: repeat inbounders, cross-mx issues, risk flags                                                      |

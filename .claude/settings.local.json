@@ -16,7 +16,10 @@
       "mcp__granola__get_meetings",
       "Bash(pip3 install *)",
       "mcp__granola__get_meeting_transcript",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(git rm *)"
     ]
   }
 }
