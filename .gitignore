@@ -6,3 +6,6 @@ __pycache__/
 .env
 .env.*
 logs/
+
+# Session chart artifacts (generated at repo root)
+/*.png
