@@ -2,7 +2,7 @@
   "mcpServers": {
     "ask-data-ai": {
       "type": "http",
-      "url": "https://cybertron-service-gateway-mcp.doordash.team/ask-data-ai/mcp"
+      "url": "https://cybertron-service-gateway-mcp.doordash.team/ws-launch-ddd532/ask-data-ai/mcp"
     },
     "google-workspace": {
       "type": "stdio",
