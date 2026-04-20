@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
 """
 Direct Snowflake query script for Claude Code.
-Uses Okta SSO (externalbrowser) with token caching — log in once via browser,
-then tokens are cached in macOS keychain for subsequent runs.
+
+Auth order:
+  1. Programmatic Access Token (PAT) if SNOWFLAKE_TOKEN is set.
+     No browser, no keychain. Preferred.
+  2. Key-pair auth if ~/.snowflake/rsa_key.p8 exists (requires IT to
+     register the public key on the user — blocked by policy at DoorDash).
+  3. Okta SSO (externalbrowser) with keychain token caching — fallback.
+
+The PAT is loaded from a .env file at the repo root if present.
 
 Usage:
   python3 scripts/snowflake_query.py "SELECT 1 AS test"
@@ -15,24 +22,81 @@ import sys
 import json
 import os
 import warnings
+from pathlib import Path
 
 warnings.filterwarnings("ignore", category=UserWarning)
+
+
+def _load_env_file():
+    """Load KEY=VALUE pairs from <repo_root>/.env into os.environ if unset."""
+    env_path = Path(__file__).resolve().parent.parent / ".env"
+    if not env_path.exists():
+        return
+    for line in env_path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        os.environ.setdefault(key, value)
+
+
+_load_env_file()
 
 # DoorDash Snowflake connection config
 SNOWFLAKE_ACCOUNT = "DOORDASH-DOORDASH"
 SNOWFLAKE_USER = "PHILIP.BORNHURST"
 SNOWFLAKE_ROLE = "PHILIPBORNHURST"
 SNOWFLAKE_WAREHOUSE = os.environ.get("SNOWFLAKE_WAREHOUSE", "ADHOC")
+SNOWFLAKE_TOKEN = os.environ.get("SNOWFLAKE_TOKEN")
+PRIVATE_KEY_PATH = os.path.expanduser(
+    os.environ.get("SNOWFLAKE_PRIVATE_KEY_PATH", "~/.snowflake/rsa_key.p8")
+)
+
+
+def _load_private_key_bytes(path):
+    """Load a PKCS#8 private key and return it as DER bytes for the connector."""
+    from cryptography.hazmat.primitives import serialization
+    passphrase = os.environ.get("SNOWFLAKE_PRIVATE_KEY_PASSPHRASE")
+    with open(path, "rb") as f:
+        p_key = serialization.load_pem_private_key(
+            f.read(),
+            password=passphrase.encode() if passphrase else None,
+        )
+    return p_key.private_bytes(
+        encoding=serialization.Encoding.DER,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
 
 
 def get_connection(warehouse=None):
-    """Create a Snowflake connection with Okta SSO + token caching."""
+    """Create a Snowflake connection. Tries PAT, then key-pair, then Okta SSO."""
     import snowflake.connector
-    return snowflake.connector.connect(
+
+    common = dict(
         account=SNOWFLAKE_ACCOUNT,
         user=SNOWFLAKE_USER,
         role=SNOWFLAKE_ROLE,
         warehouse=warehouse or SNOWFLAKE_WAREHOUSE,
+    )
+
+    if SNOWFLAKE_TOKEN:
+        return snowflake.connector.connect(
+            **common,
+            token=SNOWFLAKE_TOKEN,
+            authenticator="programmatic_access_token",
+        )
+
+    if os.path.exists(PRIVATE_KEY_PATH):
+        return snowflake.connector.connect(
+            **common,
+            private_key=_load_private_key_bytes(PRIVATE_KEY_PATH),
+        )
+
+    return snowflake.connector.connect(
+        **common,
         authenticator="externalbrowser",
         client_store_temporary_credential=True,
     )

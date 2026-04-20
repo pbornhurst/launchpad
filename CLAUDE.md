@@ -112,6 +112,12 @@ Key tools by domain:
 - **Key tools:** `search`, `fetch`, `search_conversations`, `get_conversation`, `search_contacts`, `get_contact`
 - **Usage:** "Check Intercom for recent tickets from [mx]", "Pull the Intercom conversation for [issue]"
 
+### pocket (remote via .mcp.json)
+
+- **Server:** `npx mcp-remote https://public.heypocketai.com/mcp` (stdio bridge)
+- **Auth:** OAuth (browser popup on first connection, then cached)
+- **Usage:** "Ask Pocket...", "Use Pocket to..."
+
 ---
 
 ## Support Channels
@@ -183,7 +189,13 @@ Pathfinder uses Stripe-powered card readers for in-store credit card payments. T
 | `edw.merchant.fact_merchant_sales`                               | Near-realtime order-level data (~minutes latency). Used by mx-alert-monitor for intraday volume checks. **Key columns:** `store_id`, `channel` (In-store, Kiosk, Marketplace, Storefront), `transaction_created_at_local`, `subtotal`. POS channels = `channel IN ('In-store', 'Kiosk')`.                                                                                                                                                                                                                         |
 
 
-These are the **executive-level** Pathfinder POS business tables. Use them for total business reporting: active stores, card volume, card GOV, period-over-period trends. Query via `mcp__ask-data-ai__ExecuteSnowflakeQuery`.
+These are the **executive-level** Pathfinder POS business tables. Use them for total business reporting: active stores, card volume, card GOV, period-over-period trends.
+
+### Snowflake query routing
+
+- **Default: ask-data-ai** for everything that isn't a raw SQL scan — `ask_firefly`, `search_data_catalog`, `DescribeTable`, `discover_sigma_dashboards`, `ask_data_mx`, `ask_finance_ai`, and the other wiki/metric agents. These are fast and don't hit OAuth drops.
+- **Fall back to direct Snowflake** for raw SQL via `python3 scripts/snowflake_query.py --json "SQL_HERE"`. Auth is PAT from `.env`. No browser, no keychain, no OAuth.
+- **Always use direct Snowflake for:** audit tables (`fact_menu_audit_event_changes_daily`, `iguazu.server_events_production.menu_audit_event`), wide scans (>30 days), or any query you expect to run >30s. `mcp__ask-data-ai__ExecuteSnowflakeQuery` drops connection every ~2min and returns `"Downstream not connected"`.
 
 ### POS Cohort Query (per-mx)
 

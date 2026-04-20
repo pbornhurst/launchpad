@@ -1,0 +1,122 @@
+<html>
+<head><style>
+body { font-family: Arial, sans-serif; color: #333; line-height: 1.5; }
+h1 { color: #2C3E50; border-bottom: 2px solid #2C3E50; padding-bottom: 6px; }
+h2 { color: #2C3E50; margin-top: 28px; }
+h3 { color: #34495E; }
+table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+th { background-color: #2C3E50; color: white; padding: 8px; text-align: left; }
+td { padding: 8px; border-bottom: 1px solid #ddd; }
+tr:nth-child(even) { background-color: #f9f9f9; }
+.urgent { color: #D63B2F; font-weight: bold; }
+.resolved { background-color: #2E7D32; color: white; padding: 2px 8px; border-radius: 4px; font-weight: bold; }
+.pending { background-color: #F9A825; color: white; padding: 2px 8px; border-radius: 4px; font-weight: bold; }
+.muted { color: #777; font-size: 13px; }
+hr { border: none; border-top: 1px solid #ddd; margin: 24px 0; }
+.footer { color: #999; font-size: 11px; text-align: center; margin-top: 40px; }
+</style></head>
+<body>
+
+<h1>Eggsactly — Cash Balance Bug: Reimbursement Analysis &amp; Resolution Plan</h1>
+
+<table>
+<tr><th style="width:35%;">Merchant</th><td>Eggsactly By Chase's (Bonita Ave) — Business ID 11215846 · Store ID 23535599</td></tr>
+<tr><th>Owner</th><td>Dori</td></tr>
+<tr><th>Primary Contact</th><td>Taylor (Tae) Gendreau</td></tr>
+<tr><th>Report window</th><td>Aug 18, 2025 – Apr 16, 2026 (full 6-month transaction export)</td></tr>
+<tr><th>Bug impact window</th><td><span class="urgent">Feb 21, 2026 – Apr 15, 2026</span> (8 weeks)</td></tr>
+<tr><th>Total phantom cash</th><td><span class="urgent">$219.50 across 21 orders</span></td></tr>
+<tr><th>Fix ETA</th><td>On or before <strong>April 30, 2026</strong> (committed by DoorDash Engineering)</td></tr>
+<tr><th>Status</th><td><span class="pending">ENGINEERING — FIX MERGED, ROLLOUT SCHEDULED</span></td></tr>
+</table>
+
+<hr>
+
+<h2>Executive Summary</h2>
+<p>On fully discounted (100%-off) in-store orders, the Pathfinder POS was incorrectly labeling the payment method as <strong>cash</strong> rather than <strong>external</strong>. This inflated the cash balance expected at end-of-shift, and staff covered the shortfall from their tips to reconcile the drawer.</p>
+
+<p>Engineering has identified the root-cause code path, merged a fix, and committed to rolling it to Eggsactly on or before <strong>April 30, 2026</strong>. In the interim, Phil configured a new <strong>EXTERNAL Revenue Center</strong> on the POS; running all comps through that path immediately bypasses the bug.</p>
+
+<p>A full audit of the Aug 18, 2025 – Apr 16, 2026 transaction export identified <strong>21 mislabeled orders totaling $219.50</strong>, all within a narrow 8-week window. This is the proposed reimbursement amount.</p>
+
+<hr>
+
+<h2>What Actually Happened</h2>
+<ul>
+<li><strong>The bug:</strong> On fully discounted in-store orders, the POS auto-assigned payment method = <code>cash</code> with no option for the staff to choose another form.</li>
+<li><strong>The impact:</strong> Each mislabeled order added its subtotal to the expected cash drawer balance at close, even though no actual cash was collected. When the drawer came up short, staff dropped additional tips to close the gap.</li>
+<li><strong>Interim workaround (in place now):</strong> Phil set up a new EXTERNAL payment Revenue Center on the POS. All future comps run through that RC will bypass the bug entirely.</li>
+<li><strong>Permanent fix:</strong> Faiza (DoorDash Pathfinder Engineering) has merged a code change. It will ship to Eggsactly's POS by <strong>April 30, 2026</strong>, eliminating the need for the RC workaround thereafter.</li>
+</ul>
+
+<hr>
+
+<h2>Reimbursement Scope — By Staff PIN</h2>
+<p>The bug disproportionately affected one staff member (PIN 2361), who absorbed <strong>63% of the total shortfall</strong> across 11 separate shifts.</p>
+
+<table>
+<tr><th>Employee PIN</th><th>Orders Affected</th><th>Phantom Cash</th><th>Shifts Hit</th></tr>
+<tr><td><strong>2361</strong></td><td>14</td><td><strong>$139.00</strong></td><td>11</td></tr>
+<tr><td>1487</td><td>3</td><td>$38.00</td><td>3</td></tr>
+<tr><td>883</td><td>2</td><td>$19.00</td><td>2</td></tr>
+<tr><td>7711</td><td>1</td><td>$14.00</td><td>1</td></tr>
+<tr><td>1919</td><td>1</td><td>$9.50</td><td>1</td></tr>
+<tr style="background-color:#f0f0f0;"><th>TOTAL</th><th>21</th><th style="color:#D63B2F;">$219.50</th><th>—</th></tr>
+</table>
+
+<hr>
+
+<h2>Full Line-Item List</h2>
+
+<table>
+<tr><th>Date</th><th>Time</th><th>Employee PIN</th><th>Subtotal</th></tr>
+<tr><td>2026-02-21</td><td>—</td><td>7711</td><td>$14.00</td></tr>
+<tr><td>2026-02-22</td><td>12:11</td><td>1487</td><td>$19.00</td></tr>
+<tr><td>2026-03-02</td><td>10:49</td><td>2361</td><td>$9.50</td></tr>
+<tr><td>2026-03-03</td><td>—</td><td>2361</td><td>$9.50</td></tr>
+<tr><td>2026-03-04</td><td>—</td><td>2361</td><td>$9.50</td></tr>
+<tr><td>2026-03-06</td><td>10:38</td><td>1487</td><td>$9.50</td></tr>
+<tr><td>2026-03-09</td><td>—</td><td>2361</td><td>$9.50</td></tr>
+<tr><td>2026-03-10</td><td>—</td><td>1919</td><td>$9.50</td></tr>
+<tr><td>2026-03-13</td><td>—</td><td>1487</td><td>$9.50</td></tr>
+<tr><td>2026-03-17</td><td>—</td><td>2361</td><td>$9.50</td></tr>
+<tr><td>2026-03-18</td><td>—</td><td>2361</td><td>$9.50</td></tr>
+<tr><td>2026-03-19</td><td>10:51</td><td>2361</td><td>$15.00</td></tr>
+<tr><td>2026-03-25</td><td>10:21</td><td>2361</td><td>$3.50</td></tr>
+<tr><td>2026-03-30</td><td>—</td><td>2361</td><td>$4.00</td></tr>
+<tr><td>2026-04-01</td><td>10:21</td><td>2361</td><td>$4.00</td></tr>
+<tr><td>2026-04-04</td><td>11:30</td><td>883</td><td>$9.50</td></tr>
+<tr><td>2026-04-09</td><td>10:05</td><td>883</td><td>$9.50</td></tr>
+<tr><td>2026-04-15</td><td>—</td><td>2361</td><td>$19.00</td></tr>
+<tr><td>2026-04-15</td><td>—</td><td>2361</td><td>$9.50</td></tr>
+<tr><td>2026-04-15</td><td>—</td><td>2361</td><td>$23.50</td></tr>
+<tr><td>2026-04-15</td><td>—</td><td>2361</td><td>$3.50</td></tr>
+</table>
+
+<p class="muted">Apr 15 alone showed 4 impacted orders totaling $55.50 — which is almost certainly the spike that triggered Dori's call on Apr 17.</p>
+
+<hr>
+
+<h2>Methodology</h2>
+<ul>
+<li><strong>Source:</strong> Financial Detailed Transactions export pulled from the DoorDash Merchant Portal for Store ID 23535599, covering Aug 18, 2025 – Apr 16, 2026 (8,752 transaction rows).</li>
+<li><strong>Bug-impacted filter:</strong> Orders where (1) the channel is <code>In-store</code>, (2) the discount fully offset the subtotal (100% discount, net = $0), and (3) the payment method was recorded as <code>cash</code>.</li>
+<li><strong>Excluded from reimbursement:</strong> 100%-discount orders labeled <code>credit_card</code> (Aug 2025 – Feb 2026, 85 orders) — these did not inflate the cash drawer and did not cause a tip shortfall. They may reflect a separate system behavior; flagged to engineering for review but not a reimbursement item.</li>
+</ul>
+
+<hr>
+
+<h2>Action Items</h2>
+
+<table>
+<tr><th>Item</th><th>Owner</th><th>Status</th></tr>
+<tr><td>Reimburse $219.50 to Eggsactly staff (per PIN breakdown above)</td><td>DoorDash / Pathfinder AM</td><td><span class="pending">PENDING APPROVAL</span></td></tr>
+<tr><td>Route all future comps through new EXTERNAL Revenue Center</td><td>Eggsactly staff</td><td><span class="resolved">IN PLACE</span></td></tr>
+<tr><td>Ship POS fix to eliminate bug permanently</td><td>DoorDash Engineering (Faiza Nasiha)</td><td><span class="pending">BY APR 30, 2026</span></td></tr>
+<tr><td>Validate fix with Eggsactly post-deploy</td><td>Phil Bornhurst</td><td><span class="pending">WEEK OF MAY 4</span></td></tr>
+</table>
+
+<p class="footer">Generated by Claude Agent | April 17, 2026 | Pathfinder Account Management</p>
+
+</body>
+</html>

@@ -19,7 +19,13 @@
       "Bash(git add *)",
       "Bash(git commit *)",
       "Bash(git push *)",
-      "Bash(git rm *)"
+      "Bash(git rm *)",
+      "Bash(curl -sS -X OPTIONS https://cybertron-service-gateway-mcp.doordash.team/ask-data-ai/mcp -D - -o /dev/null)",
+      "Bash(curl -sS https://cybertron-service-gateway-mcp.doordash.team/ask-data-ai/mcp -D - -o /tmp/mcp_response.txt)",
+      "Bash(curl -sS \"https://cybertron-service-gateway-mcp.doordash.team/ws-launch-ddd532/ask-data-ai/mcp\" -D - -o /tmp/mcp_ws.txt)",
+      "Bash(curl -sS https://cybertron-service-gateway-mcp.doordash.team/ -D - -o /tmp/mcp_root.txt)",
+      "Bash(curl -sS --max-time 10 https://cybertron-service-gateway-mcp.doordash.team/)",
+      "Bash(curl -sS --max-time 10 -X POST https://cybertron-service-gateway-mcp.doordash.team/ws-launch-ddd532/ask-data-ai/mcp -H \"Content-Type: application/json\" -H \"Accept: application/json, text/event-stream\" -d '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2024-11-05\",\"capabilities\":{},\"clientInfo\":{\"name\":\"probe\",\"version\":\"1.0\"}}}')"
     ]
   }
 }

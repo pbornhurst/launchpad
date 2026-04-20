@@ -21,6 +21,16 @@
         "https://mcp.intercom.com/mcp"
       ],
       "env": {}
+    },
+    "pocket": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://public.heypocketai.com/mcp"
+      ],
+      "env": {}
     }
   }
 }
