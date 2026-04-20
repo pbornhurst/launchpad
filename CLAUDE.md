@@ -356,6 +356,7 @@ Focus extra attention on ICP and Tier 1 for proactive outreach and issue resolut
 | `/support-scan`     | Combined support scan: Slack escalations + Intercom highlights + pattern alerts                                               |
 | `/support-intel`    | Support pattern analysis: repeat inbounders, cross-mx issues, risk flags                                                      |
 | `/weekly-recap`     | Weekly summary across all tools                                                                                               |
+| `/weekly-mindmap`   | Weekly cross-AM mind map (Phil + Mallory): themes, risks, wins, product feedback, stakeholder graph. Google Doc in `Weekly Mind Maps 2026`. |
 | `/card-metrics`     | Pathfinder card volume metrics: active stores, volume, GOV with period-over-period changes                                    |
 | `/feedback-log`     | Log product feedback to the tracker                                                                                           |
 | `/meeting-capture`  | Scan last 7d Granola for `mx call` flagged meetings, generate PRISM-TnA from transcript, prepend to Running Notes doc, log    |
@@ -383,6 +384,7 @@ Agents run as isolated subprocesses — they pull from multiple data sources in 
 | `calendly-call-prep` | "Prep my Calendly calls", "Run Calendly prep", `/calendly-prep`                                   | Scans today's calendar for Calendly events, matches to Master Hub, creates account management folder + Running Notes doc, runs Opus-powered internet research, sends Slack notification with links and restaurant brief.           |
 | `churn-risk`         | "Run churn risk analysis", "Health score report", "Which mx are at risk"                          | Portfolio health scoring: 3 parallel sub-agents (volume, support, engagement). Composite RED/YELLOW/GREEN per mx. NEW vs. ONGOING risk detection. Opus-powered scoring + recommendations. Google Doc report + daily brief summary. |
 | `autoreason`         | "Autoreason this:", "/autoreason [task]", "Refine [task] through adversarial iteration"           | Adversarial multi-agent refinement. Author → Strawman → Rewrite → Synthesize → 3 Blind Judges per round. Loops until incumbent wins twice (streak=2) or max rounds. Opus generators + Sonnet judges.                               |
+| `weekly-mindmap`     | "Build a weekly mind map", "Weekly mind map for week of 4/13", `/weekly-mindmap`                  | Weekly cross-AM mind map. Pulls Phil+Mallory calls from input tracker, dispatches N parallel extraction sub-agents (one per AM book), synthesizes themes/risks/wins/feedback/stakeholder graph. Outputs Google Doc in `Weekly Mind Maps 2026`. |
 
 
 **Usage:** Just describe what you want naturally, or be explicit ("Use the mx-researcher agent"). Add "in the background" to run while you keep working.
@@ -419,9 +421,10 @@ When creating Google Docs (dossiers, reports, briefs, etc.), always use the `imp
 
 | Name                 | Folder ID                           | Location |
 | -------------------- | ----------------------------------- | -------- |
-| 2026                 | `1xPRPSJUWBtJDbeISgOxJiTX0Y8znczf`_ | My Drive |
+| 2026                 | `1xPRPSJUWBtJDbeISgOxJiTX0Y8znczf_` | My Drive |
 | mx deep dives        | `1LC-N9ib_c43jJeXkbRm0iO_3FswL-wrn` | 2026/    |
 | support intelligence | `12HiJU4UPLifS11vy8066LmnYBR9LK5z8` | 2026/    |
+| Weekly Mind Maps 2026 | `1aUdFtQBQ3MsAh1gK6qENFcv0YlYBUCmI` | 2026/    |
 | Account Management   | `1-ZfbMtwlJaj-6Hx2LqrTIysvPNxMF7MK` | My Drive |
 
 

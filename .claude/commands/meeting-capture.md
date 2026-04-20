@@ -56,22 +56,20 @@ If no match, drop the meeting. If matched, continue parsing:
 
 Do these once per command run, before any per-meeting work:
 
-**Master Hub — correct spreadsheet.** The real Master Hub is `1InzoCJDsjzyejfASR19Bvb0Q9TdtJsSNhUZjS9a7VhE`, titled "[Pathfinder] Merchant List / Launch Hub". The data tab is `Merchant Database` (NOT the default first tab "Launch Calendar"). Column headers live on **row 2** (row 1 is section group labels like "INPUT DRI: SALES"). Data starts on row 3.
-
-> Note: CLAUDE.md currently lists a stale Master Hub ID (`1ndVs...`). The memory index at `memory/master_hub_id.md` has the correct reference — trust that until CLAUDE.md is corrected.
+**Master Hub.** Use `1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4` — the IMPORTRANGE view with a single header row (cleaner to read than the source sheet). Default first tab (`gid=0`). Column headers live on **row 1**. Data starts on row 2.
 
 **Master Hub header confirmation** (future-proof against column shifts):
 
 - `mcp__google-workspace__read_sheet_values`
-  - `spreadsheet_id: "1InzoCJDsjzyejfASR19Bvb0Q9TdtJsSNhUZjS9a7VhE"`
-  - `range_name: "Merchant Database!A2:CA2"`
+  - `spreadsheet_id: "1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4"`
+  - `range_name: "A1:CA1"`
   - `user_google_email: "philip.bornhurst@doordash.com"`
 - Locate the column index where header equals exactly `"Running Notes"`. Expected: column BV (index 73). If it has moved, use the discovered column.
 
 **Master Hub body.** The `read_sheet_values` tool display-truncates at ~50 rows even on successful larger reads, which makes per-row lookups flaky. Instead:
 
-- Call `mcp__google-workspace__get_drive_file_download_url` with `file_id: "1InzoCJDsjzyejfASR19Bvb0Q9TdtJsSNhUZjS9a7VhE"` and `export_format: "xlsx"`.
-- Parse the downloaded `.xlsx` with Python + `openpyxl` (install via `pip3 install openpyxl` if needed). Target sheet: `Merchant Database`. Headers on row 2, data from row 3.
+- Call `mcp__google-workspace__get_drive_file_download_url` with `file_id: "1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4"` and `export_format: "xlsx"`.
+- Parse the downloaded `.xlsx` with Python + `openpyxl` (install via `pip3 install openpyxl` if needed). Use the first/default sheet. Headers on row 1, data from row 2.
 - Build an in-memory dict keyed by Store ID (column E, index 4), capturing:
   - Business Name (column B, index 1)
   - Store ID (column E, index 4)
@@ -422,5 +420,5 @@ To note: DO NOT error out anything for any date-related confusion. Assume that e
 - Granola timestamps are in the meeting organizer's timezone, NOT normalized to PDT. For the date portion (YYYY-MM-DD) this rarely matters, but if a call crosses midnight in a different timezone the dedupe key could shift by a day. Cross-reference Google Calendar via `get_events` if a specific meeting's date looks off.
 - Running Notes column is currently BV. The command auto-detects by header name in case the column shifts.
 - The log sheet `v2` tab drives downstream automations. Do NOT write to Sheet1 or Sheet4.
-- Master Hub lives at `1InzoCJDsjzyejfASR19Bvb0Q9TdtJsSNhUZjS9a7VhE`, tab `Merchant Database`, headers on row 2. Ignore CLAUDE.md's stale ID until it's corrected there.
+- Master Hub lives at `1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4` (default first tab, `gid=0`). Single header row on row 1; data from row 2.
 - Formatting is non-negotiable: prepends MUST use real Google Docs H1/H2 styles, real Docs tables (via `create_table_with_data`), real bullet lists, and Arial 11 body. Markdown-as-plaintext inserts (pipe tables, `#` headings, `*` bullets rendered literally) are broken output, not "good enough." Reference doc: `1odvvOQpOm_m0G7WR8hlwKTzZYxI_j74JoSA8W2d3Trs`.
