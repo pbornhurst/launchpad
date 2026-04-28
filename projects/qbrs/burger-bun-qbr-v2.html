@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Burger Bun — Quarterly Business Review (v2)</title>
+<style>
+  body { font-family: Arial, sans-serif; color: #333; line-height: 1.5; max-width: 920px; margin: 24px auto; padding: 0 20px; }
+  h1 { color: #2C3E50; border-bottom: 3px solid #2C3E50; padding-bottom: 8px; margin-bottom: 4px; }
+  h2 { color: #2C3E50; margin-top: 36px; border-bottom: 1px solid #dcdcdc; padding-bottom: 4px; }
+  h3 { color: #34495E; margin-top: 24px; }
+  h4 { color: #34495E; margin-top: 18px; margin-bottom: 6px; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 14px; }
+  th { background-color: #2C3E50; color: white; padding: 8px 12px; text-align: left; font-weight: bold; }
+  td { padding: 8px 12px; border: 1px solid #e0e0e0; }
+  tr:nth-child(even) { background-color: #f9f9f9; }
+  .meta { color: #555; margin-top: 6px; }
+  .pos { color: #2E7D32; font-weight: bold; }
+  .neg { color: #D63B2F; font-weight: bold; }
+  .warn { color: #F9A825; font-weight: bold; }
+  .callout { background: #f4f6f9; border-left: 4px solid #2C3E50; padding: 10px 14px; margin: 14px 0; }
+  .findings li { margin: 8px 0; }
+  .footer { color: #999; font-size: 11px; text-align: center; margin-top: 40px; border-top: 1px solid #eee; padding-top: 10px; }
+  em.source { color: #777; font-size: 12px; }
+  hr { border: none; border-top: 1px solid #dcdcdc; margin: 30px 0; }
+</style>
+</head>
+<body>
+
+<h1>Burger Bun — Quarterly Business Review (v2)</h1>
+<div class="meta">
+  <strong>Period:</strong> 2026-01-01 to 2026-03-31 (Q1 2026) &nbsp;|&nbsp;
+  <strong>Store ID:</strong> 11409 &nbsp;|&nbsp;
+  <strong>Comparison:</strong> 2025-10-01 to 2025-12-31 (Q4 2025)<br>
+  <strong>Location:</strong> Los Angeles / Glendale, CA<br>
+  <strong>Cuisine on DoorDash Marketplace:</strong> Mexican <em>(see Recommendations — this is a misclassification)</em><br>
+  <strong>Portal:</strong> <a href="https://www.doordash.com/merchant/sales?store_id=11409">doordash.com/merchant/sales?store_id=11409</a>
+</div>
+
+<hr>
+
+<h2>Executive Summary</h2>
+<p>Q1 2026 was a strong growth quarter for Burger Bun. Total sales reached <strong>$92,659.83</strong> across 3,418 completed orders — a <span class="pos">+134.0% quarter-over-quarter jump</span> from $39,605.74 in Q4 2025. Growth was concentrated in-store: POS/cashier sales rose from $29,856.26 to $69,627.05 (+133.2%), and order count grew from 1,229 to 2,674 (+117.6%). Sponsored Listings produced a <strong>5.35× ROAS</strong> on $947.78 of ad spend, delivering $5,070.93 in attributed sales. Storefront (1P online ordering) scaled from effectively idle in Q4 ($138.88 / 5 orders) to $4,102.72 / 114 orders at the highest AOV of any channel ($35.99). Kiosk launched late in the quarter with 50 orders at a $18.97 AOV.</p>
+<p>The operational standout: <strong>menu conversion climbed from 7.79% in week 1 to 22.89% in the final week</strong> — nearly a 3× improvement, driven by better menu structure and rising photo coverage (75% → 81%).</p>
+
+<hr>
+
+<h2>Total Performance (QoQ)</h2>
+<table>
+  <tr><th>Metric</th><th>Q1 2026</th><th>Q4 2025</th><th>Change</th></tr>
+  <tr><td>Total Sales (subtotal)</td><td>$92,659.83</td><td>$39,605.74</td><td><span class="pos">+134.0%</span></td></tr>
+  <tr><td>Total Orders</td><td>3,418</td><td>1,544</td><td><span class="pos">+121.4%</span></td></tr>
+  <tr><td>Average Order Value</td><td>$27.11</td><td>$25.65</td><td><span class="pos">+5.7%</span></td></tr>
+</table>
+<em class="source">Financial source of truth: edw.merchant.fact_merchant_transactions_details_portal, transaction_type = 'Order', final_order_status IN ('Delivered', 'Picked Up'). Channel subtotals sum to the grand total exactly: $69,627.05 + $948.74 + $17,981.32 + $4,102.72 = $92,659.83 (delta $0.00).</em>
+
+<hr>
+
+<h2>Channel Performance (QoQ)</h2>
+
+<h3>In-Store (POS + Kiosk Combined)</h3>
+<table>
+  <tr><th>Metric</th><th>Q1 2026</th><th>Q4 2025</th><th>Change</th></tr>
+  <tr><td>Sales</td><td>$70,575.79</td><td>$29,856.26</td><td><span class="pos">+136.4%</span></td></tr>
+  <tr><td>Orders</td><td>2,724</td><td>1,229</td><td><span class="pos">+121.6%</span></td></tr>
+  <tr><td>AOV</td><td>$25.91</td><td>$24.29</td><td><span class="pos">+6.7%</span></td></tr>
+</table>
+<h4>Q1 Breakdown Within In-Store</h4>
+<table>
+  <tr><th>Sub-channel</th><th>Q1 Sales</th><th>Q1 Orders</th><th>Q1 AOV</th></tr>
+  <tr><td>In-store (POS)</td><td>$69,627.05</td><td>2,674</td><td>$26.04</td></tr>
+  <tr><td>Kiosk</td><td>$948.74</td><td>50</td><td>$18.97</td></tr>
+</table>
+
+<h3>In-Store (POS) — standalone (QoQ)</h3>
+<table>
+  <tr><th>Metric</th><th>Q1 2026</th><th>Q4 2025</th><th>Change</th></tr>
+  <tr><td>Sales</td><td>$69,627.05</td><td>$29,856.26</td><td><span class="pos">+133.2%</span></td></tr>
+  <tr><td>Orders</td><td>2,674</td><td>1,229</td><td><span class="pos">+117.6%</span></td></tr>
+  <tr><td>AOV</td><td>$26.04</td><td>$24.29</td><td><span class="pos">+7.2%</span></td></tr>
+</table>
+
+<h3>Marketplace (QoQ)</h3>
+<table>
+  <tr><th>Metric</th><th>Q1 2026</th><th>Q4 2025</th><th>Change</th></tr>
+  <tr><td>Sales</td><td>$17,981.32</td><td>$9,610.60</td><td><span class="pos">+87.1%</span></td></tr>
+  <tr><td>Orders</td><td>580</td><td>310</td><td><span class="pos">+87.1%</span></td></tr>
+  <tr><td>AOV</td><td>$31.00</td><td>$31.00</td><td>0.0%</td></tr>
+</table>
+<h4>Marketplace Customer Mix (Sponsored-Listing-attributed)</h4>
+<table>
+  <tr><th>Customer Type</th><th>Q1 2026</th><th>Q4 2025</th><th>Change</th></tr>
+  <tr><td>New (SL-attributed)</td><td>52</td><td>28</td><td><span class="pos">+85.7%</span></td></tr>
+  <tr><td>Existing (SL-attributed)</td><td>116</td><td>66</td><td><span class="pos">+75.8%</span></td></tr>
+  <tr><td>Total (SL-attributed)</td><td>168</td><td>94</td><td><span class="pos">+78.7%</span></td></tr>
+</table>
+
+<h3>Kiosk (QoQ)</h3>
+<table>
+  <tr><th>Metric</th><th>Q1 2026</th><th>Q4 2025</th><th>Change</th></tr>
+  <tr><td>Sales</td><td>$948.74</td><td>$0.00</td><td><strong>New channel</strong></td></tr>
+  <tr><td>Orders</td><td>50</td><td>0</td><td><strong>New channel</strong></td></tr>
+  <tr><td>AOV</td><td>$18.97</td><td>N/A</td><td>N/A</td></tr>
+</table>
+<em class="source">Kiosk launched in Q1 2026 — Q4 2025 had zero kiosk activity.</em>
+
+<h3>Storefront / 1P Online Ordering (QoQ)</h3>
+<table>
+  <tr><th>Metric</th><th>Q1 2026</th><th>Q4 2025</th><th>Change</th></tr>
+  <tr><td>Sales</td><td>$4,102.72</td><td>$138.88</td><td><span class="pos">+2,854.1%</span></td></tr>
+  <tr><td>Orders</td><td>114</td><td>5</td><td><span class="pos">+2,180.0%</span></td></tr>
+  <tr><td>AOV</td><td>$35.99</td><td>$27.78</td><td><span class="pos">+29.6%</span></td></tr>
+</table>
+<em class="source">Storefront scaled from effectively idle in Q4 to a meaningful channel in Q1, at the highest AOV of any channel.</em>
+
+<hr>
+
+<h2>Menu Conversion Funnel</h2>
+<em class="source">Online ordering funnel — how effectively Marketplace/Storefront menu viewers convert to orders.</em>
+<table>
+  <tr><th>Metric</th><th>Q1 2026</th><th>Q4 2025</th><th>Change</th></tr>
+  <tr><td>Menu Visitors</td><td>3,865</td><td>1,787</td><td><span class="pos">+116.3%</span></td></tr>
+  <tr><td>Checkouts</td><td>651</td><td>293</td><td><span class="pos">+122.2%</span></td></tr>
+  <tr><td>Deliveries</td><td>576</td><td>310</td><td><span class="pos">+85.8%</span></td></tr>
+  <tr><td>Menu Conversion Rate</td><td>16.84%</td><td>16.40%</td><td><span class="pos">+0.4 pp</span></td></tr>
+  <tr><td>Photo Coverage</td><td>81%</td><td>75%</td><td><span class="pos">+6 pp</span></td></tr>
+</table>
+
+<h3>Weekly Conversion Trend (Q1 2026)</h3>
+<table>
+  <tr><th>Week Starting</th><th>Visitors</th><th>Checkouts</th><th>Conversion Rate</th></tr>
+  <tr><td>2025-12-29</td><td>77</td><td>6</td><td>7.79%</td></tr>
+  <tr><td>2026-01-05</td><td>195</td><td>25</td><td>12.82%</td></tr>
+  <tr><td>2026-01-12</td><td>215</td><td>20</td><td>9.30%</td></tr>
+  <tr><td>2026-01-19</td><td>226</td><td>23</td><td>10.18%</td></tr>
+  <tr><td>2026-01-26</td><td>338</td><td>38</td><td>11.24%</td></tr>
+  <tr><td>2026-02-02</td><td>325</td><td>55</td><td>16.92%</td></tr>
+  <tr><td>2026-02-09</td><td>333</td><td>64</td><td>19.22%</td></tr>
+  <tr><td>2026-02-16</td><td>356</td><td>63</td><td>17.70%</td></tr>
+  <tr><td>2026-02-23</td><td>325</td><td>67</td><td>20.62%</td></tr>
+  <tr><td>2026-03-02</td><td>331</td><td>58</td><td>17.52%</td></tr>
+  <tr><td>2026-03-09</td><td>340</td><td>65</td><td>19.12%</td></tr>
+  <tr><td>2026-03-16</td><td>379</td><td>78</td><td>20.58%</td></tr>
+  <tr><td>2026-03-23</td><td>342</td><td>70</td><td>20.47%</td></tr>
+  <tr><td>2026-03-30</td><td>83</td><td>19</td><td><span class="pos">22.89%</span></td></tr>
+</table>
+
+<div class="callout"><strong>Headline:</strong> Conversion nearly tripled from 7.79% to 22.89% over the quarter. Visitors more than doubled, and each visitor is far more likely to convert — a direct result of menu-health improvements (photos, structure, pricing).</div>
+
+<hr>
+
+<h2>Product Mix</h2>
+<h3>Top 15 Revenue Drivers (Q1 2026)</h3>
+<table>
+  <tr><th>Rank</th><th>Item</th><th>Category</th><th>Units</th><th>Revenue</th><th>Avg Price</th></tr>
+  <tr><td>1</td><td>#2 Bun Cheeseburger</td><td>🍔 The Burger Bloc</td><td>484</td><td>$5,546.50</td><td>$11.46</td></tr>
+  <tr><td>2</td><td>Combo</td><td>🍔 The Burger Bloc</td><td>684</td><td>$4,929.74</td><td>$7.21</td></tr>
+  <tr><td>3</td><td>Philly Cheesesteak Sandwich</td><td>🥪 Stacked & Loaded Sandwiches</td><td>187</td><td>$3,481.88</td><td>$18.62</td></tr>
+  <tr><td>4</td><td>#13 Premium Ultimate Chef Burger</td><td>🍔 The Burger Bloc</td><td>190</td><td>$3,022.44</td><td>$15.91</td></tr>
+  <tr><td>5</td><td>#4 Double Decker</td><td>🍔 The Burger Bloc</td><td>199</td><td>$3,002.31</td><td>$15.09</td></tr>
+  <tr><td>6</td><td>#3 Boss Burger</td><td>🍔 The Burger Bloc</td><td>210</td><td>$2,991.01</td><td>$14.24</td></tr>
+  <tr><td>7</td><td>World Famous Seasoned French Fries</td><td>🍟 Signature Sides</td><td>400</td><td>$2,864.71</td><td>$7.16</td></tr>
+  <tr><td>8</td><td>#2 Bun Cheeseburger <em>(duplicate cat)</em></td><td>The Burger Bloc</td><td>187</td><td>$2,218.95</td><td>$11.87</td></tr>
+  <tr><td>9</td><td>Carne Asada Burrito</td><td>Mexican Food (POS ONLY)</td><td>137</td><td>$2,200.56</td><td>$16.06</td></tr>
+  <tr><td>10</td><td>Combo <em>(duplicate cat)</em></td><td>The Burger Bloc</td><td>299</td><td>$2,182.49</td><td>$7.30</td></tr>
+  <tr><td>11</td><td>#1 Bun Hamburger</td><td>🍔 The Burger Bloc</td><td>176</td><td>$1,818.13</td><td>$10.33</td></tr>
+  <tr><td>12</td><td>#3 Boss Burger <em>(duplicate cat)</em></td><td>The Burger Bloc</td><td>113</td><td>$1,692.51</td><td>$14.98</td></tr>
+  <tr><td>13</td><td>Traditional Gyro (Beef & Lamb)</td><td>🥙 From the Greek Islands</td><td>95</td><td>$1,543.91</td><td>$16.25</td></tr>
+  <tr><td>14</td><td>#8 Kobe (Wagyu) Burger</td><td>🍔 The Burger Bloc</td><td>87</td><td>$1,478.55</td><td>$16.99</td></tr>
+  <tr><td>15</td><td>Carne Asada Torta</td><td>Mexican Food (POS ONLY)</td><td>92</td><td>$1,437.06</td><td>$15.62</td></tr>
+</table>
+
+<h3>Category Breakdown (Top 15 by Revenue)</h3>
+<table>
+  <tr><th>Category</th><th>SKUs</th><th>Units</th><th>Revenue</th><th>Share</th></tr>
+  <tr><td>🍔 The Burger Bloc</td><td>16</td><td>2,445</td><td>$28,402.85</td><td>30.7%</td></tr>
+  <tr><td>The Burger Bloc <em>(duplicate)</em></td><td>17</td><td>999</td><td>$11,533.87</td><td>12.4%</td></tr>
+  <tr><td>Mexican Food (POS ONLY)</td><td>18</td><td>731</td><td>$10,370.44</td><td>11.2%</td></tr>
+  <tr><td>🍟 Signature Sides</td><td>10</td><td>958</td><td>$6,839.47</td><td>7.4%</td></tr>
+  <tr><td>🥪 Stacked & Loaded Sandwiches</td><td>7</td><td>384</td><td>$5,847.26</td><td>6.3%</td></tr>
+  <tr><td>Signature Side Kicks <em>(duplicate)</em></td><td>12</td><td>342</td><td>$2,481.72</td><td>2.7%</td></tr>
+  <tr><td>🥙 From the Greek Islands</td><td>3</td><td>146</td><td>$2,311.67</td><td>2.5%</td></tr>
+  <tr><td>🥤 The Beverage Gallery</td><td>13</td><td>460</td><td>$2,110.85</td><td>2.3%</td></tr>
+  <tr><td>Stacked & Loaded Sandwiches <em>(duplicate)</em></td><td>7</td><td>136</td><td>$2,073.05</td><td>2.2%</td></tr>
+  <tr><td>🍳 Breakfast Bliss</td><td>5</td><td>139</td><td>$1,980.46</td><td>2.1%</td></tr>
+  <tr><td>From the Greek Islands <em>(duplicate)</em></td><td>3</td><td>88</td><td>$1,424.69</td><td>1.5%</td></tr>
+  <tr><td>🍗 Jumbo Chicken Wings</td><td>6</td><td>72</td><td>$1,347.74</td><td>1.5%</td></tr>
+  <tr><td>🥪 Kids Menu (NEW!)</td><td>7</td><td>81</td><td>$1,077.90</td><td>1.2%</td></tr>
+  <tr><td>Jumbo Chicken Wings & Golden Chicken Tenders <em>(duplicate)</em></td><td>6</td><td>62</td><td>$963.76</td><td>1.0%</td></tr>
+  <tr><td>🍗 Golden Chicken Tenders</td><td>4</td><td>69</td><td>$893.84</td><td>1.0%</td></tr>
+</table>
+
+<div class="callout"><strong>Menu health flag:</strong> Six category pairs appear twice on your menu (emoji vs. non-emoji variants) — a legacy menu-duplication artifact that dilutes reporting and can confuse customers browsing the menu. Consolidating these will tighten both storefront UX and analytics.</div>
+
+<hr>
+
+<h2>Operations (Marketplace)</h2>
+<table>
+  <tr><th>Metric</th><th>Q1 2026</th></tr>
+  <tr><td>Rated Orders</td><td>0</td></tr>
+  <tr><td>Error Rate (missing / incorrect)</td><td>0.0%</td></tr>
+</table>
+<em class="source">edw.merchant.fact_merchant_orders_portal has sparse coverage for this store, so marketplace operational metrics (wait time, cancellation rate) can't be cleanly measured from that source this quarter. Recommend validating operational metrics from the full order stream in a follow-up before setting a Q2 target.</em>
+
+<hr>
+
+<h2>Customer & Ratings</h2>
+<h3>Ratings</h3>
+<p>No rated orders were captured in Q1 2026. We recommend prompting customers for post-order ratings more aggressively (in-app push + receipt messaging) so we can track satisfaction quarter over quarter.</p>
+
+<h3>Marketplace Customer Acquisition (Sponsored Listings attribution)</h3>
+<table>
+  <tr><th>Segment</th><th>Q1 2026</th><th>Q4 2025</th><th>Change</th></tr>
+  <tr><td>New customers (SL-attributed)</td><td>52</td><td>28</td><td><span class="pos">+85.7%</span></td></tr>
+  <tr><td>Existing customers (SL-attributed)</td><td>116</td><td>66</td><td><span class="pos">+75.8%</span></td></tr>
+  <tr><td>Total SL-attributed customers</td><td>168</td><td>94</td><td><span class="pos">+78.7%</span></td></tr>
+</table>
+<em class="source">Source: edw.ads.fact_sl_campaign_performance. SL-attributed only; total unique Marketplace customers is higher once organic and promo traffic are included.</em>
+
+<hr>
+
+<h2>Discount Analysis (Q1 2026)</h2>
+<table>
+  <tr><th>Channel</th><th>Subtotal</th><th>Your Discounts</th><th>DoorDash-Funded</th><th>Third-Party</th><th>Discount Rate</th></tr>
+  <tr><td>In-store</td><td>$69,627.05</td><td>$895.55</td><td>$0.00</td><td>$0.00</td><td>1.3%</td></tr>
+  <tr><td>Marketplace</td><td>$17,981.32</td><td>$551.24</td><td>$193.69</td><td>$0.00</td><td>4.1%</td></tr>
+  <tr><td>Storefront</td><td>$4,102.72</td><td>$140.00</td><td>$0.00</td><td>$0.00</td><td>3.4%</td></tr>
+  <tr><td>Kiosk</td><td>$948.74</td><td>$0.00</td><td>$0.00</td><td>$0.00</td><td>0.0%</td></tr>
+  <tr><td><strong>Total</strong></td><td><strong>$92,659.83</strong></td><td><strong>$1,586.79</strong></td><td><strong>$193.69</strong></td><td><strong>$0.00</strong></td><td><strong>1.9%</strong></td></tr>
+</table>
+<p>Discount spend is very efficient across all channels — well under the 8% threshold we'd flag as a concern.</p>
+
+<hr>
+
+<h2>Marketing Performance</h2>
+
+<h3>Sponsored Listings (QoQ)</h3>
+<table>
+  <tr><th>Metric</th><th>Q1 2026</th><th>Q4 2025</th><th>Change</th></tr>
+  <tr><td>Impressions</td><td>18,289</td><td>9,392</td><td><span class="pos">+94.7%</span></td></tr>
+  <tr><td>Clicks</td><td>938</td><td>559</td><td><span class="pos">+67.8%</span></td></tr>
+  <tr><td>CTR</td><td>5.13%</td><td>5.95%</td><td><span class="warn">−0.8 pp</span></td></tr>
+  <tr><td>Attributed Orders</td><td>181</td><td>108</td><td><span class="pos">+67.6%</span></td></tr>
+  <tr><td>Attributed Sales</td><td>$5,070.93</td><td>$2,835.29</td><td><span class="pos">+78.8%</span></td></tr>
+  <tr><td>Ad Spend</td><td>$947.78</td><td>$638.94</td><td>+48.3%</td></tr>
+  <tr><td>CPA (ad spend / orders)</td><td>$5.24</td><td>$5.92</td><td><span class="pos">−11.5%</span></td></tr>
+  <tr><td>ROAS</td><td><strong>5.35×</strong></td><td><strong>4.44×</strong></td><td><span class="pos">+0.91×</span></td></tr>
+  <tr><td>New Customers</td><td>52</td><td>28</td><td><span class="pos">+85.7%</span></td></tr>
+  <tr><td>Existing Customers</td><td>116</td><td>66</td><td><span class="pos">+75.8%</span></td></tr>
+</table>
+<div class="callout"><strong>Sponsored Listings is your strongest paid channel</strong> — ROAS, attributed sales, and new customers all grew faster than ad spend. Scaling further is the top marketing recommendation.</div>
+
+<h3>Promotions (Q1 2026 — campaigns with attributed orders)</h3>
+<table>
+  <tr><th>Campaign</th><th>Orders</th><th>Sales</th><th>Your Discount</th><th>DD Contribution</th><th>ROAS</th></tr>
+  <tr><td>Loyalty Promo – Burger Bun</td><td>138</td><td>$4,651.62</td><td>$1,295.56</td><td>$0.00</td><td>2.42×</td></tr>
+  <tr><td>DashPass pickup credit (targeting test)</td><td>39</td><td>$1,267.44</td><td>$0.00</td><td>$0.00</td><td>DD-side</td></tr>
+  <tr><td>Mexican Daily Lunch Specials 11–2pm</td><td>32</td><td>$834.49</td><td>$142.00</td><td>$0.00</td><td><span class="pos">4.77×</span></td></tr>
+  <tr><td>kraft allcx (3/26–3/31)</td><td>12</td><td>$604.22</td><td>$0.00</td><td>$84.00</td><td>DD-side</td></tr>
+  <tr><td>Chase DashPass – $5 Rx Jan '26</td><td>4</td><td>$275.61</td><td>$0.00</td><td>$20.00</td><td>DD-side</td></tr>
+  <tr><td>Monster BOGO</td><td>5</td><td>$194.09</td><td>$36.57</td><td>$0.00</td><td>3.27×</td></tr>
+  <tr><td>Alani Energy Drink B1G1</td><td>3</td><td>$147.43</td><td>$14.67</td><td>$0.00</td><td><span class="neg">0.28×</span></td></tr>
+  <tr><td>Make Good Promotion</td><td>8</td><td>$140.99</td><td>$50.00</td><td>$0.00</td><td>1.86×</td></tr>
+  <tr><td>Seamless Experience Free Express</td><td>5</td><td>$130.11</td><td>$0.00</td><td>$14.95</td><td>DD-side</td></tr>
+  <tr><td>30% Off Breakfast Happy Hour 10–11am</td><td>6</td><td>$126.66</td><td>$18.00</td><td>$0.00</td><td>1.51×</td></tr>
+  <tr><td>Other small campaigns</td><td>8</td><td>$294.65</td><td>$0.00</td><td>$74.74</td><td>DD-side</td></tr>
+  <tr><td><strong>Total (non-zero)</strong></td><td><strong>~260</strong></td><td><strong>~$8,667</strong></td><td><strong>$1,556.80</strong></td><td><strong>~$193.69</strong></td><td><strong>Weighted ~3.0×</strong></td></tr>
+</table>
+
+<h3>Promotions (QoQ totals)</h3>
+<table>
+  <tr><th>Metric</th><th>Q1 2026</th><th>Q4 2025</th><th>Change</th></tr>
+  <tr><td>Promo-Attributed Sales</td><td>$8,666.55</td><td>$5,697.44</td><td><span class="pos">+52.1%</span></td></tr>
+  <tr><td>Promo-Attributed Orders</td><td>~260</td><td>171</td><td><span class="pos">+52.0%</span></td></tr>
+  <tr><td>Your Promo Discounts</td><td>$1,556.80</td><td>$915.47</td><td>+70.1%</td></tr>
+</table>
+<em class="source">Q4 top campaigns for reference: Smart campaign 10/27/25 (73 orders, $2,337 sales, $465 your discount); Spend $40 get 20% off (14 orders, $863 sales); Loyalty Promo – Burger Bun (30 orders, $809 sales, $150 your discount).</em>
+
+<div class="callout"><strong>Takeaway:</strong> The Loyalty Promo drives the bulk of Q1 promo volume — 126 of 138 Loyalty orders came from existing customers. Healthy retention engine, but light on net-new acquisition; balance with more new-customer-skewed offers. <strong>Mexican Daily Lunch Specials hit 4.77× ROAS on $142 of spend</strong> — a clean proof point for daypart promos. <strong>Alani B1G1 at 0.28× ROAS should be paused.</strong></div>
+
+<h3>Marketing Efficiency (Q1 2026)</h3>
+<table>
+  <tr><th>Metric</th><th>Value</th></tr>
+  <tr><td>Merchant-Funded Marketing Spend</td><td>$2,504.58 (promo discounts $1,556.80 + SL ad fees $947.78)</td></tr>
+  <tr><td>Marketing-Attributed Sales</td><td>$13,737.48 (SL $5,070.93 + Promo $8,666.55)</td></tr>
+  <tr><td>Overall Marketing ROAS</td><td><span class="pos">5.48×</span></td></tr>
+  <tr><td>Cost per New Customer (SL only)</td><td>$18.23</td></tr>
+  <tr><td>Marketing Spend as % of Total Sales</td><td>2.7%</td></tr>
+</table>
+
+<hr>
+
+<h2>Key Findings</h2>
+<ol class="findings">
+  <li><strong>Growth is broad and accelerating.</strong> Total sales more than doubled QoQ (+134.0%) with in-store volume rising from 1,229 to 2,674 orders (+117.6%). Storefront scaled nearly 30× from a near-idle state.</li>
+  <li><strong>Menu conversion tripled through the quarter.</strong> The online funnel climbed from 7.79% in early January to 22.89% by end of March — visitors more than doubled and each visitor is far more likely to convert.</li>
+  <li><strong>Sponsored Listings is your strongest paid channel.</strong> 5.35× ROAS on $947 of spend, up +0.91× QoQ; 52 new customers at CPA $18.23. Worth scaling.</li>
+  <li><strong>The Loyalty Promo is carrying promo volume — largely on existing customers.</strong> 138 of ~260 promo orders (53%) and 126 of those 138 from existing customers. Strong retention engine; light on net-new acquisition.</li>
+  <li><span class="warn"><strong>Mexican cuisine classification is likely a mismatch.</strong></span> The store is named "Burger Bun" and 47% of top-15 revenue comes from burger-category items; Marketplace customers searching "burgers" may never see you.</li>
+  <li><strong>Duplicate menu categories are dragging menu clarity.</strong> Six category pairs appear twice (emoji vs. non-emoji), likely a legacy POS sync artifact.</li>
+  <li><strong>Kiosk launched but hasn't yet scaled.</strong> 50 orders in Q1 at an $18.97 AOV — driving kiosk awareness and a clearer upsell flow is the biggest lever there.</li>
+  <li><strong>Rating capture is zero.</strong> No rated orders all quarter — no customer-satisfaction signal to act on.</li>
+</ol>
+
+<h2>Recommendations</h2>
+<ol class="findings">
+  <li><strong>Correct the Marketplace cuisine classification from "Mexican" to "Burger"</strong> (or a burger-forward dual tag). Work with your DoorDash contact to update the primary cuisine. Expected impact: meaningful lift in Marketplace impressions and new-customer orders.</li>
+  <li><strong>Scale Sponsored Listings spend by ~50%.</strong> At 5.35× ROAS and an improving trajectory, raising the weekly budget from ~$75 to ~$110–$125 should keep ROAS above 4× while unlocking incremental orders.</li>
+  <li><strong>Pause the Alani Energy Drink B1G1 (0.28× ROAS) and scale the Mexican Daily Lunch Specials (4.77× ROAS).</strong> Mirror the lunch daypart structure with a "Burger Daily Lunch Specials" 11am–2pm.</li>
+  <li><strong>Rebalance the Loyalty Promo.</strong> 126 of 138 orders came from existing customers. Layer a new-customer-skewed offer (e.g., first-order $5 off $20) to bring the new:existing mix closer to the Sponsored Listings ratio (~1:2 rather than ~1:12).</li>
+  <li><strong>Consolidate duplicate menu categories.</strong> Merge "The Burger Bloc" / "The Burger Bloc (emoji)" and the other 5 duplicate pairs. Re-run the duplicate check after consolidation.</li>
+  <li><strong>Turn on post-order rating requests.</strong> Target at least 75+ rated orders in Q2 to establish a baseline satisfaction score.</li>
+  <li><strong>Grow kiosk attach.</strong> Kiosk AOV ($18.97) is ~27% below the in-store average ($26.04) — add combo/side upsell prompts and signage to close the gap.</li>
+  <li><strong>Double down on Storefront (1P).</strong> With a $35.99 AOV (highest of any channel) and ~29× QoQ growth, table-tent / receipt / social QR-code promotion for the 1P link will compound returns and improve your blended margin.</li>
+</ol>
+
+<h2>Growth Opportunities</h2>
+<ul>
+  <li><strong>Cuisine correction + SL scale-up</strong> is the biggest Q2 lever. Marketplace is the largest growth vector, and a correct cuisine tag plus 50% more ad spend could plausibly add $3k–$5k per month.</li>
+  <li><strong>Storefront acquisition push.</strong> Storefront AOV ($35.99) is 16% above Marketplace ($31.00) — moving orders from Marketplace to Storefront improves margin while retaining the customer. A small 1P-only incentive (e.g., "$3 off your next 1P order") can pull repeat diners off Marketplace.</li>
+  <li><strong>Lunch daypart promotions.</strong> Mexican Daily Lunch Specials hit 4.77× ROAS — replicate for burgers 11am–2pm.</li>
+  <li><strong>Catering / large-order bundle.</strong> At a $27 AOV, there's headroom for an $80–$120 family/office bundle built around the Premium Chef Burger, Philly Cheesesteak, and Combo items.</li>
+</ul>
+
+<h2>Targets for Q2 2026</h2>
+<table>
+  <tr><th>Target</th><th>Q1 Actual</th><th>Q2 Goal</th></tr>
+  <tr><td>Total Sales</td><td>$92,660</td><td>$115,000 (+24%)</td></tr>
+  <tr><td>Marketplace Sales</td><td>$17,981</td><td>$25,000 (+39% — tied to cuisine fix)</td></tr>
+  <tr><td>Menu Conversion Rate (quarter-end)</td><td>22.89%</td><td>≥22% sustained</td></tr>
+  <tr><td>Sponsored Listings ROAS</td><td>5.35×</td><td>≥4.5× at higher spend</td></tr>
+  <tr><td>Rated Orders Captured</td><td>0</td><td>≥75</td></tr>
+  <tr><td>New Customers (SL-attributed)</td><td>52</td><td>≥85</td></tr>
+  <tr><td>Kiosk Orders</td><td>50</td><td>≥150</td></tr>
+</table>
+
+<div class="footer">
+  Prepared by Pathfinder Account Management | 2026-04-21
+</div>
+
+</body>
+</html>

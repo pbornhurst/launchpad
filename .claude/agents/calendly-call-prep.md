@@ -482,15 +482,21 @@ Launch with `subagent_type: "general-purpose"`, `model: "haiku"`.
 > **DM name:** [ATTENDEE_NAME]
 > **Location:** [ADDRESS or city if known]
 >
+> **CRITICAL — bot messages:** Install and check-in reports in #pathfinder-mxonboarding are posted by **Slack workflow bots** ("Mx Install Summary" `B07P5KQ2A1J` and "Mx Check-in Summary" `B07P0H7EYCV`), not by humans. `slack_search_public_and_private` **excludes bot messages by default** — you MUST pass `include_bots: true` on every search call here, or you will get zero results.
+>
 > **Search strategy:**
 >
-> 1. Search using `mcp__slack__slack_search_public_and_private`:
->    - Try: `"[BUSINESS_NAME]" in:<#C067E67HNAZ>`
->    - If no results, try: `"[STORE_NAME]" in:<#C067E67HNAZ>` (if different from business name)
->    - If still no results, try: `"[ATTENDEE_NAME]" in:<#C067E67HNAZ>`
->    - If still no results, try: `"[partial address or city]" in:<#C067E67HNAZ>`
+> 1. Search using `mcp__slack__slack_search_public_and_private` with `include_bots: true` on every call:
+>    - Try: `"[BUSINESS_NAME]" in:<#C067E67HNAZ>` — `include_bots: true`
+>    - If no results, try: `"[STORE_ID]" in:<#C067E67HNAZ>` — `include_bots: true` (Store ID is the most reliable hit since reports always include it)
+>    - If no results, try: `"[STORE_NAME]" in:<#C067E67HNAZ>` — `include_bots: true` (if different from business name)
+>    - If no results, try: a simplified business name without apostrophes/special chars (e.g., `Shake Hen` instead of `Shake'Hen`)
+>    - If still no results, try: `"[ATTENDEE_NAME]" in:<#C067E67HNAZ>` — `include_bots: true`
+>    - If still no results, try: `"[partial address or city]" in:<#C067E67HNAZ>` — `include_bots: true`
 >
 > 2. For each message found, read the full thread using `mcp__slack__slack_read_thread` to capture the complete context (install notes often have replies with updates).
+>
+> 3. Look for both Install reports (typically posted day-of-install) AND Check-in reports (typically 1–3 days post-install). Both are valuable — the install report covers hardware/setup, the check-in covers how things are going post-launch.
 >
 > 3. Look for:
 >    - Launcher install notes (hardware setup, terminal count, network details)

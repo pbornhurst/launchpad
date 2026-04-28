@@ -9,3 +9,6 @@ logs/
 
 # Session chart artifacts (generated at repo root)
 /*.png
+
+# Local git worktrees (per-session working trees, not source)
+.claude/worktrees/

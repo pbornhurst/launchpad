@@ -364,6 +364,7 @@ Focus extra attention on ICP and Tier 1 for proactive outreach and issue resolut
 | `/calendly-prep`    | Prep for today's Calendly calls: scan calendar, match Master Hub, create folders/docs, internet research, Slack summary       |
 | `/churn-risk`       | Portfolio health scores: composite RED/YELLOW/GREEN per mx with churn risk ranking                                            |
 | `/mx-alert-monitor` | Intraday anomaly check: POS-dark detection, channel-specific churn signals, volume drops >40%. Uses real-time Snowflake data. |
+| `/mx-tier`          | Automated merchant tiering: 4 parallel sub-agents gather Health Gate + Tier Scorecard inputs, Phil confirms subjective scores, writes into mx file's `Merchant Health & Tier` tab, posts Slack summary. |
 | `/autoreason`       | Adversarial refinement: critique, rewrite, synthesis, blind judging until convergence                                         |
 
 
@@ -385,6 +386,7 @@ Agents run as isolated subprocesses — they pull from multiple data sources in 
 | `churn-risk`         | "Run churn risk analysis", "Health score report", "Which mx are at risk"                          | Portfolio health scoring: 3 parallel sub-agents (volume, support, engagement). Composite RED/YELLOW/GREEN per mx. NEW vs. ONGOING risk detection. Opus-powered scoring + recommendations. Google Doc report + daily brief summary. |
 | `autoreason`         | "Autoreason this:", "/autoreason [task]", "Refine [task] through adversarial iteration"           | Adversarial multi-agent refinement. Author → Strawman → Rewrite → Synthesize → 3 Blind Judges per round. Loops until incumbent wins twice (streak=2) or max rounds. Opus generators + Sonnet judges.                               |
 | `weekly-mindmap`     | "Build a weekly mind map", "Weekly mind map for week of 4/13", `/weekly-mindmap`                  | Weekly cross-AM mind map. Pulls Phil+Mallory calls from input tracker, dispatches N parallel extraction sub-agents (one per AM book), synthesizes themes/risks/wins/feedback/stakeholder graph. Outputs Google Doc in `Weekly Mind Maps 2026`. |
+| `mx-tier`            | "Tier Store [ID]", "/mx-tier 12345", "Run mx-tier for [mx]"                                       | Automated 2026 Mx Journey tiering. 4 parallel sub-agents (Intercom+Slack support, onboarding Slack, Running Notes doc, Snowflake GOV/footprint) propose scores for all 10 scorecard fields. Phil confirms the 4 subjective ones (onboarding sat, overall sentiment, mx feedback engagement, critical blocker). Writes directly into the mx file's `Merchant Health & Tier` tab (creates tab if missing). Computes tier (S/1/2/3/Purgatory) and stamps graduation date. Posts Slack summary to #phils-gumloop-agent. |
 
 
 **Usage:** Just describe what you want naturally, or be explicit ("Use the mx-researcher agent"). Add "in the background" to run while you keep working.
