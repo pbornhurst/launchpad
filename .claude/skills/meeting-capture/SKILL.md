@@ -200,51 +200,50 @@ PRISM-TnA gives you the content. Parse it into this structured form in memory be
 }
 ```
 
-**h. Prepend to the Running Notes doc — real Docs formatting, minimal API cost.**
+**h. Prepend to the Running Notes doc — real Docs formatting, with table-write verification.**
 
 The reference target format is doc `1odvvOQpOm_m0G7WR8hlwKTzZYxI_j74JoSA8W2d3Trs`. Real H1/H2, real Docs tables, real bullets, Arial 11 body. Raw markdown as text is not acceptable.
 
-**Design constraint: 3 API calls per meeting, zero intermediate `inspect_doc_structure` calls.** Positions are precomputed with the table-span formula below and applied in a single order-sensitive pipeline.
+**Why table writes are now 2-step + audited.** The previous design used `create_table_with_data` to insert a populated table in one call. Across the 2026-04-23 → 2026-04-29 window that call silently dropped cell content under load — produced structurally-correct tables (right rows × cols) with every cell empty, no error returned. Root cause never confirmed (suspected silent payload drop or index drift in the bottom-up insert sequence). The new design separates table skeleton from cell content, then audits before declaring success — so silent failures become visible and recoverable.
 
-**Table-span formula.** A `create_table_with_data` insert at position `P` with `R` rows × `C` cols and `S` total characters of cell content (sum of `len(cell)` across all cells, no newlines counted) occupies this many indices:
+**Design: 4 doc calls per meeting (was 7), with audit + at-most-one retry on empty cells.**
+
+**Table-span formula** (still used to pre-compute positions for Call 1 — empty tables only, so `S = 0`):
 
 ```
-span = 3 + R + 2*R*C + S
+span_empty = 3 + R + 2*R*C
 ```
 
-Derivation (verified empirically on a 4×2 / 90-char-content table that shifted subsequent indices by 113): 3 bytes for the table header/footer structural tokens, `R` bytes for row markers, 2 bytes per cell for the cell marker plus its paragraph's trailing newline, plus the raw content chars.
+For a 4×2 metadata table that's 27 indices. For an N-row × 3-col Action Items table (incl. header) it's `3 + N + 6N = 3 + 7N`. Sum these spans when computing cursor positions ahead of all table inserts.
 
-Use this to precompute, ahead of Call 1, exactly where every future position lands after all 6 tables are inserted.
+**Call 1 — `batch_update_doc`: text skeleton + paragraph styles + bullets + fonts + EMPTY tables (single call).**
 
-**Call 1 — `batch_update_doc`: text skeleton + paragraph styles + bullets + fonts (single call, all at pre-table positions).**
+Walk content with forward cursor `cursor = 1`. For each block:
 
-Why at pre-table positions: format operations on a range attach character formatting to those characters. Subsequently inserting tables shifts the characters to higher indices but they retain the formatting. So applying bullets and font to the original range works — the formatting moves with the text.
+1. Append `insert_text` op at `cursor` with `text + "\n"` (or `insert_table` for table blocks — see below).
+2. If `style` is a heading, append `update_paragraph_style` over `[cursor, cursor + len(text+"\n")]`.
+3. Advance `cursor` by `len(text+"\n")` for text blocks, or by `span_empty(R, C)` for table blocks.
 
-Walk the content in document order with a forward cursor starting at `cursor = 1`. For each block `(text, style)`:
+Block order (tables now inserted directly, no placeholder blanks):
 
-1. Append `insert_text` op at `cursor` with `text + "\n"`.
-2. If `style` is a heading, append `update_paragraph_style` over `[cursor, cursor + len(text+"\n")]` with the named style.
-3. `cursor += len(text + "\n")`.
-
-Block order (same as before, with placeholder blank lines where tables will land):
-
-| # | Text | Style |
+| # | Block | Style / Action |
 |---|---|---|
 | 1 | `{title}` | HEADING_1 |
 | 2 | `Metadata` | HEADING_2 |
-| 3 | `` (blank) | NORMAL_TEXT — metadata table placeholder |
+| 3 | empty 4×2 table | `insert_table` — 4 rows, 2 cols, no `bold_headers` (key-value layout) |
 | 4 | `Detailed Bullet Notes` | HEADING_2 |
-| 5-N | each bullet text | NORMAL_TEXT |
+| 5..N | each bullet text | NORMAL_TEXT |
 | N+1 | `Action Items` | HEADING_2 |
-| N+2 | `` (blank) | NORMAL_TEXT — action items table placeholder |
+| N+2 | empty `(1+rows_ai)×3` table | `insert_table` — `bold_headers: true` |
 | N+3 | `Feature Requests, Gaps & Product Feedback` | HEADING_2 |
-| N+4 | `` (blank) | NORMAL_TEXT — placeholder |
+| N+4 | empty `(1+rows_fr)×3` table | `insert_table` — `bold_headers: true` (skip block if no feature requests; write "(none surfaced this call)" as NORMAL_TEXT instead) |
 | N+5 | `Tone & Character` | HEADING_2 |
-| N+6 | `` (blank) | NORMAL_TEXT — placeholder |
+| N+6 | empty `(1+rows_tc)×3` table | `insert_table` — `bold_headers: true` |
 | N+7 | `Insights or Flags` | HEADING_2 |
 | N+8 | `{insights_text}` | NORMAL_TEXT |
 | N+9 | `Growth Advisory` | HEADING_2 |
-| N+10..11 | blank placeholders for GA topics + GA score (only if GA has data; else skip both and write the "No GA discussed" paragraph directly) | NORMAL_TEXT |
+| N+10 | empty `(1+rows_ga_topics)×4` table | `insert_table` (only if `growth_advisory.has_topics`; else skip and write "No growth advisory topics discussed.") |
+| N+11 | empty `(1+3)×3` table for GA score | `insert_table` (only if GA has score data; rows = 3 dimensions: Specificity, Actionability, Composite OR however many score rows the prompt produced) |
 | N+12 | `{ga_composite_line}` | NORMAL_TEXT |
 | N+13 | `Gut Check` | HEADING_2 |
 | N+14 | `{gut_check_text}` | NORMAL_TEXT |
@@ -253,50 +252,51 @@ Block order (same as before, with placeholder blank lines where tables will land
 | N+17 | `===` | NORMAL_TEXT |
 | N+18 | `` (blank) | NORMAL_TEXT |
 
-Track during this walk:
-- `bullet_first_index` = start_index of first bullet paragraph
-- `bullet_last_end` = end_index of last bullet paragraph
-- `prepend_end` = final cursor value
+Track during the walk:
+- `bullet_first_index` / `bullet_last_end` — for the bullet list op
+- `prepend_end` — final cursor value
+- `table_positions[]` — list of `(table_kind, start_index, rows, cols)` tuples in document order, used by Call 3
 
-At the end of the op list for Call 1, append these operations (all referencing the positions just computed, which are still valid because no tables have been inserted yet):
-
+At the end of the op list, append:
 - `create_bullet_list` over `[bullet_first_index, bullet_last_end]`, `list_type: UNORDERED`
 - `format_text` over `[1, prepend_end]` with `font_family: "Arial"`, `font_size: 11`
-- `format_text` over the title's range with `font_size: 22`, `bold: true` (H1 override — named style alone doesn't carry font size in this tool)
+- `format_text` over the title's range with `font_size: 22`, `bold: true`
 - `format_text` over each H2's range with `font_size: 14`, `bold: true`
 
 Fire this as ONE `batch_update_doc` call.
 
-**Calls 2-7 — `create_table_with_data` × 6, bottom-up.**
+**Call 2 — `inspect_doc_structure detailed=true`: capture cell positions.**
 
-Insert tables in DESCENDING placeholder-index order so earlier placeholders' indices remain valid as later tables are inserted. Given the placeholder positions tracked in Call 1, the order is typically:
+After Call 1 lands, read back the doc structure. For each table in `table_positions`, walk the corresponding table in the structure response and capture every cell's `start_index`. Build `cell_writes[]` — a list of `(cell_start_index, text)` tuples covering every cell that should have content.
 
-1. GA score placeholder (highest index)
-2. GA topics placeholder
-3. Tone & Character placeholder
-4. Feature Requests placeholder
-5. Action Items placeholder
-6. Metadata placeholder (lowest index)
+For each table kind, the cell-text mapping is:
+- **Metadata (4×2)**: rows = `[["Date", date], ["Account Manager", am], ["Merchant Contact", contact], ["Business Name", name]]`. `bold_headers` is OFF for this table — the left column is the "key", not a header.
+- **Action Items**: row 0 = `["Action", "Owner", "Deadline"]`, rows 1+ = entries from `action_items`.
+- **Feature Requests**: row 0 = `["Item", "Context", "Priority"]`, rows 1+ = entries from `feature_requests`.
+- **Tone**: row 0 = `["Person", "Tone", "Notes"]`, rows 1+ = entries from `tone`.
+- **GA topics**: row 0 = `["Topic", "Bucket", "Initiated By", "Commitment"]`, rows 1+ = entries from `growth_advisory.topics_table`.
+- **GA score**: row 0 = `["Dimension", "Score", "Label"]`, rows 1+ = entries from `growth_advisory.score_table`.
 
-For each table:
+Sanity check: number of cells in the structure response per table MUST equal `R × C`. If it doesn't, log `cell-count-mismatch` and skip that table's writes (don't try to recover a misshapen table — leave it empty for the audit step to surface).
 
-```
-mcp__google-workspace__create_table_with_data
-  document_id: {doc_id}
-  user_google_email: philip.bornhurst@doordash.com
-  tab_id: t.0                         # or the actual tab id if different
-  index: {placeholder.start_index}
-  bold_headers: true                  # false for Metadata (key-value, not tabular)
-  table_data: [[headers], [row], ...]
-```
+**Call 3 — `batch_update_doc` with `insert_text` ops in REVERSE document order.**
 
-Because bullets and font were applied to the original range in Call 1, the formatting stays with the text as tables push it down. Tables get their own default formatting, which is fine — the Launchpad reference doc's tables are not specially formatted beyond bold headers.
+Sort `cell_writes[]` by `cell_start_index` DESCENDING. Insert each cell's text at its start_index. Reverse order keeps earlier indices valid as later cells get filled.
 
-**Call 8 — `modify_sheet_values` to append the tracker row** (unchanged from step i below).
+If a cell text is empty (legitimately — e.g. a Tone row where Notes is blank), skip the op. Empty insertions are no-ops anyway, but skipping avoids polluting the audit signal.
 
-**Cost accounting.** 1 super-batch + 6 table inserts + 1 tracker append + 1 email draft = 9 API calls per meeting. No `inspect_doc_structure` calls required. If GA has no topics and score, the table count drops to 4 and total calls drop to 7. If the email step skips (no recipient available), subtract 1.
+Fire as ONE `batch_update_doc` call.
+
+**Call 4 — `inspect_doc_structure detailed=true` (audit) + at-most-one retry.**
+
+Re-read the doc. For every cell in `cell_writes[]` that was supposed to have non-empty text, confirm the structure now reports that text in the cell. Build `empty_cells[]` — cells that should have content but still don't.
+
+- If `empty_cells[]` is empty → audit passed. Record `audit-passed` in the meeting status. Proceed to step i.
+- If `empty_cells[]` is non-empty → fire ONE retry `batch_update_doc` with insert_text ops for the missing cells (positions re-resolved from the audit's structure response, sorted reverse-descending). Record `audit-retried-N-cells` in the meeting status. Do NOT audit a second time — accept whatever lands. The tracker row gets a `partial-content` note. The end-of-run summary lists every meeting that needed a retry so Phil can spot-check.
 
 **If ANY call fails** (permissions, schema, etc.), mark the meeting `failed-doc-write`, log which call failed, and continue to the next meeting without rollback. Partial prepends are acceptable.
+
+**Cost accounting.** 1 super-batch (Call 1) + 1 inspect (Call 2) + 1 cell-fill batch (Call 3) + 1 audit inspect (Call 4) + 0–1 retry batch + 1 tracker append + 1 email draft = **6–7 API calls per meeting** (was 9). The 4-call doc-write sequence replaces the previous 7-call pattern (1 super-batch + 6 `create_table_with_data`) — net savings while adding verification. If GA has no topics and no score table, two table inserts + their cell writes drop out and the cost shrinks accordingly.
 
 **i. Append to tracker.** Use `mcp__google-workspace__modify_sheet_values`:
 
@@ -576,5 +576,6 @@ To note: DO NOT error out anything for any date-related confusion. Assume that e
 - Running Notes column is currently BV. The skill auto-detects by header name in case the column shifts.
 - The log sheet `v2` tab drives downstream automations. Do NOT write to Sheet1 or Sheet4.
 - Master Hub lives at `1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4` (default first tab, `gid=0`). Single header row on row 1; data from row 2.
-- Formatting is non-negotiable: prepends MUST use real Google Docs H1/H2 styles, real Docs tables (via `create_table_with_data`), real bullet lists, and Arial 11 body. Markdown-as-plaintext inserts (pipe tables, `#` headings, `*` bullets rendered literally) are broken output, not "good enough." Reference doc: `1odvvOQpOm_m0G7WR8hlwKTzZYxI_j74JoSA8W2d3Trs`.
+- Formatting is non-negotiable: prepends MUST use real Google Docs H1/H2 styles, real Docs tables (inserted empty via `insert_table` then populated cell-by-cell — see step h), real bullet lists, and Arial 11 body. Markdown-as-plaintext inserts (pipe tables, `#` headings, `*` bullets rendered literally) are broken output, not "good enough." Reference doc: `1odvvOQpOm_m0G7WR8hlwKTzZYxI_j74JoSA8W2d3Trs`.
+- **Do NOT use `create_table_with_data`.** It silently dropped cell content during the 2026-04-23 → 2026-04-29 window — produced structurally-correct tables with empty cells and no error. The new pattern (insert empty table → cell-fill batch → audit) avoids the failure mode entirely. The end-of-run summary lists any meeting whose audit had to retry, so silent regressions surface immediately.
 - Always pass `user_google_email: "philip.bornhurst@doordash.com"` to every google-workspace MCP call. No exceptions.
