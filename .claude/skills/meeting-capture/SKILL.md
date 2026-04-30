@@ -298,7 +298,11 @@ Re-read the doc. For every cell in `cell_writes[]` that was supposed to have non
 
 **Cost accounting.** 1 super-batch (Call 1) + 1 inspect (Call 2) + 1 cell-fill batch (Call 3) + 1 audit inspect (Call 4) + 0–1 retry batch + 1 tracker append + 1 email draft = **6–7 API calls per meeting** (was 9). The 4-call doc-write sequence replaces the previous 7-call pattern (1 super-batch + 6 `create_table_with_data`) — net savings while adding verification. If GA has no topics and no score table, two table inserts + their cell writes drop out and the cost shrinks accordingly.
 
-**i. Append to tracker.** Use `mcp__google-workspace__modify_sheet_values`:
+**i. Append to tracker (with verification + at-most-one retry).**
+
+The tracker write is the **non-negotiable** finishing step. Doc prepends without tracker rows are how mx calls go missing in downstream automations (daily brief, weekly mind map, mx-tier scoring). Treat tracker-write failures with the same audit-and-retry rigor as the doc-write step. Historical incident: 4 meetings from 2026-04-21 to 2026-04-29 had Running Notes prepended but no tracker rows — required manual back-fill.
+
+**i.1 — Append.** Use `mcp__google-workspace__modify_sheet_values`:
 
 - `spreadsheet_id: "1OMJ-3KK_ge_aLy_kJZR-2AbehZdKeviOpmHOILmS8lM"`
 - `range_name: "v2!A{next_row_index}:E{next_row_index}"`
@@ -311,7 +315,18 @@ Re-read the doc. For every cell in `cell_writes[]` that was supposed to have non
   - `D`: `"Phil"`
   - `E`: Running Notes URL (full URL from Master Hub column BV)
 
-After successful write, increment `next_row_index` and add `(store_id, meeting_date)` to the in-memory dedupe set so later meetings in the same run also dedupe against it.
+**i.2 — Verify.** Immediately after the append, call `mcp__google-workspace__read_sheet_values` on `v2!A{next_row_index}:E{next_row_index}` and confirm the row landed with the expected Store ID in column B and a non-empty URL in column E.
+
+- Verify pass: `read[0][1] == store_id` (string match) AND `read[0][4]` starts with `"https://docs.google.com/document/d/"`. → record `tracker-written` and continue.
+- Verify fail (read returned an empty row, wrong Store ID, or short URL): fire ONE retry of the same `modify_sheet_values` call to the same range. Then re-read once more.
+  - Retry pass → record `tracker-retried` and continue.
+  - Retry fail → record `tracker-write-failed` with the read-back values, surface loudly in the summary. Do NOT skip the email draft. Do NOT corrupt downstream state — the in-memory dedupe set should NOT include this `(store_id, date)` so a re-run of /meeting-capture will pick it up again.
+
+**i.3 — Update in-memory state.** ONLY after verify (or retry) passes:
+- Increment `next_row_index`.
+- Add `(store_id, meeting_date)` to the in-memory dedupe set so later meetings in the same run also dedupe against it.
+
+If verify failed both attempts, do NOT update in-memory state. The next /meeting-capture run will re-process this meeting (which produces a duplicate prepend in the doc, but at least the tracker gets the row). Phil will see the `tracker-write-failed` flag in the summary and can decide whether to manually fix or accept the re-run.
 
 **i2. Draft follow-up email to merchant contact.**
 
@@ -389,9 +404,14 @@ Capture the returned `draft_id` and construct the review URL: `https://mail.goog
 
 **Cowork tool fallback:** If `mcp__google-workspace__draft_gmail_message` is not available in the current context, use the `gws` CLI (load `core:using-gmail` skill first for correct syntax). The draft-creation command there is equivalent.
 
-**j. Record status** as `processed` for the summary. Also record the email outcome (`email-drafted` + draft link, `email-skipped-no-recipient`, or `email-draft-failed`) so the summary can show it.
+**j. Record status** as `processed` for the summary. Also record:
+- The doc-write outcome (`audit-passed`, `audit-retried-N-cells`, or `failed-doc-write`).
+- The tracker outcome (`tracker-written`, `tracker-retried`, or `tracker-write-failed`).
+- The email outcome (`email-drafted` + draft link, `email-skipped-no-recipient`, or `email-draft-failed`).
 
 ### 6. Summary report
+
+**Final reconciliation pass.** Before printing the summary, re-read `v2!A:E` from the tracker once more and build a fresh set of `(store_id, date)` pairs. For each meeting marked `processed` in this run, confirm its `(store_id, meeting_date)` is in that set. Any meeting that was processed but is NOT in the tracker = a silent drop. Add it to a `tracker-missing[]` list and surface loudly in the summary. Do NOT auto-retry from the reconciliation step — by this point we've already had two attempts in step i, and a third silent failure means something deeper is wrong (auth drop, sheet permissions, etc.) that warrants Phil's attention.
 
 Print a concise summary:
 
@@ -399,24 +419,34 @@ Print a concise summary:
 Meeting Capture — Summary
 
 Processed: N
+  Tracker rows confirmed: M  (must equal N — if M < N, see "Tracker drops" below)
 Skipped (duplicate): N
 Skipped (no Store ID): N
 Skipped (not in Master Hub): N
 Skipped (no Running Notes doc): N
 Failed (doc write): N
 
-Email drafts created: N
-Email skipped (no recipient): N
-Email draft failed: N
+Doc-write audits: N passed, K retried (cells back-filled), F failed
+Tracker writes: N first-try, K retried, F failed
+Email drafts: N created, K skipped (no recipient), F failed
+
+{IF tracker-write-failed or tracker-missing[] non-empty:}
+TRACKER DROPS — these meetings have Running Notes prepends but NO tracker row:
+- {YYYY-MM-DD} {Business Name} ({Store ID}) — Running Notes: {URL}
+  Reason: {tracker-write-failed | tracker-missing}
+- ...
+ACTION: Re-run /meeting-capture or manually back-fill these rows in the tracker.
 
 Processed mx:
 - {Business Name} ({Store ID}) — {YYYY-MM-DD}
   Notes: {Running Notes URL}
+  Doc audit: {audit-passed | audit-retried-N-cells | failed}
+  Tracker: {tracker-written | tracker-retried | tracker-write-failed}
   Draft: {draft review URL, or "skipped - no recipient", or "failed - {reason}"}
 - ...
 ```
 
-Include Store IDs, Running Notes links, and draft email links so Phil can spot-check results and send drafts with one click.
+Include Store IDs, Running Notes links, and draft email links so Phil can spot-check results and send drafts with one click. The TRACKER DROPS section is the most important signal — it's the single artifact that tells Phil whether downstream automations have complete data for this batch.
 
 ### 7. Error handling philosophy
 
