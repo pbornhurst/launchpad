@@ -7,39 +7,55 @@ description: Scan recent Granola meetings for mx calls, generate structured PRIS
 
 Scan recent Granola meetings for mx calls, generate structured PRISM-TnA notes from the transcript, prepend them to the mx's Running Notes doc, and log the call to the Running Notes Input Tracker.
 
-**Confirms before writing.** Scans in tiered time windows (2h → 12h → 24h → 48h → 7d), stops the moment it hits an mx call that's already in the tracker, classifies every candidate (processable vs. skipped), then waits for Phil's explicit go-ahead before touching any doc or tracker. Re-running back-to-back is cheap (usually bails after Tier 1).
+**Confirms before writing.** Lists last 7d of Granola meetings in one call, batch-fetches all candidate notes upfront, then walks tier windows (2h → 12h → 24h → 48h → 7d) IN MEMORY with stop-the-world early-exit on the first tracker-duplicate hit. Classifies every candidate (processable vs. skipped) and waits for Phil's explicit go-ahead before touching any doc or tracker.
 
 ## Instructions
 
-### 1. Scan Granola in tiered time windows (newest first)
+### 1. Discover candidates (one list call, one batched fetch, in-memory tier walk)
 
-**Goal:** Do as little work as possible. Check the most recent meetings first and stop scanning as soon as we hit a meeting that was already captured.
+**Design:** the front-end discovery does at most **3 API calls**: one `list_meetings`, one `read_sheet_values` for the tracker dedupe set, and one or two `get_meetings` batches. The tier walk is purely in-memory over the already-fetched data — its job is the stop-the-world early-exit, not gating I/O.
 
-**1a. One-shot meeting list.** Call `mcp__granola__list_meetings` with `time_range: "last_30_days"` (Granola has no native < 1 week window). This is cheap — a single call returning up to 25 meeting summaries.
+**Parallelization:** Step 3's reads (Master Hub header + xlsx download + tracker dedupe) are independent of Step 1c's `get_meetings` batch. Fire them in the same message as parallel tool calls — the tier walk in 1d needs both sets of data, but neither needs the other to start. This is the difference between a serial 4-call chain and a 2-round-trip discovery phase.
 
-**1b. Sort newest-first** by `created_at` (or `start_at`) and compute each meeting's age in hours relative to `now()` in America/Los_Angeles. Use `date` (bash) or `datetime` (python) — never guess hour offsets. Remember Granola timestamps render in the event creator's timezone, not PDT (see MEMORY.md Granola notes).
+**1a. List meetings — 7-day custom window.** Call `mcp__granola__list_meetings` with:
+- `time_range: "custom"`
+- `custom_start: <today minus 7 days, ISO format YYYY-MM-DD>`
+- `custom_end: <today, ISO format YYYY-MM-DD>`
 
-**1c. Tier windows.** Walk the list in the following tiered windows, from narrowest to widest:
+Why custom over `last_30_days`: a 30-day window returns ~130+ meeting summaries (~70KB) that overflow the tool-result token limit, forcing a file-spillover round trip via Bash. A 7-day window returns ~25 meetings inline, no spillover.
 
-1. **Tier 1** — last **2 hours**
-2. **Tier 2** — last **12 hours** (delta: 2h → 12h, only meetings not already fetched in Tier 1)
-3. **Tier 3** — last **24 hours**
-4. **Tier 4** — last **48 hours**
-5. **Tier 5** — last **168 hours (7 days)**
+**1b. Parse, tier-bucket, and emit IDs in one Python invocation.** Pipe the `list_meetings` text through a single `python3 <<PY ... PY` Bash call that:
 
-For each tier:
-- Collect the meetings in that tier's delta window whose notes have NOT yet been fetched.
-- Batch-fetch their notes via `mcp__granola__get_meetings` (up to 10 IDs per call).
-- Walk each meeting in newest-first order, run marker detection (Step 2), and append classified candidates to the in-memory candidate list. **Do not fetch transcripts and do not write to Docs / tracker / Gmail yet** — that happens in Step 5 after Phil confirms the list.
-- **Stop-the-world trigger:** The moment you encounter an `mx call` meeting whose `(store_id, meeting_date)` is already in the tracker dedupe set (Section 3), halt all further tier expansion. Everything older is presumed already processed. Record this as the stop point for the confirmation summary.
-- If no stop-the-world trigger fires within this tier, expand to the next tier.
+1. Regex-extracts each `<meeting id="..." title="..." date="...">` triplet.
+2. Parses the date string (`%b %d, %Y %I:%M %p` after stripping the trailing `PDT`/`PST`) and computes `hours_ago = (datetime.now() - parsed_dt).total_seconds() / 3600`. (Granola timestamps render in the event creator's timezone — usually PT for Phil's calendar, but cross-reference Google Calendar via `get_events` if a specific meeting's date looks off.)
+3. Sorts newest-first.
+4. Buckets each meeting into Tier 1-5 by `hours_ago`:
+   - Tier 1: 0-2h
+   - Tier 2: 2-12h
+   - Tier 3: 12-24h
+   - Tier 4: 24-48h
+   - Tier 5: 48-168h
+5. Prints a single JSON blob with: meeting list (id, title, date_str, hours_ago, tier), tier-bucket sizes, and a deduped list of all candidate IDs to fetch (Tier 1 ∪ Tier 2 ∪ Tier 3 ∪ Tier 4 ∪ Tier 5, capped at 10 per `get_meetings` call).
 
-**1d. How the dedupe signal works.** Before Tier 1 runs, load the tracker v2 dedupe set ONCE (Section 3). Every successfully captured meeting in the current run also gets added to the in-memory dedupe set so it short-circuits subsequent tiers. The tracker is append-only, so a `(store_id, date)` pair found there means that exact mx call was already captured — nothing older could plausibly be new.
+This replaces what was previously two Bash steps with one.
 
-**1e. Edge cases:**
-- Non-`mx call` meetings (no marker) do NOT count toward the stop trigger. Skip them and keep walking.
+**1c. Batched note fetch (single round trip when possible).** From step 1b's deduped ID list, call `mcp__granola__get_meetings` with up to 10 IDs per call. For typical 7-day windows the candidate count is ≤10 and this is one round trip; if >10, fire as many parallel `get_meetings` calls as needed (each capped at 10 IDs) in a single message. Pre-filter on a denylist of obvious recurring internal meetings before fetching, so we don't waste IDs on team standups: skip titles matching (case-insensitive) any of `^AM Team Super Standup`, `^Pathfinder (Brief|Ops|Prod)`, `^Phil / `, `^Philip / `, `Weekly 1:1$`, `^Strategic Initiatives Check-In`, `^DD <> CE Weekly`, `^VOTM Sync`, `^Monthly Newsletter Jam`. (When in doubt, fetch — the cost of one extra `get_meetings` slot is small, and missing an mx call is worse than fetching one internal meeting.)
+
+**1d. Tier walk in memory (stop-the-world).** With every candidate's notes now resident, walk Tier 1 → Tier 5 in newest-first order. For each meeting in each tier:
+- Run marker detection (Step 2) on the private notes.
+- If marker matches and `(store_id, meeting_date)` is in the tracker dedupe set: **halt** all further tier expansion. Everything older in this run is presumed already processed. Record this as the stop point for the confirmation summary.
+- If marker matches and not in dedupe set: append as `processable` (or appropriate `skipped-*` bucket — see Step 4) to the candidate list.
+- If no marker: skip silently, do NOT count toward stop trigger.
+
+The walk is pure local CPU; no API calls. The stop-the-world benefit is preserved — it just operates on the already-fetched data.
+
+**1e. How the dedupe signal works.** Load the tracker v2 dedupe set ONCE (Section 3) before the tier walk. Every successfully captured meeting in the current run also gets added to the in-memory dedupe set so it short-circuits later in the same walk. The tracker is append-only, so a `(store_id, date)` pair found there means that exact mx call was already captured — nothing older could plausibly be new.
+
+**1f. Edge cases:**
+- Non-`mx call` meetings (no marker) do NOT count toward the stop trigger. Skip them silently.
 - `mx call` meetings that are missing a Store ID, not in Master Hub, or have no Running Notes doc count as `skipped-*` but DO NOT trigger stop — they weren't captured, so we have no signal that older meetings were either.
-- If Tier 5 completes with zero captures and zero stop hits, the summary should note "no new mx calls in last 7 days" — this is the true base case.
+- Tier 5 completes with zero captures and zero stop hits → the summary notes "no new mx calls in last 7 days" — true base case for re-runs.
+- If 7 days isn't enough (Phil names a meeting older than 7d in step 4 modify), widen `custom_start` to 14d and re-run steps 1a-1d. Don't widen by default — the savings come from the narrow window.
 
 ### 2. Identify mx calls
 
