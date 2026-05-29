@@ -1,0 +1,206 @@
+{
+  "store_id": "475740",
+  "store_name": "Bento Ya (317 Broadway)",
+  "install_date": "2025-06-28",
+  "windows": {
+    "pre_start": "2024-12-30",
+    "pre_end": "2025-06-27",
+    "post_start": "2025-06-28",
+    "post_end": "2025-12-25",
+    "m1_3_start": "2025-06-28",
+    "m1_3_end": "2025-09-25",
+    "m4_6_start": "2025-09-26",
+    "m4_6_end": "2025-12-24",
+    "latest_3m_start": "2026-02-11",
+    "latest_3m_end": "2026-05-11",
+    "tenure_days_since_install": 318
+  },
+  "metadata": {
+    "cuisine_type": "Japanese",
+    "region_name": "Southern California",
+    "submarket_name": "Los Angeles",
+    "management_type_grouped": "UNMANAGED SMB",
+    "cuisine_bucket": "Asian",
+    "region_bucket": "West",
+    "mgmt_bucket": "Unmanaged Smb",
+    "lifetime_osw": "1042.955977",
+    "lifetime_gov_store_week": "21740.674402515726",
+    "total_active_days": "318",
+    "lifetime_card_orders": "47380",
+    "lifetime_card_gov": "987647.780000000000"
+  },
+  "blocks": {
+    "channel_pre_post": {
+      "rows": [
+        {
+          "CHANNEL": "In-store",
+          "PRE_ORDERS": 0,
+          "PRE_SUBTOTAL": "0.00",
+          "POST_ORDERS": 26386,
+          "POST_SUBTOTAL": "463026.54"
+        },
+        {
+          "CHANNEL": "Marketplace",
+          "PRE_ORDERS": 181,
+          "PRE_SUBTOTAL": "4048.80",
+          "POST_ORDERS": 315,
+          "POST_SUBTOTAL": "8390.10"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "PRE_ORDERS": 6,
+          "PRE_SUBTOTAL": "140.25",
+          "POST_ORDERS": 5,
+          "POST_SUBTOTAL": "123.00"
+        },
+        {
+          "CHANNEL": null,
+          "PRE_ORDERS": 0,
+          "PRE_SUBTOTAL": "0.00",
+          "POST_ORDERS": 1,
+          "POST_SUBTOTAL": "2.58"
+        }
+      ],
+      "elapsed_s": 41.67
+    },
+    "channel_maturation": {
+      "rows": [
+        {
+          "CHANNEL": "In-store",
+          "M1_3_ORDERS": 13786,
+          "M1_3_SUBTOTAL": "243355.03",
+          "M4_6_ORDERS": 12600,
+          "M4_6_SUBTOTAL": "219671.51",
+          "LATEST_3M_ORDERS": 14126,
+          "LATEST_3M_SUBTOTAL": "248612.77"
+        },
+        {
+          "CHANNEL": "Marketplace",
+          "M1_3_ORDERS": 181,
+          "M1_3_SUBTOTAL": "4863.55",
+          "M4_6_ORDERS": 134,
+          "M4_6_SUBTOTAL": "3526.55",
+          "LATEST_3M_ORDERS": 147,
+          "LATEST_3M_SUBTOTAL": "4386.85"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "M1_3_ORDERS": 3,
+          "M1_3_SUBTOTAL": "74.00",
+          "M4_6_ORDERS": 2,
+          "M4_6_SUBTOTAL": "49.00",
+          "LATEST_3M_ORDERS": 3,
+          "LATEST_3M_SUBTOTAL": "74.25"
+        },
+        {
+          "CHANNEL": null,
+          "M1_3_ORDERS": 1,
+          "M1_3_SUBTOTAL": "2.58",
+          "M4_6_ORDERS": 0,
+          "M4_6_SUBTOTAL": "0.00",
+          "LATEST_3M_ORDERS": 1,
+          "LATEST_3M_SUBTOTAL": "11.00"
+        }
+      ],
+      "elapsed_s": 42.44
+    },
+    "mp_ops": {
+      "rows": [
+        {
+          "PRE_COMPLETED_ORDERS": 181,
+          "PRE_ERRORS": 0,
+          "PRE_AVOIDABLE_WAIT_SECONDS": "2.37081301",
+          "PRE_AVG_RATING": "4.933333",
+          "POST_COMPLETED_ORDERS": 315,
+          "POST_ERRORS": 0,
+          "POST_AVOIDABLE_WAIT_SECONDS": "2.29362416",
+          "POST_AVG_RATING": "4.641509"
+        }
+      ],
+      "elapsed_s": 39.68
+    },
+    "mp_cancellations": {
+      "rows": [
+        {
+          "PRE_CANCELLED": 6,
+          "POST_CANCELLED": 9
+        }
+      ],
+      "elapsed_s": 47.45
+    },
+    "customer_acquisition": {
+      "rows": [
+        {
+          "CHANNEL": "Marketplace",
+          "CX_TYPE_WITHIN_STORE": "new",
+          "PRE_ORDERS": 61,
+          "PRE_SUBTOTAL": "1496.83",
+          "POST_ORDERS": 155,
+          "POST_SUBTOTAL": "4710.80"
+        },
+        {
+          "CHANNEL": "Marketplace",
+          "CX_TYPE_WITHIN_STORE": "repeat",
+          "PRE_ORDERS": 120,
+          "PRE_SUBTOTAL": "2551.97",
+          "POST_ORDERS": 160,
+          "POST_SUBTOTAL": "3679.30"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "CX_TYPE_WITHIN_STORE": "new",
+          "PRE_ORDERS": 5,
+          "PRE_SUBTOTAL": "122.50",
+          "POST_ORDERS": 5,
+          "POST_SUBTOTAL": "123.00"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "CX_TYPE_WITHIN_STORE": "repeat",
+          "PRE_ORDERS": 1,
+          "PRE_SUBTOTAL": "17.75",
+          "POST_ORDERS": 0,
+          "POST_SUBTOTAL": "0.00"
+        }
+      ],
+      "elapsed_s": 81.06
+    },
+    "sponsored_listings": {
+      "rows": [
+        {
+          "PRE_IMPRESSIONS": 0,
+          "PRE_CLICKS": 0,
+          "PRE_ORDERS": 0,
+          "PRE_SALES": "0.000000",
+          "PRE_AD_SPEND": "0.000000",
+          "PRE_NEW_CX": 0,
+          "POST_IMPRESSIONS": 1857,
+          "POST_CLICKS": 119,
+          "POST_ORDERS": 39,
+          "POST_SALES": "777.400000",
+          "POST_AD_SPEND": "207.340000",
+          "POST_NEW_CX": 2
+        }
+      ],
+      "elapsed_s": 49.23
+    },
+    "promos": {
+      "rows": [
+        {
+          "PRE_ORDERS": 7,
+          "PRE_SALES": "189.710000",
+          "PRE_DD_FUNDED_DISCOUNT": "38.930000",
+          "PRE_MX_FUNDED_DISCOUNT": "0.000000",
+          "PRE_NEW_CX": 6,
+          "POST_ORDERS": 15,
+          "POST_SALES": "464.750000",
+          "POST_DD_FUNDED_DISCOUNT": "104.230000",
+          "POST_MX_FUNDED_DISCOUNT": "0.000000",
+          "POST_NEW_CX": 8
+        }
+      ],
+      "elapsed_s": 617.6
+    }
+  },
+  "pulled_at": "2026-05-12"
+}

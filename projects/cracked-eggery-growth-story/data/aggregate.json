@@ -1,0 +1,488 @@
+{
+  "generated_at": "2026-05-21",
+  "today": "2026-05-21",
+  "post_end_anchor": "2026-05-20",
+  "stores": [
+    {
+      "store_id": "2290148",
+      "store_name": "Cracked Eggery (Cleveland Park)",
+      "install_date": "2026-03-03",
+      "tenure_days": 79,
+      "windows": {
+        "pre_start": "2025-09-04",
+        "pre_end": "2026-03-02",
+        "matched_pre_start": "2025-12-15",
+        "matched_pre_end": "2026-03-02",
+        "post_start": "2026-03-03",
+        "post_end": "2026-05-20",
+        "post_days": 79,
+        "matched_pre_days": 79,
+        "full_pre_days": 180
+      },
+      "metadata": {
+        "cuisine_type": "American",
+        "region_name": "Northeast",
+        "submarket_name": "Washington, D.C",
+        "management_type_grouped": "MANAGED SMB",
+        "lifetime_card_orders": 4523,
+        "lifetime_card_gov": 112654.14
+      },
+      "channels_matched": {
+        "In-store": {
+          "pre_orders": 0,
+          "pre_subtotal": 0.0,
+          "post_orders": 1647,
+          "post_subtotal": 30811.75
+        },
+        "Kiosk": {
+          "pre_orders": 0,
+          "pre_subtotal": 0.0,
+          "post_orders": 2876,
+          "post_subtotal": 65167.4
+        },
+        "Marketplace": {
+          "pre_orders": 2451,
+          "pre_subtotal": 64419.3,
+          "post_orders": 2481,
+          "post_subtotal": 62475.05
+        },
+        "Storefront": {
+          "pre_orders": 960,
+          "pre_subtotal": 25090.35,
+          "post_orders": 1265,
+          "post_subtotal": 29879.31
+        }
+      },
+      "channels_full": {
+        "In-store": {
+          "pre_orders": 0,
+          "pre_subtotal": 0.0,
+          "post_orders": 1647,
+          "post_subtotal": 30811.75
+        },
+        "Kiosk": {
+          "pre_orders": 0,
+          "pre_subtotal": 0.0,
+          "post_orders": 2876,
+          "post_subtotal": 65167.4
+        },
+        "Marketplace": {
+          "pre_orders": 6045,
+          "pre_subtotal": 157903.15,
+          "post_orders": 2481,
+          "post_subtotal": 62475.05
+        },
+        "Storefront": {
+          "pre_orders": 2505,
+          "pre_subtotal": 64486.15,
+          "post_orders": 1265,
+          "post_subtotal": 29879.31
+        }
+      },
+      "mp_ops": {
+        "pre_completed_orders": 2451,
+        "post_completed_orders": 2481,
+        "pre_errors": 23,
+        "post_errors": 28,
+        "pre_error_rate_pct": 0.9383924928600571,
+        "post_error_rate_pct": 1.128577186618299,
+        "pre_avoidable_wait_seconds": 1.05516995,
+        "post_avoidable_wait_seconds": 1.46673127,
+        "pre_avg_rating": null,
+        "post_avg_rating": null
+      },
+      "mp_cancels": {
+        "pre_cancelled": 10,
+        "post_cancelled": 21,
+        "pre_cancel_rate_pct": 0.4063388866314506,
+        "post_cancel_rate_pct": 0.8393285371702638
+      },
+      "cx_acq": {
+        "Marketplace": {
+          "new": {
+            "pre_orders": 658,
+            "pre_subtotal": 19108.75,
+            "post_orders": 574,
+            "post_subtotal": 15759.15
+          },
+          "repeat": {
+            "pre_orders": 1793,
+            "pre_subtotal": 45310.55,
+            "post_orders": 1907,
+            "post_subtotal": 46715.9
+          }
+        },
+        "Storefront": {
+          "new": {
+            "pre_orders": 462,
+            "pre_subtotal": 13356.7,
+            "post_orders": 618,
+            "post_subtotal": 15977.25
+          },
+          "repeat": {
+            "pre_orders": 498,
+            "pre_subtotal": 11733.65,
+            "post_orders": 647,
+            "post_subtotal": 13902.06
+          }
+        }
+      },
+      "sl": {
+        "pre_impressions": 16579,
+        "pre_clicks": 1217,
+        "pre_orders": 532,
+        "pre_sales": 13842.9,
+        "pre_ad_spend": 1607.66,
+        "pre_new_cx": 64,
+        "pre_roas": 8.610589303708496,
+        "post_impressions": 9330,
+        "post_clicks": 747,
+        "post_orders": 331,
+        "post_sales": 8268.0,
+        "post_ad_spend": 1004.96,
+        "post_new_cx": 38,
+        "post_roas": 8.227193122114313
+      },
+      "promos": {
+        "pre_orders": 1463,
+        "pre_sales": 45171.35,
+        "pre_dd_funded_discount": 1446.2,
+        "pre_mx_funded_discount": 5750.29,
+        "pre_new_cx": 406,
+        "post_orders": 1235,
+        "post_sales": 37382.31,
+        "post_dd_funded_discount": 844.32,
+        "post_mx_funded_discount": 4745.24,
+        "post_new_cx": 369
+      },
+      "totals": {
+        "post_pos_orders": 4523,
+        "post_pos_gov": 95979.15,
+        "post_pos_orders_per_week": 400.7721518987342,
+        "post_pos_gov_per_week": 8504.48164556962,
+        "post_pos_gov_annualized": 443447.9715189873,
+        "matched_nonpos_pre_orders": 3411,
+        "matched_nonpos_post_orders": 3746,
+        "matched_nonpos_pre_gov": 89509.65,
+        "matched_nonpos_post_gov": 92354.36,
+        "matched_nonpos_orders_delta_pct": 9.821166813251246,
+        "matched_nonpos_gov_delta_pct": 3.1781042602669176,
+        "matched_nonpos_pre_gov_per_week": 7931.234810126582,
+        "matched_nonpos_post_gov_per_week": 8183.297721518988,
+        "full_pre_nonpos_orders_per_week": 332.5,
+        "full_pre_nonpos_gov_per_week": 8648.472777777777,
+        "post_nonpos_orders_per_week": 331.9240506329114,
+        "post_nonpos_gov_per_week": 8183.297721518988,
+        "matched_new_cx_pre": 1120,
+        "matched_new_cx_post": 1192,
+        "matched_new_cx_delta_pct": 6.428571428571428,
+        "matched_repeat_cx_pre": 2291,
+        "matched_repeat_cx_post": 2554,
+        "matched_repeat_cx_delta_pct": 11.479703186381492
+      }
+    },
+    {
+      "store_id": "2827991",
+      "store_name": "Cracked Eggery (8th St)",
+      "install_date": "2026-03-24",
+      "tenure_days": 58,
+      "windows": {
+        "pre_start": "2025-09-25",
+        "pre_end": "2026-03-23",
+        "matched_pre_start": "2026-01-25",
+        "matched_pre_end": "2026-03-23",
+        "post_start": "2026-03-24",
+        "post_end": "2026-05-20",
+        "post_days": 58,
+        "matched_pre_days": 58,
+        "full_pre_days": 180
+      },
+      "metadata": {
+        "cuisine_type": "American",
+        "region_name": "Northeast",
+        "submarket_name": "Washington, D.C",
+        "management_type_grouped": "MANAGED SMB",
+        "lifetime_card_orders": 5600,
+        "lifetime_card_gov": 121251.86
+      },
+      "channels_matched": {
+        "In-store": {
+          "pre_orders": 0,
+          "pre_subtotal": 0.0,
+          "post_orders": 187,
+          "post_subtotal": 2425.35
+        },
+        "Kiosk": {
+          "pre_orders": 0,
+          "pre_subtotal": 0.0,
+          "post_orders": 5413,
+          "post_subtotal": 104770.3
+        },
+        "Marketplace": {
+          "pre_orders": 5369,
+          "pre_subtotal": 139082.65,
+          "post_orders": 5417,
+          "post_subtotal": 135082.5
+        },
+        "Storefront": {
+          "pre_orders": 1089,
+          "pre_subtotal": 26662.2,
+          "post_orders": 1646,
+          "post_subtotal": 37560.25
+        }
+      },
+      "channels_full": {
+        "In-store": {
+          "pre_orders": 0,
+          "pre_subtotal": 0.0,
+          "post_orders": 187,
+          "post_subtotal": 2425.35
+        },
+        "Kiosk": {
+          "pre_orders": 0,
+          "pre_subtotal": 0.0,
+          "post_orders": 5413,
+          "post_subtotal": 104770.3
+        },
+        "Marketplace": {
+          "pre_orders": 15672,
+          "pre_subtotal": 405316.8,
+          "post_orders": 5417,
+          "post_subtotal": 135082.5
+        },
+        "Storefront": {
+          "pre_orders": 3711,
+          "pre_subtotal": 93488.0,
+          "post_orders": 1646,
+          "post_subtotal": 37560.25
+        }
+      },
+      "mp_ops": {
+        "pre_completed_orders": 5369,
+        "post_completed_orders": 5417,
+        "pre_errors": 56,
+        "post_errors": 101,
+        "pre_error_rate_pct": 1.0430247718383312,
+        "post_error_rate_pct": 1.8645006461140854,
+        "pre_avoidable_wait_seconds": 1.502932,
+        "post_avoidable_wait_seconds": 1.36697981,
+        "pre_avg_rating": null,
+        "post_avg_rating": null
+      },
+      "mp_cancels": {
+        "pre_cancelled": 51,
+        "post_cancelled": 54,
+        "pre_cancel_rate_pct": 0.9409594095940959,
+        "post_cancel_rate_pct": 0.9870224821787608
+      },
+      "cx_acq": {
+        "Marketplace": {
+          "new": {
+            "pre_orders": 1716,
+            "pre_subtotal": 49178.85,
+            "post_orders": 1505,
+            "post_subtotal": 41613.6
+          },
+          "repeat": {
+            "pre_orders": 3653,
+            "pre_subtotal": 89903.8,
+            "post_orders": 3912,
+            "post_subtotal": 93468.9
+          }
+        },
+        "Storefront": {
+          "new": {
+            "pre_orders": 580,
+            "pre_subtotal": 15220.0,
+            "post_orders": 854,
+            "post_subtotal": 21277.35
+          },
+          "repeat": {
+            "pre_orders": 509,
+            "pre_subtotal": 11442.2,
+            "post_orders": 792,
+            "post_subtotal": 16282.9
+          }
+        }
+      },
+      "sl": {
+        "pre_impressions": 40239,
+        "pre_clicks": 3045,
+        "pre_orders": 1071,
+        "pre_sales": 27512.05,
+        "pre_ad_spend": 3240.17,
+        "pre_new_cx": 289,
+        "pre_roas": 8.490927945138681,
+        "post_impressions": 22444,
+        "post_clicks": 1700,
+        "post_orders": 635,
+        "post_sales": 16644.25,
+        "post_ad_spend": 1924.84,
+        "post_new_cx": 127,
+        "post_roas": 8.64708235489703
+      },
+      "promos": {
+        "pre_orders": 3009,
+        "pre_sales": 92531.35,
+        "pre_dd_funded_discount": 4837.39,
+        "pre_mx_funded_discount": 10248.88,
+        "pre_new_cx": 1293,
+        "post_orders": 2444,
+        "post_sales": 76511.45,
+        "post_dd_funded_discount": 896.98,
+        "post_mx_funded_discount": 9293.92,
+        "post_new_cx": 1069
+      },
+      "totals": {
+        "post_pos_orders": 5600,
+        "post_pos_gov": 107195.65000000001,
+        "post_pos_orders_per_week": 675.8620689655172,
+        "post_pos_gov_per_week": 12937.40603448276,
+        "post_pos_gov_annualized": 674593.3146551724,
+        "matched_nonpos_pre_orders": 6458,
+        "matched_nonpos_post_orders": 7063,
+        "matched_nonpos_pre_gov": 165744.85,
+        "matched_nonpos_post_gov": 172642.75,
+        "matched_nonpos_orders_delta_pct": 9.36822545679777,
+        "matched_nonpos_gov_delta_pct": 4.161758268808952,
+        "matched_nonpos_pre_gov_per_week": 20003.688793103447,
+        "matched_nonpos_post_gov_per_week": 20836.193965517243,
+        "full_pre_nonpos_orders_per_week": 753.7833333333333,
+        "full_pre_nonpos_gov_per_week": 19397.964444444446,
+        "post_nonpos_orders_per_week": 852.4310344827586,
+        "post_nonpos_gov_per_week": 20836.193965517243,
+        "matched_new_cx_pre": 2296,
+        "matched_new_cx_post": 2359,
+        "matched_new_cx_delta_pct": 2.7439024390243905,
+        "matched_repeat_cx_pre": 4162,
+        "matched_repeat_cx_post": 4704,
+        "matched_repeat_cx_delta_pct": 13.022585295530995
+      }
+    }
+  ],
+  "brand": {
+    "store_count": 2,
+    "channels_matched": {
+      "Marketplace": {
+        "pre_orders": 7820,
+        "pre_subtotal": 203501.95,
+        "post_orders": 7898,
+        "post_subtotal": 197557.55
+      },
+      "In-store": {
+        "pre_orders": 0,
+        "pre_subtotal": 0.0,
+        "post_orders": 1834,
+        "post_subtotal": 33237.1
+      },
+      "Kiosk": {
+        "pre_orders": 0,
+        "pre_subtotal": 0.0,
+        "post_orders": 8289,
+        "post_subtotal": 169937.7
+      },
+      "Storefront": {
+        "pre_orders": 2049,
+        "pre_subtotal": 51752.55,
+        "post_orders": 2911,
+        "post_subtotal": 67439.56
+      }
+    },
+    "channels_full": {
+      "Marketplace": {
+        "pre_orders": 21717,
+        "pre_subtotal": 563219.95,
+        "post_orders": 7898,
+        "post_subtotal": 197557.55
+      },
+      "In-store": {
+        "pre_orders": 0,
+        "pre_subtotal": 0.0,
+        "post_orders": 1834,
+        "post_subtotal": 33237.1
+      },
+      "Kiosk": {
+        "pre_orders": 0,
+        "pre_subtotal": 0.0,
+        "post_orders": 8289,
+        "post_subtotal": 169937.7
+      },
+      "Storefront": {
+        "pre_orders": 6216,
+        "pre_subtotal": 157974.15,
+        "post_orders": 2911,
+        "post_subtotal": 67439.56
+      }
+    },
+    "mp_ops": {
+      "pre_completed_orders": 7820,
+      "post_completed_orders": 7898,
+      "pre_errors": 79,
+      "post_errors": 129,
+      "pre_error_rate_pct": 1.010230179028133,
+      "post_error_rate_pct": 1.633324892377817,
+      "pre_avoidable_wait_seconds": 1.3625912347122764,
+      "post_avoidable_wait_seconds": 1.3983147520435553,
+      "pre_avg_rating": 0.0,
+      "post_avg_rating": 0.0
+    },
+    "mp_cancels": {
+      "pre_cancelled": 61,
+      "post_cancelled": 75,
+      "pre_cancel_rate_pct": 0.7740134500697881,
+      "post_cancel_rate_pct": 0.9406747773736359
+    },
+    "sl": {
+      "pre_impressions": 56818,
+      "pre_clicks": 4262,
+      "pre_orders": 1603,
+      "pre_sales": 41354.95,
+      "pre_ad_spend": 4847.83,
+      "pre_new_cx": 353,
+      "post_impressions": 31774,
+      "post_clicks": 2447,
+      "post_orders": 966,
+      "post_sales": 24912.25,
+      "post_ad_spend": 2929.8,
+      "post_new_cx": 165,
+      "pre_roas": 8.53061060309458,
+      "post_roas": 8.503054816028397
+    },
+    "promos": {
+      "pre_orders": 4472,
+      "pre_sales": 137702.7,
+      "pre_dd_funded_discount": 6283.59,
+      "pre_mx_funded_discount": 15999.169999999998,
+      "pre_new_cx": 1699,
+      "post_orders": 3679,
+      "post_sales": 113893.76,
+      "post_dd_funded_discount": 1741.3000000000002,
+      "post_mx_funded_discount": 14039.16,
+      "post_new_cx": 1438
+    },
+    "totals": {
+      "post_pos_orders": 10123,
+      "post_pos_gov": 203174.8,
+      "post_pos_gov_per_week": 21441.88768005238,
+      "post_pos_gov_annualized": 1118041.2861741597,
+      "matched_nonpos_pre_gov": 255254.5,
+      "matched_nonpos_post_gov": 264997.11,
+      "matched_nonpos_pre_orders": 9869,
+      "matched_nonpos_post_orders": 10809,
+      "matched_nonpos_gov_delta_pct": 3.8168220344793085,
+      "matched_nonpos_orders_delta_pct": 9.524774546559934,
+      "matched_new_cx_pre": 3416,
+      "matched_new_cx_post": 3551,
+      "matched_new_cx_delta_pct": 3.9519906323185015,
+      "matched_repeat_cx_pre": 6453,
+      "matched_repeat_cx_post": 7258,
+      "matched_repeat_cx_delta_pct": 12.474817914148458,
+      "full_pre_nonpos_gov_per_week": 28046.437222222223,
+      "post_nonpos_gov_per_week": 29019.49168703623,
+      "full_pre_nonpos_orders_per_week": 1086.2833333333333,
+      "post_nonpos_orders_per_week": 1184.3550851156701,
+      "nonpos_gov_weekly_delta_pct_vs_full_pre": 3.4694405464199884,
+      "nonpos_orders_weekly_delta_pct_vs_full_pre": 9.028192624607161
+    }
+  }
+}

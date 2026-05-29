@@ -4,9 +4,9 @@ description: >
   Calendly call preparation agent. Scans today's calendar for Calendly-scheduled
   mx meetings (identified by "Event Name: 15 Minute Meeting" in the description),
   matches each to the Master Hub, finds or creates an account management folder,
-  creates a Running Notes doc with full mx profile data, scans the onboarding
-  channel for Launcher notes, runs internet research via a sub-agent, and sends
-  a Slack summary with all links and a restaurant brief.
+  creates a Running Notes doc with full mx profile data, searches Gmail's
+  "Launcher Reports" label for install/check-in notes, runs internet research
+  via a sub-agent, and sends a Slack summary with all links and a restaurant brief.
 model: sonnet
 color: cyan
 ---
@@ -296,7 +296,7 @@ Launch with `subagent_type: "general-purpose"`, `model: "sonnet"`.
 > <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
 >
 > <h2 style="color: #2C3E50;">Onboarding Notes</h2>
-> <p>[ONBOARDING_NOTES_PLACEHOLDER — this will be populated by the main agent from Sub-agent C results after doc creation. If no notes found: "<em>No onboarding notes found in #pathfinder-mxonboarding</em>"]</p>
+> <p>[ONBOARDING_NOTES_PLACEHOLDER — this will be populated by the main agent from Sub-agent C results after doc creation. If no notes found: "<em>No onboarding notes found in Gmail Launcher Reports</em>"]</p>
 >
 > <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
 >
@@ -469,59 +469,70 @@ Launch with `subagent_type: "general-purpose"`, `model: "opus"`.
 
 ---
 
-### Sub-agent C: Onboarding Channel Scan
+### Sub-agent C: Gmail Launcher Reports Scan
 
 Launch with `subagent_type: "general-purpose"`, `model: "haiku"`.
 
 **Prompt for Sub-agent C** (fill in the business/store details):
 
-> You are searching the #pathfinder-mxonboarding Slack channel for install notes, check-in notes, and any other onboarding context about a specific mx.
+> You are searching Phil's Gmail for Launcher install and check-in reports about a specific mx. These are PRISM Onboarding Bot summaries that Phil receives by email and labels `Launcher Reports`.
 >
 > **Mx name:** [BUSINESS_NAME or best name from calendar event]
+> **Store ID (if known):** [STORE_ID or "unknown"]
 > **Store name (if different):** [STORE_NAME]
 > **DM name:** [ATTENDEE_NAME]
 > **Location:** [ADDRESS or city if known]
 >
-> **CRITICAL — bot messages:** Install and check-in reports in #pathfinder-mxonboarding are posted by **Slack workflow bots** ("Mx Install Summary" `B07P5KQ2A1J` and "Mx Check-in Summary" `B07P0H7EYCV`), not by humans. `slack_search_public_and_private` **excludes bot messages by default** — you MUST pass `include_bots: true` on every search call here, or you will get zero results.
+> **Where these emails live:**
+> - Gmail label: `Launcher Reports`
+> - Sender: PRISM Onboarding Bot (emails go from `philip.bornhurst@doordash.com` to himself)
+> - Subject patterns: `Mx Install Summary` (day-of-install) and `Mx Check-in Summary` (1–3 days post-install)
+> - Expect 1–2 emails per mx (one install report, one check-in). Some mx have only one or the other.
+> - Reports may or may not contain the Store ID in the body — fuzzy matching on the business/store name is required.
 >
-> **Search strategy:**
+> **CRITICAL — fuzzy matching:** Reports often reference the mx by store name or business name with no Store ID, or with a slightly different spelling than Master Hub (apostrophes dropped, "& " vs "and", abbreviations like "BBQ" vs "Barbecue"). Always run multiple search variations before giving up.
 >
-> 1. Search using `mcp__slack__slack_search_public_and_private` with `include_bots: true` on every call:
->    - Try: `"[BUSINESS_NAME]" in:<#C067E67HNAZ>` — `include_bots: true`
->    - If no results, try: `"[STORE_ID]" in:<#C067E67HNAZ>` — `include_bots: true` (Store ID is the most reliable hit since reports always include it)
->    - If no results, try: `"[STORE_NAME]" in:<#C067E67HNAZ>` — `include_bots: true` (if different from business name)
->    - If no results, try: a simplified business name without apostrophes/special chars (e.g., `Shake Hen` instead of `Shake'Hen`)
->    - If still no results, try: `"[ATTENDEE_NAME]" in:<#C067E67HNAZ>` — `include_bots: true`
->    - If still no results, try: `"[partial address or city]" in:<#C067E67HNAZ>` — `include_bots: true`
+> **Search strategy** — use `mcp__google-workspace__search_gmail_messages` with `user_google_email: "philip.bornhurst@doordash.com"`:
 >
-> 2. For each message found, read the full thread using `mcp__slack__slack_read_thread` to capture the complete context (install notes often have replies with updates).
+> 1. **Store ID first (most reliable when known):** `label:"Launcher Reports" [STORE_ID]`
+> 2. **Exact business name:** `label:"Launcher Reports" "[BUSINESS_NAME]"`
+> 3. **Exact store name (if different):** `label:"Launcher Reports" "[STORE_NAME]"`
+> 4. **Simplified name** — strip apostrophes, ampersands, special chars, suffixes like "LLC"/"Inc"/"Restaurant": `label:"Launcher Reports" "[SIMPLIFIED_NAME]"` (e.g. `Shake Hen` instead of `Shake'Hen`, `Joe Pizza` instead of `Joe's Pizza & Pasta LLC`)
+> 5. **Distinctive single token** — pick the most unique word from the name (skip generic words like "restaurant", "kitchen", "cafe", "grill", "pizza"): `label:"Launcher Reports" "[DISTINCTIVE_TOKEN]"`
+> 6. **DM name fallback:** `label:"Launcher Reports" "[ATTENDEE_NAME]"`
+> 7. **City/street fallback:** `label:"Launcher Reports" "[CITY or street name]"`
 >
-> 3. Look for both Install reports (typically posted day-of-install) AND Check-in reports (typically 1–3 days post-install). Both are valuable — the install report covers hardware/setup, the check-in covers how things are going post-launch.
+> Stop searching as soon as you find 1+ matching threads. Open each match with `mcp__google-workspace__get_gmail_thread_content` (or `get_gmail_message_content` for a single message) to read the full body.
 >
-> 3. Look for:
->    - Launcher install notes (hardware setup, terminal count, network details)
->    - Check-in notes from the Launcher after install
->    - Any issues flagged during onboarding (hardware problems, network issues, menu concerns)
->    - Launcher name and install date
->    - Hardware configuration (Puck/M2 vs Wise, number of terminals, printers, kiosk details)
->    - Any follow-up items or open issues
+> **Disambiguation:** If a search returns multiple results, verify each is the right mx by cross-checking the Store ID, address, or DM name in the body. If you find a report for a different mx with a similar name, discard it. If you can't tell which is correct, return ONBOARDING_STATUS: AMBIGUOUS and list what you found in MATCH_NOTES so Phil can resolve.
+>
+> **Look for:**
+> - Launcher install notes (hardware setup, terminal count, network details)
+> - Check-in notes from the Launcher after install
+> - Any issues flagged during onboarding (hardware problems, network issues, menu concerns)
+> - Launcher name and install date
+> - Hardware configuration (Puck/M2 vs Wise, number of terminals, printers, kiosk details)
+> - MSAT score, ops intensity, top product requests, existing POS uninstalled status, website/online-ordering status
+> - Any follow-up items or open issues
 >
 > **Return** a structured summary:
 > ```
-> ONBOARDING_STATUS: [FOUND / NOT_FOUND]
+> ONBOARDING_STATUS: [FOUND / NOT_FOUND / AMBIGUOUS]
 > LAUNCHER_NAME: [name or "Unknown"]
 > INSTALL_DATE: [date or "Unknown"]
 > HARDWARE_NOTES: [terminal types, count, printers, kiosks, etc.]
-> INSTALL_NOTES: [key observations from Launcher install notes]
-> CHECK_IN_NOTES: [key observations from Launcher check-in notes]
+> INSTALL_NOTES: [key observations from Launcher install report]
+> CHECK_IN_NOTES: [key observations from Launcher check-in report]
+> MSAT_SCORE: [score or "N/A"]
 > ISSUES_FLAGGED: [any problems, concerns, or open items]
+> MATCH_NOTES: [which search query matched; note any ambiguity]
 > FULL_SUMMARY: [A paragraph summarizing all onboarding context found — this will be inserted directly into the Running Notes doc]
 > ```
 >
 > If nothing found after all search attempts, return:
 > ```
 > ONBOARDING_STATUS: NOT_FOUND
-> FULL_SUMMARY: No onboarding notes found in #pathfinder-mxonboarding
+> FULL_SUMMARY: No onboarding notes found in Gmail Launcher Reports
 > ```
 
 ---
@@ -542,7 +553,9 @@ Use `mcp__google-workspace__find_and_replace_doc`:
 
 If this doesn't work cleanly (the placeholder text may have been rendered differently), use `mcp__google-workspace__get_doc_content` to find the onboarding section, then use `mcp__google-workspace__modify_doc_text` to update it.
 
-If Sub-agent C returned NOT_FOUND, replace the placeholder with: "No onboarding notes found in #pathfinder-mxonboarding"
+If Sub-agent C returned NOT_FOUND, replace the placeholder with: "No onboarding notes found in Gmail Launcher Reports"
+
+If Sub-agent C returned AMBIGUOUS, replace the placeholder with: "Onboarding notes ambiguous — multiple Launcher Reports matched, manual review recommended. [include MATCH_NOTES summary]"
 
 ### 3b: Send Slack Notification
 
@@ -588,5 +601,5 @@ Follow the project's error handling philosophy: **no retries, graceful degradati
 | Folder search/create fails | Create doc in the parent Account Management folder instead. Note the error |
 | Doc creation fails | Send Slack with folder link and research only. Note the error |
 | Internet research sub-agent fails | Send Slack with folder + doc links. Include "Internet research unavailable" |
-| Onboarding channel scan fails | Omit onboarding section from Running Notes (leave placeholder). Note "Onboarding notes unavailable" |
+| Gmail Launcher Reports search fails | Omit onboarding section from Running Notes (leave placeholder). Note "Onboarding notes unavailable" |
 | Slack send fails | Return all links and research in the conversation output |

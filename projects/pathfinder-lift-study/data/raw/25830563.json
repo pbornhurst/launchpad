@@ -1,0 +1,190 @@
+{
+  "store_id": "25830563",
+  "store_name": "Vienna Beef Factory Store (Morgan St)",
+  "install_date": "2025-09-23",
+  "windows": {
+    "pre_start": "2025-03-27",
+    "pre_end": "2025-09-22",
+    "post_start": "2025-09-23",
+    "post_end": "2026-03-22",
+    "m1_3_start": "2025-09-23",
+    "m1_3_end": "2025-12-21",
+    "m4_6_start": "2025-12-22",
+    "m4_6_end": "2026-03-21",
+    "latest_3m_start": null,
+    "latest_3m_end": null,
+    "tenure_days_since_install": 231
+  },
+  "metadata": {
+    "cuisine_type": "American Traditional",
+    "region_name": "Midwest",
+    "submarket_name": "Chicago",
+    "management_type_grouped": "UNMANAGED SMB",
+    "cuisine_bucket": "American",
+    "region_bucket": "Midwest",
+    "mgmt_bucket": "Unmanaged Smb",
+    "lifetime_osw": "751.666664",
+    "lifetime_gov_store_week": "19717.467272727273",
+    "total_active_days": "231",
+    "lifetime_card_orders": "24805",
+    "lifetime_card_gov": "650676.420000000000"
+  },
+  "blocks": {
+    "channel_pre_post": {
+      "rows": [
+        {
+          "CHANNEL": "In-store",
+          "PRE_ORDERS": 0,
+          "PRE_SUBTOTAL": "0.00",
+          "POST_ORDERS": 18785,
+          "POST_SUBTOTAL": "435136.38"
+        },
+        {
+          "CHANNEL": "Marketplace",
+          "PRE_ORDERS": 323,
+          "PRE_SUBTOTAL": "6761.00",
+          "POST_ORDERS": 307,
+          "POST_SUBTOTAL": "8249.11"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "PRE_ORDERS": 26,
+          "PRE_SUBTOTAL": "796.00",
+          "POST_ORDERS": 40,
+          "POST_SUBTOTAL": "1021.61"
+        }
+      ],
+      "elapsed_s": 106.4
+    },
+    "channel_maturation": {
+      "rows": [
+        {
+          "CHANNEL": "In-store",
+          "M1_3_ORDERS": 9099,
+          "M1_3_SUBTOTAL": "213554.76",
+          "M4_6_ORDERS": 9686,
+          "M4_6_SUBTOTAL": "221581.62",
+          "LATEST_3M_ORDERS": 0,
+          "LATEST_3M_SUBTOTAL": "0.00"
+        },
+        {
+          "CHANNEL": "Marketplace",
+          "M1_3_ORDERS": 178,
+          "M1_3_SUBTOTAL": "4756.46",
+          "M4_6_ORDERS": 129,
+          "M4_6_SUBTOTAL": "3492.65",
+          "LATEST_3M_ORDERS": 0,
+          "LATEST_3M_SUBTOTAL": "0.00"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "M1_3_ORDERS": 19,
+          "M1_3_SUBTOTAL": "551.24",
+          "M4_6_ORDERS": 21,
+          "M4_6_SUBTOTAL": "470.37",
+          "LATEST_3M_ORDERS": 0,
+          "LATEST_3M_SUBTOTAL": "0.00"
+        }
+      ],
+      "elapsed_s": 41.31
+    },
+    "mp_ops": {
+      "rows": [
+        {
+          "PRE_COMPLETED_ORDERS": 323,
+          "PRE_ERRORS": 3,
+          "PRE_AVOIDABLE_WAIT_SECONDS": "1.99575540",
+          "PRE_AVG_RATING": "4.793103",
+          "POST_COMPLETED_ORDERS": 307,
+          "POST_ERRORS": 6,
+          "POST_AVOIDABLE_WAIT_SECONDS": "2.38157692",
+          "POST_AVG_RATING": "4.653846"
+        }
+      ],
+      "elapsed_s": 34.47
+    },
+    "mp_cancellations": {
+      "rows": [
+        {
+          "PRE_CANCELLED": 5,
+          "POST_CANCELLED": 3
+        }
+      ],
+      "elapsed_s": 37.23
+    },
+    "customer_acquisition": {
+      "rows": [
+        {
+          "CHANNEL": "Marketplace",
+          "CX_TYPE_WITHIN_STORE": "new",
+          "PRE_ORDERS": 140,
+          "PRE_SUBTOTAL": "3025.00",
+          "POST_ORDERS": 149,
+          "POST_SUBTOTAL": "3983.99"
+        },
+        {
+          "CHANNEL": "Marketplace",
+          "CX_TYPE_WITHIN_STORE": "repeat",
+          "PRE_ORDERS": 183,
+          "PRE_SUBTOTAL": "3736.00",
+          "POST_ORDERS": 158,
+          "POST_SUBTOTAL": "4265.12"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "CX_TYPE_WITHIN_STORE": "new",
+          "PRE_ORDERS": 25,
+          "PRE_SUBTOTAL": "774.00",
+          "POST_ORDERS": 27,
+          "POST_SUBTOTAL": "714.00"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "CX_TYPE_WITHIN_STORE": "repeat",
+          "PRE_ORDERS": 1,
+          "PRE_SUBTOTAL": "22.00",
+          "POST_ORDERS": 13,
+          "POST_SUBTOTAL": "307.61"
+        }
+      ],
+      "elapsed_s": 69.22
+    },
+    "sponsored_listings": {
+      "rows": [
+        {
+          "PRE_IMPRESSIONS": null,
+          "PRE_CLICKS": null,
+          "PRE_ORDERS": null,
+          "PRE_SALES": null,
+          "PRE_AD_SPEND": null,
+          "PRE_NEW_CX": null,
+          "POST_IMPRESSIONS": null,
+          "POST_CLICKS": null,
+          "POST_ORDERS": null,
+          "POST_SALES": null,
+          "POST_AD_SPEND": null,
+          "POST_NEW_CX": null
+        }
+      ],
+      "elapsed_s": 42.85
+    },
+    "promos": {
+      "rows": [
+        {
+          "PRE_ORDERS": 87,
+          "PRE_SALES": "2372.000000",
+          "PRE_DD_FUNDED_DISCOUNT": "105.940000",
+          "PRE_MX_FUNDED_DISCOUNT": "372.450000",
+          "PRE_NEW_CX": 48,
+          "POST_ORDERS": 164,
+          "POST_SALES": "4658.950000",
+          "POST_DD_FUNDED_DISCOUNT": "51.160000",
+          "POST_MX_FUNDED_DISCOUNT": "965.030000",
+          "POST_NEW_CX": 94
+        }
+      ],
+      "elapsed_s": 907.62
+    }
+  },
+  "pulled_at": "2026-05-12"
+}

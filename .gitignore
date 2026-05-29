@@ -6,6 +6,8 @@ __pycache__/
 .env
 .env.*
 logs/
+.email-triage/
+.claude/scheduled_tasks.lock
 
 # Session chart artifacts (generated at repo root)
 /*.png

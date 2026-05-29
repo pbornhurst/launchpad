@@ -1,0 +1,206 @@
+{
+  "store_id": "56090",
+  "store_name": "Bravos California Fresh (Rancho Viejo Rd)",
+  "install_date": "2025-04-16",
+  "windows": {
+    "pre_start": "2024-10-18",
+    "pre_end": "2025-04-15",
+    "post_start": "2025-04-16",
+    "post_end": "2025-10-13",
+    "m1_3_start": "2025-04-16",
+    "m1_3_end": "2025-07-14",
+    "m4_6_start": "2025-07-15",
+    "m4_6_end": "2025-10-12",
+    "latest_3m_start": "2026-02-11",
+    "latest_3m_end": "2026-05-11",
+    "tenure_days_since_install": 391
+  },
+  "metadata": {
+    "cuisine_type": "Mexican,American",
+    "region_name": "Southern California",
+    "submarket_name": "Orange County",
+    "management_type_grouped": "MANAGED SMB",
+    "cuisine_bucket": "Mexican",
+    "region_bucket": "West",
+    "mgmt_bucket": "Managed Smb",
+    "lifetime_osw": "1596.809767",
+    "lifetime_gov_store_week": "43400.982519280204",
+    "total_active_days": "389",
+    "lifetime_card_orders": "88737",
+    "lifetime_card_gov": "2411854.600000000000"
+  },
+  "blocks": {
+    "channel_pre_post": {
+      "rows": [
+        {
+          "CHANNEL": "In-store",
+          "PRE_ORDERS": 0,
+          "PRE_SUBTOTAL": "0.00",
+          "POST_ORDERS": 40842,
+          "POST_SUBTOTAL": "1017614.24"
+        },
+        {
+          "CHANNEL": "Marketplace",
+          "PRE_ORDERS": 4453,
+          "PRE_SUBTOTAL": "128617.10",
+          "POST_ORDERS": 3956,
+          "POST_SUBTOTAL": "115931.50"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "PRE_ORDERS": 2651,
+          "PRE_SUBTOTAL": "58584.77",
+          "POST_ORDERS": 2539,
+          "POST_SUBTOTAL": "58449.51"
+        },
+        {
+          "CHANNEL": null,
+          "PRE_ORDERS": 0,
+          "PRE_SUBTOTAL": "0.00",
+          "POST_ORDERS": 2,
+          "POST_SUBTOTAL": "48.64"
+        }
+      ],
+      "elapsed_s": 31.09
+    },
+    "channel_maturation": {
+      "rows": [
+        {
+          "CHANNEL": "In-store",
+          "M1_3_ORDERS": 19884,
+          "M1_3_SUBTOTAL": "489743.63",
+          "M4_6_ORDERS": 20740,
+          "M4_6_SUBTOTAL": "521212.80",
+          "LATEST_3M_ORDERS": 20671,
+          "LATEST_3M_SUBTOTAL": "517310.42"
+        },
+        {
+          "CHANNEL": "Marketplace",
+          "M1_3_ORDERS": 1815,
+          "M1_3_SUBTOTAL": "52875.58",
+          "M4_6_ORDERS": 2115,
+          "M4_6_SUBTOTAL": "62442.57",
+          "LATEST_3M_ORDERS": 2420,
+          "LATEST_3M_SUBTOTAL": "71200.20"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "M1_3_ORDERS": 1165,
+          "M1_3_SUBTOTAL": "27982.42",
+          "M4_6_ORDERS": 1342,
+          "M4_6_SUBTOTAL": "29921.71",
+          "LATEST_3M_ORDERS": 1393,
+          "LATEST_3M_SUBTOTAL": "30805.83"
+        },
+        {
+          "CHANNEL": null,
+          "M1_3_ORDERS": 0,
+          "M1_3_SUBTOTAL": "0.00",
+          "M4_6_ORDERS": 2,
+          "M4_6_SUBTOTAL": "48.64",
+          "LATEST_3M_ORDERS": 0,
+          "LATEST_3M_SUBTOTAL": "0.00"
+        }
+      ],
+      "elapsed_s": 71.32
+    },
+    "mp_ops": {
+      "rows": [
+        {
+          "PRE_COMPLETED_ORDERS": 4453,
+          "PRE_ERRORS": 76,
+          "PRE_AVOIDABLE_WAIT_SECONDS": "2.72014780",
+          "PRE_AVG_RATING": "4.716783",
+          "POST_COMPLETED_ORDERS": 3956,
+          "POST_ERRORS": 62,
+          "POST_AVOIDABLE_WAIT_SECONDS": "2.61366502",
+          "POST_AVG_RATING": "4.794521"
+        }
+      ],
+      "elapsed_s": 29.73
+    },
+    "mp_cancellations": {
+      "rows": [
+        {
+          "PRE_CANCELLED": 15,
+          "POST_CANCELLED": 24
+        }
+      ],
+      "elapsed_s": 37.23
+    },
+    "customer_acquisition": {
+      "rows": [
+        {
+          "CHANNEL": "Marketplace",
+          "CX_TYPE_WITHIN_STORE": "new",
+          "PRE_ORDERS": 578,
+          "PRE_SUBTOTAL": "18554.83",
+          "POST_ORDERS": 437,
+          "POST_SUBTOTAL": "13644.02"
+        },
+        {
+          "CHANNEL": "Marketplace",
+          "CX_TYPE_WITHIN_STORE": "repeat",
+          "PRE_ORDERS": 3875,
+          "PRE_SUBTOTAL": "110062.27",
+          "POST_ORDERS": 3519,
+          "POST_SUBTOTAL": "102287.48"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "CX_TYPE_WITHIN_STORE": "new",
+          "PRE_ORDERS": 790,
+          "PRE_SUBTOTAL": "22775.36",
+          "POST_ORDERS": 735,
+          "POST_SUBTOTAL": "21450.05"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "CX_TYPE_WITHIN_STORE": "repeat",
+          "PRE_ORDERS": 1861,
+          "PRE_SUBTOTAL": "35809.41",
+          "POST_ORDERS": 1804,
+          "POST_SUBTOTAL": "36999.46"
+        }
+      ],
+      "elapsed_s": 51.18
+    },
+    "sponsored_listings": {
+      "rows": [
+        {
+          "PRE_IMPRESSIONS": 33036,
+          "PRE_CLICKS": 1142,
+          "PRE_ORDERS": 152,
+          "PRE_SALES": "5054.860000",
+          "PRE_AD_SPEND": "1269.650000",
+          "PRE_NEW_CX": 152,
+          "POST_IMPRESSIONS": 22251,
+          "POST_CLICKS": 1378,
+          "POST_ORDERS": 655,
+          "POST_SALES": "18176.500000",
+          "POST_AD_SPEND": "2809.950000",
+          "POST_NEW_CX": 45
+        }
+      ],
+      "elapsed_s": 1.05
+    },
+    "promos": {
+      "rows": [
+        {
+          "PRE_ORDERS": 1169,
+          "PRE_SALES": "35130.460000",
+          "PRE_DD_FUNDED_DISCOUNT": "830.840000",
+          "PRE_MX_FUNDED_DISCOUNT": "2894.980000",
+          "PRE_NEW_CX": 309,
+          "POST_ORDERS": 925,
+          "POST_SALES": "29812.210000",
+          "POST_DD_FUNDED_DISCOUNT": "1104.700000",
+          "POST_MX_FUNDED_DISCOUNT": "1603.580000",
+          "POST_NEW_CX": 247
+        }
+      ],
+      "elapsed_s": 299.99
+    }
+  },
+  "pulled_at": "2026-05-12"
+}

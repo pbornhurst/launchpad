@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Cracked Eggery - Pathfinder Growth Story</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; color: #333; max-width: 1100px; margin: 24px auto; padding: 0 20px; line-height: 1.5; }
+  h1 { color: #2C3E50; border-bottom: 3px solid #2C3E50; padding-bottom: 8px; margin-top: 0; }
+  h2 { color: #2C3E50; margin-top: 36px; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
+  h3 { color: #34495E; margin-top: 24px; }
+  .subtitle { color: #555; font-size: 14px; margin-top: -6px; }
+  .caveat { background: #FFF8E1; border-left: 4px solid #F9A825; padding: 12px 16px; margin: 16px 0; font-size: 14px; }
+  .insight { background: #E8F5E9; border-left: 4px solid #2E7D32; padding: 12px 16px; margin: 16px 0; font-size: 14px; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 18px 0; font-size: 14px; }
+  th, td { border: 1px solid #e0e0e0; padding: 8px 10px; text-align: right; }
+  th { background-color: #2C3E50; color: white; text-align: center; }
+  td:first-child { text-align: left; }
+  tr:nth-child(even) { background-color: #f9f9f9; }
+  tr.totals td { font-weight: 700; background-color: #ECEFF1; border-top: 2px solid #2C3E50; }
+  .hero { font-size: 15px; }
+  .hero td.note { font-size: 12px; color: #666; font-style: italic; text-align: left; }
+  .good { color: #2E7D32; font-weight: 600; }
+  .bad  { color: #D63B2F; font-weight: 600; }
+  .neutral { color: #777; }
+  .store-card { background: #fafafa; border: 1px solid #e0e0e0; padding: 16px 20px; margin: 24px 0; border-radius: 6px; }
+  .store-card h2 { margin-top: 0; }
+  .store-id { color: #888; font-size: 16px; font-weight: normal; }
+  .store-meta { font-size: 13px; color: #555; margin-bottom: 12px; }
+  .side-by-side { display: flex; gap: 18px; }
+  .side-by-side > div { flex: 1; }
+  .note { font-size: 12px; color: #666; font-style: italic; }
+  hr { border: none; border-top: 1px solid #ddd; margin: 32px 0; }
+  footer { color: #999; font-size: 11px; text-align: center; margin-top: 48px; }
+</style>
+</head>
+<body>
+
+<h1>Cracked Eggery - Pathfinder Growth Story</h1>
+<p class="subtitle">2 stores, ~2 months on Pathfinder. Generated 2026-05-21. Methodology: matched pre vs post windows (equal length per store) + 6-month pre baseline with weekly run-rate normalization.</p>
+
+<div class="caveat">
+  <strong>Caveats up front.</strong> n=2 stores; tenure is short (58d / 79d). Numbers in this report should be read as <em>directional signal</em>, not statistical proof. Where the post period and a 6mo pre period are compared, we normalize to weekly run-rate to keep the comparison apples-to-apples.
+  <br/>
+  <strong>Stores:</strong> Cleveland Park installed 2026-03-03 (79d); 8th St installed 2026-03-24 (58d)
+</div>
+
+<h2>Executive Summary - Brand Total (Matched Window)</h2>
+
+    <table class="hero">
+      <thead>
+        <tr><th>Hero metric</th><th>Pre</th><th>Post</th><th>Δ</th><th>Note</th></tr>
+      </thead>
+      <tbody>
+            <tr>
+              <td><strong>Pathfinder POS GOV (post)</strong></td>
+              <td>$0 (no POS pre-install)</td>
+              <td>$203,175</td>
+              <td class="neutral">-</td>
+              <td class="note">100% incremental - $21,442/wk run-rate</td>
+            </tr>
+            <tr>
+              <td><strong>Pathfinder POS GOV (annualized)</strong></td>
+              <td>-</td>
+              <td>$1,118,041</td>
+              <td class="neutral">-</td>
+              <td class="note">Post weekly avg × 52</td>
+            </tr>
+            <tr>
+              <td><strong>Pathfinder POS orders (post)</strong></td>
+              <td>0</td>
+              <td>10,123</td>
+              <td class="neutral">-</td>
+              <td class="note">In-store + Kiosk channels</td>
+            </tr>
+            <tr>
+              <td><strong>Non-POS GOV (matched window)</strong></td>
+              <td>$255,254</td>
+              <td>$264,997</td>
+              <td class="good">+3.8%</td>
+              <td class="note">Marketplace + Storefront, equal-length pre/post</td>
+            </tr>
+            <tr>
+              <td><strong>Non-POS orders (matched window)</strong></td>
+              <td>9,869</td>
+              <td>10,809</td>
+              <td class="good">+9.5%</td>
+              <td class="note">Marketplace + Storefront</td>
+            </tr>
+            <tr>
+              <td><strong>New customers (matched, MP+Storefront)</strong></td>
+              <td>3,416</td>
+              <td>3,551</td>
+              <td class="good">+4.0%</td>
+              <td class="note">New-to-store customers</td>
+            </tr>
+            <tr>
+              <td><strong>Repeat customers (matched, MP+Storefront)</strong></td>
+              <td>6,453</td>
+              <td>7,258</td>
+              <td class="good">+12.5%</td>
+              <td class="note">Returning customers</td>
+            </tr>
+            <tr>
+              <td><strong>Sponsored Listings ROAS</strong></td>
+              <td>8.53x</td>
+              <td>8.50x</td>
+              <td class="bad">-0.3%</td>
+              <td class="note">Ad spend: $4,848 -> $2,930</td>
+            </tr>
+      </tbody>
+    </table>
+    
+
+<h2>Brand Total - Weekly Run-Rate (vs 6mo Pre Baseline)</h2>
+<p class="subtitle">Normalizes for the difference in window lengths. Pre baseline is the 6mo before each store installed, averaged to per-week.</p>
+
+    <table>
+      <thead>
+        <tr><th>Weekly run-rate</th><th>Pre-install baseline (6mo avg)</th><th>Post-install avg</th><th>Δ</th></tr>
+      </thead>
+      <tbody>
+            <tr>
+              <td><strong>Non-POS GOV ($/wk)</strong></td>
+              <td>$28,046</td>
+              <td>$29,019</td>
+              <td class="good">+3.5%</td>
+            </tr>
+            <tr>
+              <td><strong>Non-POS orders (/wk)</strong></td>
+              <td>1,086</td>
+              <td>1,184</td>
+              <td class="good">+9.0%</td>
+            </tr>
+            <tr>
+              <td><strong>POS GOV ($/wk)</strong></td>
+              <td>-</td>
+              <td>$21,442</td>
+              <td class="good">100% net new</td>
+            </tr>
+            <tr>
+              <td><strong>Total DD-channel GOV ($/wk)</strong></td>
+              <td>$28,046</td>
+              <td>$50,461</td>
+              <td class="good">+79.9%</td>
+            </tr>
+      </tbody>
+    </table>
+    
+
+<h2>Brand Total - Channel Breakdown (Matched Window)</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th rowspan="2">Channel</th>
+          <th colspan="3">Orders</th>
+          <th colspan="3">GOV</th>
+        </tr>
+        <tr>
+          <th>Matched pre</th><th>Matched post</th><th>Δ</th>
+          <th>Matched pre</th><th>Matched post</th><th>Δ</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr>
+              <td><strong>In-store</strong></td>
+              <td>0</td>
+              <td>1,834</td>
+              <td class="good">net new</td>
+              <td>$0</td>
+              <td>$33,237</td>
+              <td class="good">net new</td>
+            </tr>
+            <tr>
+              <td><strong>Kiosk</strong></td>
+              <td>0</td>
+              <td>8,289</td>
+              <td class="good">net new</td>
+              <td>$0</td>
+              <td>$169,938</td>
+              <td class="good">net new</td>
+            </tr>
+            <tr>
+              <td><strong>Marketplace</strong></td>
+              <td>7,820</td>
+              <td>7,898</td>
+              <td class="good">+1.0%</td>
+              <td>$203,502</td>
+              <td>$197,558</td>
+              <td class="bad">-2.9%</td>
+            </tr>
+            <tr>
+              <td><strong>Storefront</strong></td>
+              <td>2,049</td>
+              <td>2,911</td>
+              <td class="good">+42.1%</td>
+              <td>$51,753</td>
+              <td>$67,440</td>
+              <td class="good">+30.3%</td>
+            </tr>
+            <tr class="totals">
+              <td><strong>Total</strong></td>
+              <td>9,869</td>
+              <td>20,932</td>
+              <td>+112.1%</td>
+              <td>$255,254</td>
+              <td>$468,172</td>
+              <td>+83.4%</td>
+            </tr>
+      </tbody>
+    </table>
+    <p class="note">Both Cracked Eggery stores summed. In-store + Kiosk = Pathfinder POS (100% incremental).</p>
+    
+
+<h2>Brand Total - Marketplace Ops & Ads (Matched Window)</h2>
+
+    <table>
+      <thead><tr><th>Marketplace ops</th><th>Matched pre</th><th>Matched post</th><th>Δ</th></tr></thead>
+      <tbody><tr><td><strong>Completed MP orders</strong></td><td>7,820</td><td>7,898</td><td class="neutral">-</td></tr><tr><td><strong>Missing/incorrect rate</strong></td><td>+1.0%</td><td>+1.6%</td><td class="bad">+61.7%</td></tr><tr><td><strong>Cancel rate (attempts)</strong></td><td>+0.8%</td><td>+0.9%</td><td class="bad">+21.5%</td></tr><tr><td><strong>Avoidable dasher wait</strong></td><td>1s</td><td>1s</td><td class="bad">+2.6%</td></tr><tr><td><strong>Avg merchant rating</strong></td><td>0.00</td><td>0.00</td><td class="neutral">-</td></tr></tbody>
+    </table>
+    
+
+
+    <div class="side-by-side">
+      <div>
+        <h3>Sponsored Listings</h3>
+        <table><thead><tr><th></th><th>Matched pre</th><th>Matched post</th></tr></thead><tbody><tr><td><strong>Impressions</strong></td><td>56,818</td><td>31,774</td></tr><tr><td><strong>Clicks</strong></td><td>4,262</td><td>2,447</td></tr><tr><td><strong>Orders</strong></td><td>1,603</td><td>966</td></tr><tr><td><strong>Sales</strong></td><td>$41,355</td><td>$24,912</td></tr><tr><td><strong>Ad spend</strong></td><td>$4,848</td><td>$2,930</td></tr><tr><td><strong>ROAS</strong></td><td>8.53x</td><td>8.50x</td></tr><tr><td><strong>New cx via SL</strong></td><td>353</td><td>165</td></tr></tbody></table>
+      </div>
+      <div>
+        <h3>Promotions</h3>
+        <table><thead><tr><th></th><th>Matched pre</th><th>Matched post</th></tr></thead><tbody><tr><td><strong>Promo orders</strong></td><td>4,472</td><td>3,679</td></tr><tr><td><strong>Promo sales</strong></td><td>$137,703</td><td>$113,894</td></tr><tr><td><strong>DD-funded discount</strong></td><td>$6,284</td><td>$1,741</td></tr><tr><td><strong>Mx-funded discount</strong></td><td>$15,999</td><td>$14,039</td></tr><tr><td><strong>New cx via promos</strong></td><td>1,699</td><td>1,438</td></tr></tbody></table>
+      </div>
+    </div>
+    
+
+<hr/>
+
+<h2>Per-Store Breakdown</h2>
+
+    <div class="store-card">
+      <h2>Cracked Eggery (Cleveland Park) <span class="store-id">(Store 2290148)</span></h2>
+      <div class="store-meta">
+        <strong>Install:</strong> 2026-03-03
+        &nbsp;|&nbsp; <strong>Tenure:</strong> 79 days
+        &nbsp;|&nbsp; <strong>Region:</strong> Northeast / Washington, D.C
+        &nbsp;|&nbsp; <strong>Cuisine:</strong> American
+        <br/>
+        <strong>Matched window:</strong> 2025-12-15 → 2026-03-02 (pre) vs 2026-03-03 → 2026-05-20 (post)
+      </div>
+
+      <h3>Matched window: equal-length pre vs post (79d each)</h3>
+      
+    <table>
+      <thead>
+        <tr>
+          <th rowspan="2">Channel</th>
+          <th colspan="3">Orders</th>
+          <th colspan="3">GOV</th>
+        </tr>
+        <tr>
+          <th>Pre 79d</th><th>Post 79d</th><th>Δ</th>
+          <th>Pre 79d</th><th>Post 79d</th><th>Δ</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr>
+              <td><strong>In-store</strong></td>
+              <td>0</td>
+              <td>1,647</td>
+              <td class="good">net new</td>
+              <td>$0</td>
+              <td>$30,812</td>
+              <td class="good">net new</td>
+            </tr>
+            <tr>
+              <td><strong>Kiosk</strong></td>
+              <td>0</td>
+              <td>2,876</td>
+              <td class="good">net new</td>
+              <td>$0</td>
+              <td>$65,167</td>
+              <td class="good">net new</td>
+            </tr>
+            <tr>
+              <td><strong>Marketplace</strong></td>
+              <td>2,451</td>
+              <td>2,481</td>
+              <td class="good">+1.2%</td>
+              <td>$64,419</td>
+              <td>$62,475</td>
+              <td class="bad">-3.0%</td>
+            </tr>
+            <tr>
+              <td><strong>Storefront</strong></td>
+              <td>960</td>
+              <td>1,265</td>
+              <td class="good">+31.8%</td>
+              <td>$25,090</td>
+              <td>$29,879</td>
+              <td class="good">+19.1%</td>
+            </tr>
+            <tr class="totals">
+              <td><strong>Total</strong></td>
+              <td>3,411</td>
+              <td>8,269</td>
+              <td>+142.4%</td>
+              <td>$89,510</td>
+              <td>$188,334</td>
+              <td>+110.4%</td>
+            </tr>
+      </tbody>
+    </table>
+    
+    
+
+      <h3>Full pre baseline (6mo) vs post-to-date (79d)</h3>
+      
+    <table>
+      <thead>
+        <tr>
+          <th rowspan="2">Channel</th>
+          <th colspan="3">Orders</th>
+          <th colspan="3">GOV</th>
+        </tr>
+        <tr>
+          <th>Pre 180d</th><th>Post 79d</th><th>Δ</th>
+          <th>Pre 180d</th><th>Post 79d</th><th>Δ</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr>
+              <td><strong>In-store</strong></td>
+              <td>0</td>
+              <td>1,647</td>
+              <td class="good">net new</td>
+              <td>$0</td>
+              <td>$30,812</td>
+              <td class="good">net new</td>
+            </tr>
+            <tr>
+              <td><strong>Kiosk</strong></td>
+              <td>0</td>
+              <td>2,876</td>
+              <td class="good">net new</td>
+              <td>$0</td>
+              <td>$65,167</td>
+              <td class="good">net new</td>
+            </tr>
+            <tr>
+              <td><strong>Marketplace</strong></td>
+              <td>6,045</td>
+              <td>2,481</td>
+              <td class="bad">-59.0%</td>
+              <td>$157,903</td>
+              <td>$62,475</td>
+              <td class="bad">-60.4%</td>
+            </tr>
+            <tr>
+              <td><strong>Storefront</strong></td>
+              <td>2,505</td>
+              <td>1,265</td>
+              <td class="bad">-49.5%</td>
+              <td>$64,486</td>
+              <td>$29,879</td>
+              <td class="bad">-53.7%</td>
+            </tr>
+            <tr class="totals">
+              <td><strong>Total</strong></td>
+              <td>8,550</td>
+              <td>8,269</td>
+              <td>-3.3%</td>
+              <td>$222,389</td>
+              <td>$188,334</td>
+              <td>-15.3%</td>
+            </tr>
+      </tbody>
+    </table>
+    <p class="note">Pre window is 180d, post is 79d - compare via weekly run-rate, not totals.</p>
+    
+
+      <h3>Marketplace operations (matched window)</h3>
+      
+    <table>
+      <thead><tr><th>Marketplace ops</th><th>Matched pre</th><th>Matched post</th><th>Δ</th></tr></thead>
+      <tbody><tr><td><strong>Completed MP orders</strong></td><td>2,451</td><td>2,481</td><td class="neutral">-</td></tr><tr><td><strong>Missing/incorrect rate</strong></td><td>+0.9%</td><td>+1.1%</td><td class="bad">+20.3%</td></tr><tr><td><strong>Cancel rate (attempts)</strong></td><td>+0.4%</td><td>+0.8%</td><td class="bad">+106.6%</td></tr><tr><td><strong>Avoidable dasher wait</strong></td><td>1s</td><td>1s</td><td class="bad">+39.0%</td></tr><tr><td><strong>Avg merchant rating</strong></td><td>-</td><td>-</td><td class="neutral">-</td></tr></tbody>
+    </table>
+    
+
+      <h3>Ads & Promos (matched window)</h3>
+      
+    <div class="side-by-side">
+      <div>
+        <h3>Sponsored Listings</h3>
+        <table><thead><tr><th></th><th>Matched pre</th><th>Matched post</th></tr></thead><tbody><tr><td><strong>Impressions</strong></td><td>16,579</td><td>9,330</td></tr><tr><td><strong>Clicks</strong></td><td>1,217</td><td>747</td></tr><tr><td><strong>Orders</strong></td><td>532</td><td>331</td></tr><tr><td><strong>Sales</strong></td><td>$13,843</td><td>$8,268</td></tr><tr><td><strong>Ad spend</strong></td><td>$1,608</td><td>$1,005</td></tr><tr><td><strong>ROAS</strong></td><td>8.61x</td><td>8.23x</td></tr><tr><td><strong>New cx via SL</strong></td><td>64</td><td>38</td></tr></tbody></table>
+      </div>
+      <div>
+        <h3>Promotions</h3>
+        <table><thead><tr><th></th><th>Matched pre</th><th>Matched post</th></tr></thead><tbody><tr><td><strong>Promo orders</strong></td><td>1,463</td><td>1,235</td></tr><tr><td><strong>Promo sales</strong></td><td>$45,171</td><td>$37,382</td></tr><tr><td><strong>DD-funded discount</strong></td><td>$1,446</td><td>$844</td></tr><tr><td><strong>Mx-funded discount</strong></td><td>$5,750</td><td>$4,745</td></tr><tr><td><strong>New cx via promos</strong></td><td>406</td><td>369</td></tr></tbody></table>
+      </div>
+    </div>
+    
+    </div>
+    
+    <div class="store-card">
+      <h2>Cracked Eggery (8th St) <span class="store-id">(Store 2827991)</span></h2>
+      <div class="store-meta">
+        <strong>Install:</strong> 2026-03-24
+        &nbsp;|&nbsp; <strong>Tenure:</strong> 58 days
+        &nbsp;|&nbsp; <strong>Region:</strong> Northeast / Washington, D.C
+        &nbsp;|&nbsp; <strong>Cuisine:</strong> American
+        <br/>
+        <strong>Matched window:</strong> 2026-01-25 → 2026-03-23 (pre) vs 2026-03-24 → 2026-05-20 (post)
+      </div>
+
+      <h3>Matched window: equal-length pre vs post (58d each)</h3>
+      
+    <table>
+      <thead>
+        <tr>
+          <th rowspan="2">Channel</th>
+          <th colspan="3">Orders</th>
+          <th colspan="3">GOV</th>
+        </tr>
+        <tr>
+          <th>Pre 58d</th><th>Post 58d</th><th>Δ</th>
+          <th>Pre 58d</th><th>Post 58d</th><th>Δ</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr>
+              <td><strong>In-store</strong></td>
+              <td>0</td>
+              <td>187</td>
+              <td class="good">net new</td>
+              <td>$0</td>
+              <td>$2,425</td>
+              <td class="good">net new</td>
+            </tr>
+            <tr>
+              <td><strong>Kiosk</strong></td>
+              <td>0</td>
+              <td>5,413</td>
+              <td class="good">net new</td>
+              <td>$0</td>
+              <td>$104,770</td>
+              <td class="good">net new</td>
+            </tr>
+            <tr>
+              <td><strong>Marketplace</strong></td>
+              <td>5,369</td>
+              <td>5,417</td>
+              <td class="good">+0.9%</td>
+              <td>$139,083</td>
+              <td>$135,082</td>
+              <td class="bad">-2.9%</td>
+            </tr>
+            <tr>
+              <td><strong>Storefront</strong></td>
+              <td>1,089</td>
+              <td>1,646</td>
+              <td class="good">+51.1%</td>
+              <td>$26,662</td>
+              <td>$37,560</td>
+              <td class="good">+40.9%</td>
+            </tr>
+            <tr class="totals">
+              <td><strong>Total</strong></td>
+              <td>6,458</td>
+              <td>12,663</td>
+              <td>+96.1%</td>
+              <td>$165,745</td>
+              <td>$279,838</td>
+              <td>+68.8%</td>
+            </tr>
+      </tbody>
+    </table>
+    
+    
+
+      <h3>Full pre baseline (6mo) vs post-to-date (58d)</h3>
+      
+    <table>
+      <thead>
+        <tr>
+          <th rowspan="2">Channel</th>
+          <th colspan="3">Orders</th>
+          <th colspan="3">GOV</th>
+        </tr>
+        <tr>
+          <th>Pre 180d</th><th>Post 58d</th><th>Δ</th>
+          <th>Pre 180d</th><th>Post 58d</th><th>Δ</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr>
+              <td><strong>In-store</strong></td>
+              <td>0</td>
+              <td>187</td>
+              <td class="good">net new</td>
+              <td>$0</td>
+              <td>$2,425</td>
+              <td class="good">net new</td>
+            </tr>
+            <tr>
+              <td><strong>Kiosk</strong></td>
+              <td>0</td>
+              <td>5,413</td>
+              <td class="good">net new</td>
+              <td>$0</td>
+              <td>$104,770</td>
+              <td class="good">net new</td>
+            </tr>
+            <tr>
+              <td><strong>Marketplace</strong></td>
+              <td>15,672</td>
+              <td>5,417</td>
+              <td class="bad">-65.4%</td>
+              <td>$405,317</td>
+              <td>$135,082</td>
+              <td class="bad">-66.7%</td>
+            </tr>
+            <tr>
+              <td><strong>Storefront</strong></td>
+              <td>3,711</td>
+              <td>1,646</td>
+              <td class="bad">-55.6%</td>
+              <td>$93,488</td>
+              <td>$37,560</td>
+              <td class="bad">-59.8%</td>
+            </tr>
+            <tr class="totals">
+              <td><strong>Total</strong></td>
+              <td>19,383</td>
+              <td>12,663</td>
+              <td>-34.7%</td>
+              <td>$498,805</td>
+              <td>$279,838</td>
+              <td>-43.9%</td>
+            </tr>
+      </tbody>
+    </table>
+    <p class="note">Pre window is 180d, post is 58d - compare via weekly run-rate, not totals.</p>
+    
+
+      <h3>Marketplace operations (matched window)</h3>
+      
+    <table>
+      <thead><tr><th>Marketplace ops</th><th>Matched pre</th><th>Matched post</th><th>Δ</th></tr></thead>
+      <tbody><tr><td><strong>Completed MP orders</strong></td><td>5,369</td><td>5,417</td><td class="neutral">-</td></tr><tr><td><strong>Missing/incorrect rate</strong></td><td>+1.0%</td><td>+1.9%</td><td class="bad">+78.8%</td></tr><tr><td><strong>Cancel rate (attempts)</strong></td><td>+0.9%</td><td>+1.0%</td><td class="bad">+4.9%</td></tr><tr><td><strong>Avoidable dasher wait</strong></td><td>2s</td><td>1s</td><td class="good">-9.0%</td></tr><tr><td><strong>Avg merchant rating</strong></td><td>-</td><td>-</td><td class="neutral">-</td></tr></tbody>
+    </table>
+    
+
+      <h3>Ads & Promos (matched window)</h3>
+      
+    <div class="side-by-side">
+      <div>
+        <h3>Sponsored Listings</h3>
+        <table><thead><tr><th></th><th>Matched pre</th><th>Matched post</th></tr></thead><tbody><tr><td><strong>Impressions</strong></td><td>40,239</td><td>22,444</td></tr><tr><td><strong>Clicks</strong></td><td>3,045</td><td>1,700</td></tr><tr><td><strong>Orders</strong></td><td>1,071</td><td>635</td></tr><tr><td><strong>Sales</strong></td><td>$27,512</td><td>$16,644</td></tr><tr><td><strong>Ad spend</strong></td><td>$3,240</td><td>$1,925</td></tr><tr><td><strong>ROAS</strong></td><td>8.49x</td><td>8.65x</td></tr><tr><td><strong>New cx via SL</strong></td><td>289</td><td>127</td></tr></tbody></table>
+      </div>
+      <div>
+        <h3>Promotions</h3>
+        <table><thead><tr><th></th><th>Matched pre</th><th>Matched post</th></tr></thead><tbody><tr><td><strong>Promo orders</strong></td><td>3,009</td><td>2,444</td></tr><tr><td><strong>Promo sales</strong></td><td>$92,531</td><td>$76,511</td></tr><tr><td><strong>DD-funded discount</strong></td><td>$4,837</td><td>$897</td></tr><tr><td><strong>Mx-funded discount</strong></td><td>$10,249</td><td>$9,294</td></tr><tr><td><strong>New cx via promos</strong></td><td>1,293</td><td>1,069</td></tr></tbody></table>
+      </div>
+    </div>
+    
+    </div>
+    
+
+<hr/>
+
+<h2>Methodology</h2>
+<ul>
+  <li><strong>Matched window:</strong> equal-length pre vs post for each store (79d for Cleveland Park, 58d for 8th St). Cleanest apples-to-apples delta.</li>
+  <li><strong>Full pre / weekly run-rate:</strong> 6mo before install vs post-to-date, normalized to per-week so window-length differences don't distort.</li>
+  <li><strong>POS GOV is by definition 100% incremental</strong> - these stores had no in-store/kiosk channel reporting to DD before Pathfinder. Pre-install in-store/kiosk = $0 in <code>edw.merchant.fact_merchant_orders_portal</code>.</li>
+  <li><strong>Marketplace ops</strong> (errors, rating, wait, cancellations) computed on the matched window only - these are completed-order-level metrics where seasonality matters less.</li>
+  <li><strong>Sources:</strong> <code>edw.merchant.fact_merchant_orders_portal</code> (channels, ops, cx), <code>edw.ads.fact_sl_campaign_performance</code> (SL), <code>edw.ads.fact_promo_campaign_performance</code> (promos).</li>
+</ul>
+
+<footer>Generated by Claude Agent | 2026-05-21 | Pathfinder Account Management</footer>
+
+</body>
+</html>

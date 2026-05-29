@@ -1,0 +1,206 @@
+{
+  "store_id": "50135",
+  "store_name": "KoFoo (23rd Street)",
+  "install_date": "2025-04-21",
+  "windows": {
+    "pre_start": "2024-10-23",
+    "pre_end": "2025-04-20",
+    "post_start": "2025-04-21",
+    "post_end": "2025-10-18",
+    "m1_3_start": "2025-04-21",
+    "m1_3_end": "2025-07-19",
+    "m4_6_start": "2025-07-20",
+    "m4_6_end": "2025-10-17",
+    "latest_3m_start": "2026-02-11",
+    "latest_3m_end": "2026-05-11",
+    "tenure_days_since_install": 386
+  },
+  "metadata": {
+    "cuisine_type": "Korean",
+    "region_name": "New York",
+    "submarket_name": "Manhattan",
+    "management_type_grouped": "UNMANAGED SMB",
+    "cuisine_bucket": "Asian",
+    "region_bucket": "Northeast",
+    "mgmt_bucket": "Unmanaged Smb",
+    "lifetime_osw": "1399.854547",
+    "lifetime_gov_store_week": "15250.322727272724",
+    "total_active_days": "385",
+    "lifetime_card_orders": "76992",
+    "lifetime_card_gov": "838767.750000000000"
+  },
+  "blocks": {
+    "channel_pre_post": {
+      "rows": [
+        {
+          "CHANNEL": "In-store",
+          "PRE_ORDERS": 0,
+          "PRE_SUBTOTAL": "0.00",
+          "POST_ORDERS": 35257,
+          "POST_SUBTOTAL": "337209.43"
+        },
+        {
+          "CHANNEL": "Marketplace",
+          "PRE_ORDERS": 413,
+          "PRE_SUBTOTAL": "12152.56",
+          "POST_ORDERS": 375,
+          "POST_SUBTOTAL": "8817.64"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "PRE_ORDERS": 34,
+          "PRE_SUBTOTAL": "668.36",
+          "POST_ORDERS": 34,
+          "POST_SUBTOTAL": "755.35"
+        },
+        {
+          "CHANNEL": null,
+          "PRE_ORDERS": 0,
+          "PRE_SUBTOTAL": "0.00",
+          "POST_ORDERS": 1,
+          "POST_SUBTOTAL": "3.09"
+        }
+      ],
+      "elapsed_s": 31.06
+    },
+    "channel_maturation": {
+      "rows": [
+        {
+          "CHANNEL": "In-store",
+          "M1_3_ORDERS": 17450,
+          "M1_3_SUBTOTAL": "168290.88",
+          "M4_6_ORDERS": 17657,
+          "M4_6_SUBTOTAL": "167300.93",
+          "LATEST_3M_ORDERS": 19787,
+          "LATEST_3M_SUBTOTAL": "194138.22"
+        },
+        {
+          "CHANNEL": "Marketplace",
+          "M1_3_ORDERS": 198,
+          "M1_3_SUBTOTAL": "4644.33",
+          "M4_6_ORDERS": 177,
+          "M4_6_SUBTOTAL": "4173.31",
+          "LATEST_3M_ORDERS": 183,
+          "LATEST_3M_SUBTOTAL": "4660.33"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "M1_3_ORDERS": 17,
+          "M1_3_SUBTOTAL": "414.50",
+          "M4_6_ORDERS": 17,
+          "M4_6_SUBTOTAL": "340.85",
+          "LATEST_3M_ORDERS": 14,
+          "LATEST_3M_SUBTOTAL": "316.95"
+        },
+        {
+          "CHANNEL": null,
+          "M1_3_ORDERS": 0,
+          "M1_3_SUBTOTAL": "0.00",
+          "M4_6_ORDERS": 1,
+          "M4_6_SUBTOTAL": "3.09",
+          "LATEST_3M_ORDERS": 1,
+          "LATEST_3M_SUBTOTAL": "2.99"
+        }
+      ],
+      "elapsed_s": 71.37
+    },
+    "mp_ops": {
+      "rows": [
+        {
+          "PRE_COMPLETED_ORDERS": 413,
+          "PRE_ERRORS": 1,
+          "PRE_AVOIDABLE_WAIT_SECONDS": "1.94166667",
+          "PRE_AVG_RATING": "4.692308",
+          "POST_COMPLETED_ORDERS": 375,
+          "POST_ERRORS": 1,
+          "POST_AVOIDABLE_WAIT_SECONDS": "1.52972067",
+          "POST_AVG_RATING": "4.931034"
+        }
+      ],
+      "elapsed_s": 29.78
+    },
+    "mp_cancellations": {
+      "rows": [
+        {
+          "PRE_CANCELLED": 3,
+          "POST_CANCELLED": 6
+        }
+      ],
+      "elapsed_s": 37.2
+    },
+    "customer_acquisition": {
+      "rows": [
+        {
+          "CHANNEL": "Marketplace",
+          "CX_TYPE_WITHIN_STORE": "new",
+          "PRE_ORDERS": 103,
+          "PRE_SUBTOTAL": "3583.79",
+          "POST_ORDERS": 134,
+          "POST_SUBTOTAL": "3201.66"
+        },
+        {
+          "CHANNEL": "Marketplace",
+          "CX_TYPE_WITHIN_STORE": "repeat",
+          "PRE_ORDERS": 310,
+          "PRE_SUBTOTAL": "8568.77",
+          "POST_ORDERS": 241,
+          "POST_SUBTOTAL": "5615.98"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "CX_TYPE_WITHIN_STORE": "new",
+          "PRE_ORDERS": 29,
+          "PRE_SUBTOTAL": "585.66",
+          "POST_ORDERS": 24,
+          "POST_SUBTOTAL": "611.85"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "CX_TYPE_WITHIN_STORE": "repeat",
+          "PRE_ORDERS": 5,
+          "PRE_SUBTOTAL": "82.70",
+          "POST_ORDERS": 10,
+          "POST_SUBTOTAL": "143.50"
+        }
+      ],
+      "elapsed_s": 51.0
+    },
+    "sponsored_listings": {
+      "rows": [
+        {
+          "PRE_IMPRESSIONS": null,
+          "PRE_CLICKS": null,
+          "PRE_ORDERS": null,
+          "PRE_SALES": null,
+          "PRE_AD_SPEND": null,
+          "PRE_NEW_CX": null,
+          "POST_IMPRESSIONS": null,
+          "POST_CLICKS": null,
+          "POST_ORDERS": null,
+          "POST_SALES": null,
+          "POST_AD_SPEND": null,
+          "POST_NEW_CX": null
+        }
+      ],
+      "elapsed_s": 0.69
+    },
+    "promos": {
+      "rows": [
+        {
+          "PRE_ORDERS": 127,
+          "PRE_SALES": "2840.410000",
+          "PRE_DD_FUNDED_DISCOUNT": "95.520000",
+          "PRE_MX_FUNDED_DISCOUNT": "0.000000",
+          "PRE_NEW_CX": 33,
+          "POST_ORDERS": 138,
+          "POST_SALES": "2837.160000",
+          "POST_DD_FUNDED_DISCOUNT": "189.630000",
+          "POST_MX_FUNDED_DISCOUNT": "5.000000",
+          "POST_NEW_CX": 63
+        }
+      ],
+      "elapsed_s": 305.53
+    }
+  },
+  "pulled_at": "2026-05-12"
+}

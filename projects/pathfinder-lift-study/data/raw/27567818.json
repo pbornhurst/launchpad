@@ -1,0 +1,199 @@
+{
+  "store_id": "27567818",
+  "store_name": "Oh Brother Philly (Market St)",
+  "install_date": "2025-08-19",
+  "windows": {
+    "pre_start": "2025-02-20",
+    "pre_end": "2025-08-18",
+    "post_start": "2025-08-19",
+    "post_end": "2026-02-15",
+    "m1_3_start": "2025-08-19",
+    "m1_3_end": "2025-11-16",
+    "m4_6_start": "2025-11-17",
+    "m4_6_end": "2026-02-14",
+    "latest_3m_start": null,
+    "latest_3m_end": null,
+    "tenure_days_since_install": 266
+  },
+  "metadata": {
+    "cuisine_type": "American",
+    "region_name": "Northeast",
+    "submarket_name": "Philadelphia",
+    "management_type_grouped": "MANAGED SMB",
+    "cuisine_bucket": "American",
+    "region_bucket": "Northeast",
+    "mgmt_bucket": "Managed Smb",
+    "lifetime_osw": "853.735848",
+    "lifetime_gov_store_week": "30282.187283018867",
+    "total_active_days": "265",
+    "lifetime_card_orders": "32320",
+    "lifetime_card_gov": "1146397.090000000000"
+  },
+  "blocks": {
+    "channel_pre_post": {
+      "rows": [
+        {
+          "CHANNEL": "In-store",
+          "PRE_ORDERS": 0,
+          "PRE_SUBTOTAL": "0.00",
+          "POST_ORDERS": 19556,
+          "POST_SUBTOTAL": "583662.62"
+        },
+        {
+          "CHANNEL": "Marketplace",
+          "PRE_ORDERS": 15825,
+          "PRE_SUBTOTAL": "487883.14",
+          "POST_ORDERS": 14044,
+          "POST_SUBTOTAL": "452152.27"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "PRE_ORDERS": 3382,
+          "PRE_SUBTOTAL": "117915.31",
+          "POST_ORDERS": 3193,
+          "POST_SUBTOTAL": "102090.19"
+        }
+      ],
+      "elapsed_s": 37.09
+    },
+    "channel_maturation": {
+      "rows": [
+        {
+          "CHANNEL": "In-store",
+          "M1_3_ORDERS": 9896,
+          "M1_3_SUBTOTAL": "287128.21",
+          "M4_6_ORDERS": 9468,
+          "M4_6_SUBTOTAL": "289742.58",
+          "LATEST_3M_ORDERS": 0,
+          "LATEST_3M_SUBTOTAL": "0.00"
+        },
+        {
+          "CHANNEL": "Marketplace",
+          "M1_3_ORDERS": 8228,
+          "M1_3_SUBTOTAL": "256550.48",
+          "M4_6_ORDERS": 5717,
+          "M4_6_SUBTOTAL": "192258.46",
+          "LATEST_3M_ORDERS": 0,
+          "LATEST_3M_SUBTOTAL": "0.00"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "M1_3_ORDERS": 1785,
+          "M1_3_SUBTOTAL": "54946.77",
+          "M4_6_ORDERS": 1384,
+          "M4_6_SUBTOTAL": "46376.80",
+          "LATEST_3M_ORDERS": 0,
+          "LATEST_3M_SUBTOTAL": "0.00"
+        },
+        {
+          "CHANNEL": null,
+          "M1_3_ORDERS": 0,
+          "M1_3_SUBTOTAL": "0.00",
+          "M4_6_ORDERS": 0,
+          "M4_6_SUBTOTAL": "0.00",
+          "LATEST_3M_ORDERS": 0,
+          "LATEST_3M_SUBTOTAL": "0.00"
+        }
+      ],
+      "elapsed_s": 37.46
+    },
+    "mp_ops": {
+      "rows": [
+        {
+          "PRE_COMPLETED_ORDERS": 15825,
+          "PRE_ERRORS": 369,
+          "PRE_AVOIDABLE_WAIT_SECONDS": "2.56067311",
+          "PRE_AVG_RATING": "4.508104",
+          "POST_COMPLETED_ORDERS": 14044,
+          "POST_ERRORS": 346,
+          "POST_AVOIDABLE_WAIT_SECONDS": "2.36145322",
+          "POST_AVG_RATING": "4.663706"
+        }
+      ],
+      "elapsed_s": 57.18
+    },
+    "mp_cancellations": {
+      "rows": [
+        {
+          "PRE_CANCELLED": 230,
+          "POST_CANCELLED": 242
+        }
+      ],
+      "elapsed_s": 45.28
+    },
+    "customer_acquisition": {
+      "rows": [
+        {
+          "CHANNEL": "Marketplace",
+          "CX_TYPE_WITHIN_STORE": "new",
+          "PRE_ORDERS": 6674,
+          "PRE_SUBTOTAL": "216982.44",
+          "POST_ORDERS": 5464,
+          "POST_SUBTOTAL": "190173.71"
+        },
+        {
+          "CHANNEL": "Marketplace",
+          "CX_TYPE_WITHIN_STORE": "repeat",
+          "PRE_ORDERS": 9151,
+          "PRE_SUBTOTAL": "270900.70",
+          "POST_ORDERS": 8580,
+          "POST_SUBTOTAL": "261978.56"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "CX_TYPE_WITHIN_STORE": "new",
+          "PRE_ORDERS": 2575,
+          "PRE_SUBTOTAL": "94057.78",
+          "POST_ORDERS": 2229,
+          "POST_SUBTOTAL": "76128.71"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "CX_TYPE_WITHIN_STORE": "repeat",
+          "PRE_ORDERS": 807,
+          "PRE_SUBTOTAL": "23857.53",
+          "POST_ORDERS": 964,
+          "POST_SUBTOTAL": "25961.48"
+        }
+      ],
+      "elapsed_s": 79.73
+    },
+    "sponsored_listings": {
+      "rows": [
+        {
+          "PRE_IMPRESSIONS": 89111,
+          "PRE_CLICKS": 6183,
+          "PRE_ORDERS": 1448,
+          "PRE_SALES": "42215.560000",
+          "PRE_AD_SPEND": "7256.850000",
+          "PRE_NEW_CX": 378,
+          "POST_IMPRESSIONS": 139283,
+          "POST_CLICKS": 11133,
+          "POST_ORDERS": 2774,
+          "POST_SALES": "92785.430000",
+          "POST_AD_SPEND": "8936.950000",
+          "POST_NEW_CX": 539
+        }
+      ],
+      "elapsed_s": 45.18
+    },
+    "promos": {
+      "rows": [
+        {
+          "PRE_ORDERS": 9330,
+          "PRE_SALES": "305884.630000",
+          "PRE_DD_FUNDED_DISCOUNT": "50640.810000",
+          "PRE_MX_FUNDED_DISCOUNT": "25232.730000",
+          "PRE_NEW_CX": 3148,
+          "POST_ORDERS": 10057,
+          "POST_SALES": "344266.980000",
+          "POST_DD_FUNDED_DISCOUNT": "94317.340000",
+          "POST_MX_FUNDED_DISCOUNT": "4552.860000",
+          "POST_NEW_CX": 3749
+        }
+      ],
+      "elapsed_s": 915.27
+    }
+  },
+  "pulled_at": "2026-05-12"
+}

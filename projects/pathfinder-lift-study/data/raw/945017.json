@@ -1,0 +1,190 @@
+{
+  "store_id": "945017",
+  "store_name": "Mag's Donuts (Bison Avenue)",
+  "install_date": "2024-05-23",
+  "windows": {
+    "pre_start": "2023-11-25",
+    "pre_end": "2024-05-22",
+    "post_start": "2024-05-23",
+    "post_end": "2024-11-19",
+    "m1_3_start": "2024-05-23",
+    "m1_3_end": "2024-08-20",
+    "m4_6_start": "2024-08-21",
+    "m4_6_end": "2024-11-18",
+    "latest_3m_start": "2026-02-11",
+    "latest_3m_end": "2026-05-11",
+    "tenure_days_since_install": 719
+  },
+  "metadata": {
+    "cuisine_type": "American,European",
+    "region_name": "Southern California",
+    "submarket_name": "Orange County",
+    "management_type_grouped": "UNMANAGED SMB",
+    "cuisine_bucket": "American",
+    "region_bucket": "West",
+    "mgmt_bucket": "Unmanaged Smb",
+    "lifetime_osw": "1272.537602",
+    "lifetime_gov_store_week": "19087.428022284125",
+    "total_active_days": "718",
+    "lifetime_card_orders": "130526",
+    "lifetime_card_gov": "1957824.760000000000"
+  },
+  "blocks": {
+    "channel_pre_post": {
+      "rows": [
+        {
+          "CHANNEL": "In-store",
+          "PRE_ORDERS": 0,
+          "PRE_SUBTOTAL": "0.00",
+          "POST_ORDERS": 33393,
+          "POST_SUBTOTAL": "480264.93"
+        },
+        {
+          "CHANNEL": "Marketplace",
+          "PRE_ORDERS": 359,
+          "PRE_SUBTOTAL": "10067.00",
+          "POST_ORDERS": 5284,
+          "POST_SUBTOTAL": "133219.05"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "PRE_ORDERS": 4,
+          "PRE_SUBTOTAL": "339.17",
+          "POST_ORDERS": 89,
+          "POST_SUBTOTAL": "3782.84"
+        }
+      ],
+      "elapsed_s": 28.96
+    },
+    "channel_maturation": {
+      "rows": [
+        {
+          "CHANNEL": "In-store",
+          "M1_3_ORDERS": 15824,
+          "M1_3_SUBTOTAL": "233881.45",
+          "M4_6_ORDERS": 17387,
+          "M4_6_SUBTOTAL": "244063.05",
+          "LATEST_3M_ORDERS": 16299,
+          "LATEST_3M_SUBTOTAL": "252571.53"
+        },
+        {
+          "CHANNEL": "Marketplace",
+          "M1_3_ORDERS": 2760,
+          "M1_3_SUBTOTAL": "70569.52",
+          "M4_6_ORDERS": 2502,
+          "M4_6_SUBTOTAL": "62095.53",
+          "LATEST_3M_ORDERS": 2860,
+          "LATEST_3M_SUBTOTAL": "69897.16"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "M1_3_ORDERS": 44,
+          "M1_3_SUBTOTAL": "1697.39",
+          "M4_6_ORDERS": 44,
+          "M4_6_SUBTOTAL": "2046.00",
+          "LATEST_3M_ORDERS": 45,
+          "LATEST_3M_SUBTOTAL": "2031.60"
+        }
+      ],
+      "elapsed_s": 73.5
+    },
+    "mp_ops": {
+      "rows": [
+        {
+          "PRE_COMPLETED_ORDERS": 359,
+          "PRE_ERRORS": 1,
+          "PRE_AVOIDABLE_WAIT_SECONDS": "2.36099476",
+          "PRE_AVG_RATING": "5.000000",
+          "POST_COMPLETED_ORDERS": 5284,
+          "POST_ERRORS": 22,
+          "POST_AVOIDABLE_WAIT_SECONDS": "2.57774177",
+          "POST_AVG_RATING": "4.977636"
+        }
+      ],
+      "elapsed_s": 22.09
+    },
+    "mp_cancellations": {
+      "rows": [
+        {
+          "PRE_CANCELLED": 2,
+          "POST_CANCELLED": 29
+        }
+      ],
+      "elapsed_s": 34.15
+    },
+    "customer_acquisition": {
+      "rows": [
+        {
+          "CHANNEL": "Marketplace",
+          "CX_TYPE_WITHIN_STORE": "new",
+          "PRE_ORDERS": 80,
+          "PRE_SUBTOTAL": "2114.18",
+          "POST_ORDERS": 1279,
+          "POST_SUBTOTAL": "34216.24"
+        },
+        {
+          "CHANNEL": "Marketplace",
+          "CX_TYPE_WITHIN_STORE": "repeat",
+          "PRE_ORDERS": 279,
+          "PRE_SUBTOTAL": "7952.82",
+          "POST_ORDERS": 4005,
+          "POST_SUBTOTAL": "99002.81"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "CX_TYPE_WITHIN_STORE": "new",
+          "PRE_ORDERS": 4,
+          "PRE_SUBTOTAL": "339.17",
+          "POST_ORDERS": 73,
+          "POST_SUBTOTAL": "3208.29"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "CX_TYPE_WITHIN_STORE": "repeat",
+          "PRE_ORDERS": 0,
+          "PRE_SUBTOTAL": "0.00",
+          "POST_ORDERS": 16,
+          "POST_SUBTOTAL": "574.55"
+        }
+      ],
+      "elapsed_s": 33.06
+    },
+    "sponsored_listings": {
+      "rows": [
+        {
+          "PRE_IMPRESSIONS": null,
+          "PRE_CLICKS": null,
+          "PRE_ORDERS": null,
+          "PRE_SALES": null,
+          "PRE_AD_SPEND": null,
+          "PRE_NEW_CX": null,
+          "POST_IMPRESSIONS": null,
+          "POST_CLICKS": null,
+          "POST_ORDERS": null,
+          "POST_SALES": null,
+          "POST_AD_SPEND": null,
+          "POST_NEW_CX": null
+        }
+      ],
+      "elapsed_s": 0.6
+    },
+    "promos": {
+      "rows": [
+        {
+          "PRE_ORDERS": 198,
+          "PRE_SALES": "4319.440000",
+          "PRE_DD_FUNDED_DISCOUNT": "346.220000",
+          "PRE_MX_FUNDED_DISCOUNT": "0.000000",
+          "PRE_NEW_CX": 66,
+          "POST_ORDERS": 265,
+          "POST_SALES": "7059.920000",
+          "POST_DD_FUNDED_DISCOUNT": "510.110000",
+          "POST_MX_FUNDED_DISCOUNT": "0.000000",
+          "POST_NEW_CX": 67
+        }
+      ],
+      "elapsed_s": 69.69
+    }
+  },
+  "pulled_at": "2026-05-12"
+}

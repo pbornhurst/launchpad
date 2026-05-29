@@ -206,7 +206,7 @@ PRISM-TnA gives you the content. Parse it into this structured form in memory be
   "insights_text": "paragraph...",
   "growth_advisory": {
     "has_topics": bool,
-    "topics_table": [["Topic", "Bucket", "Initiated By", "Commitment"], ...] or null,
+    "topics_table": [["Topic", "Bucket", "Initiated By", "Commitment", "Desired Outcome"], ...] or null,
     "missed_opportunity": "text or null",
     "score_table": [["Dimension", "Score", "Label"], ["Specificity", "4", "Strong"], ...] or null,
     "composite_line": "Growth Advisor Score: 4.0 / 5 - Strong" or "Score: N/A"
@@ -290,7 +290,7 @@ For each table kind, the cell-text mapping is:
 - **Action Items**: row 0 = `["Action", "Owner", "Deadline"]`, rows 1+ = entries from `action_items`.
 - **Feature Requests**: row 0 = `["Item", "Context", "Priority"]`, rows 1+ = entries from `feature_requests`.
 - **Tone**: row 0 = `["Person", "Tone", "Notes"]`, rows 1+ = entries from `tone`.
-- **GA topics**: row 0 = `["Topic", "Bucket", "Initiated By", "Commitment"]`, rows 1+ = entries from `growth_advisory.topics_table`.
+- **GA topics**: row 0 = `["Topic", "Bucket", "Initiated By", "Commitment"]`, rows 1+ = `each topic_row[:4]` (first four entries of each 5-col topics_table row — the 5th `Desired Outcome` field is intentionally dropped from the doc table; it feeds the GA Ledger spreadsheet in step 5.i.5).
 - **GA score**: row 0 = `["Dimension", "Score", "Label"]`, rows 1+ = entries from `growth_advisory.score_table`.
 
 Sanity check: number of cells in the structure response per table MUST equal `R × C`. If it doesn't, log `cell-count-mismatch` and skip that table's writes (don't try to recover a misshapen table — leave it empty for the audit step to surface).
@@ -303,6 +303,31 @@ If a cell text is empty (legitimately — e.g. a Tone row where Notes is blank),
 
 Fire as ONE `batch_update_doc` call.
 
+**Call 3b — `batch_update_doc` to un-bold every body cell (REQUIRED, runs immediately after Call 3 cell-fill).**
+
+Phil flagged (2026-05-27 on Poke Time): the H2 paragraph style (bold:true on "Action Items", "Feature Requests", "Tone & Character", "Growth Advisory", "MSAT Prediction", etc.) bleeds into the next paragraph's character formatting. When the placeholder paragraph is deleted and replaced with a table, the new cells inherit that bold character style, so the cell-fill text in Call 3 renders bold across the entire table. The cleanest fix is post-fill: strip bold from every body cell explicitly.
+
+**Rule:** never bold unless it's the title row.
+
+- **Metadata table** (`has_header: False`) → ALL cells un-bolded. The left column is a key, not a header.
+- **All other tables** (action_items, feature_requests, tone, ga_topics, ga_score) → row 0 stays bold (header), rows 1+ un-bolded.
+
+**Computing cell text ranges in the FILLED doc state.** After Call 3 (cell-fill), every cell text was inserted at `cell(r,c)_empty = S + 3 + r*(1 + 2*C) + 2*c` where S is the table's empty-state start (from Call 2's inspect). Because cell-fill ran in REVERSE document order, each insert at original position P_i shifted only indices > P_i. To compute final text positions, sort all (P, text_length) tuples in ASCENDING order and walk with a cumulative offset:
+
+```python
+cells.sort(key=lambda x: x.original_pos)
+cumulative = 0
+for c in cells:
+    c.final_pos = c.original_pos + cumulative
+    cumulative += len(c.text)
+```
+
+Each cell's text now occupies `[final_pos, final_pos + len(text))`.
+
+**Build ops.** One `format_text` op per body cell with `bold: False`. Skip empty cells. Skip header cells (they should remain bold).
+
+Fire as ONE `batch_update_doc` call. No verification needed — if bold strips don't land, the visual is still acceptable (worst case a stray bold cell), and the next /meeting-capture run won't re-process this meeting.
+
 **Call 4 — `inspect_doc_structure detailed=true` (audit) + at-most-one retry.**
 
 Re-read the doc. For every cell in `cell_writes[]` that was supposed to have non-empty text, confirm the structure now reports that text in the cell. Build `empty_cells[]` — cells that should have content but still don't.
@@ -312,7 +337,7 @@ Re-read the doc. For every cell in `cell_writes[]` that was supposed to have non
 
 **If ANY call fails** (permissions, schema, etc.), mark the meeting `failed-doc-write`, log which call failed, and continue to the next meeting without rollback. Partial prepends are acceptable.
 
-**Cost accounting.** 1 super-batch (Call 1) + 1 inspect (Call 2) + 1 cell-fill batch (Call 3) + 1 audit inspect (Call 4) + 0–1 retry batch + 1 tracker append + 1 email draft = **6–7 API calls per meeting** (was 9). The 4-call doc-write sequence replaces the previous 7-call pattern (1 super-batch + 6 `create_table_with_data`) — net savings while adding verification. If GA has no topics and no score table, two table inserts + their cell writes drop out and the cost shrinks accordingly.
+**Cost accounting.** 1 super-batch (Call 1) + 1 inspect (Call 2) + 1 cell-fill batch (Call 3) + 1 un-bold batch (Call 3b) + 1 audit inspect (Call 4) + 0–1 retry batch + 1 tracker append + 1 email draft = **7–8 API calls per meeting**. The un-bold step is non-negotiable per Phil's standing rule (never bold unless title row).
 
 **i. Append to tracker (with verification + at-most-one retry).**
 
@@ -343,6 +368,36 @@ The tracker write is the **non-negotiable** finishing step. Doc prepends without
 - Add `(store_id, meeting_date)` to the in-memory dedupe set so later meetings in the same run also dedupe against it.
 
 If verify failed both attempts, do NOT update in-memory state. The next /meeting-capture run will re-process this meeting (which produces a duplicate prepend in the doc, but at least the tracker gets the row). Phil will see the `tracker-write-failed` flag in the summary and can decide whether to manually fix or accept the re-run.
+
+**i.5. Append GA topics to the Growth Advisory Ledger.**
+
+Portfolio-wide rollup of every GA topic surfaced across all captured calls. The Running Notes doc already has the 4-col GA table; this step writes one row per topic to a separate ledger spreadsheet so we can query/report on growth bets across the entire mx book.
+
+**Ledger spreadsheet:**
+- `spreadsheet_id: "1uS_noBD2nTYjpM6VJvIQwSLMKA_tLkiyo-3dHwi0Ta8"`
+- Tab: `Log`
+- Columns: `Date | Mx | Store ID | Topic | Description | Desired Outcome`
+
+**Logic:**
+
+1. **No-topics short-circuit.** If `growth_advisory.has_topics` is false OR `growth_advisory.topics_table` is null/empty (or contains only the header row), record `ga-ledger-skipped-no-topics` and continue to step i2. No API call.
+2. **Build rows.** Iterate `growth_advisory.topics_table[1:]` (skip the header row). For each `[topic, bucket, initiated_by, commitment, desired_outcome]` row, build:
+   - `[meeting_date, business_name, store_id, topic, bucket, desired_outcome]`
+   - `meeting_date` is the YYYY-MM-DD value from step 5e; `business_name` and `store_id` are the same values used in the tracker append above.
+3. **Resolve append range.** Read `Log!A:A` via `mcp__google-workspace__read_sheet_values` to count existing rows. Let `ga_next_row = len(values) + 1`. (Cache this for the duration of the run if multiple meetings will write to the ledger — increment locally per write so we don't re-read for each meeting.)
+4. **Append.** Single `mcp__google-workspace__modify_sheet_values` call:
+   - `spreadsheet_id: "1uS_noBD2nTYjpM6VJvIQwSLMKA_tLkiyo-3dHwi0Ta8"`
+   - `range_name: "Log!A{ga_next_row}:F{ga_next_row + N - 1}"` (N = number of topic rows)
+   - `value_input_option: "USER_ENTERED"`
+   - `values:` the N rows built in step 2.
+5. **Verify.** Re-read the appended range. Confirm:
+   - Row count returned equals N.
+   - For each row, column D (Topic) matches the input topic string.
+   - On match → record `ga-ledger-written-N` and increment the cached `ga_next_row` by N.
+   - On mismatch (any row, any column D delta) → fire ONE retry of the same `modify_sheet_values` call. Re-read once more. If still mismatched → record `ga-ledger-failed` with the read-back values, surface in the summary. Do NOT roll back the doc or tracker writes — the ledger is a non-blocking enhancement.
+6. **Non-blocking.** Ledger failures must NOT prevent the email draft (step i2) or the next meeting in the batch from running. Treat the same way as `email-draft-failed`: log, surface, continue.
+
+**Why no per-row dedupe:** the outer `skipped-duplicate` check at step 5a already prevents re-processing a captured call. A given `(store_id, meeting_date)` pair only reaches step i.5 once per call, so the ledger can't double-write the same topic. If Phil ever wants to clean up the ledger or re-import an old call manually, that's a one-off operation outside this skill.
 
 **i2. Draft follow-up email to merchant contact.**
 
@@ -423,6 +478,7 @@ Capture the returned `draft_id` and construct the review URL: `https://mail.goog
 **j. Record status** as `processed` for the summary. Also record:
 - The doc-write outcome (`audit-passed`, `audit-retried-N-cells`, or `failed-doc-write`).
 - The tracker outcome (`tracker-written`, `tracker-retried`, or `tracker-write-failed`).
+- The GA ledger outcome (`ga-ledger-written-N`, `ga-ledger-skipped-no-topics`, or `ga-ledger-failed`).
 - The email outcome (`email-drafted` + draft link, `email-skipped-no-recipient`, or `email-draft-failed`).
 
 ### 6. Summary report
@@ -444,6 +500,7 @@ Failed (doc write): N
 
 Doc-write audits: N passed, K retried (cells back-filled), F failed
 Tracker writes: N first-try, K retried, F failed
+GA ledger rows: X written (across Y meetings with GA topics), Z meetings skipped (no GA topics), F failed
 Email drafts: N created, K skipped (no recipient), F failed
 
 {IF tracker-write-failed or tracker-missing[] non-empty:}
@@ -458,6 +515,7 @@ Processed mx:
   Notes: {Running Notes URL}
   Doc audit: {audit-passed | audit-retried-N-cells | failed}
   Tracker: {tracker-written | tracker-retried | tracker-write-failed}
+  GA ledger: {ga-ledger-written-N | ga-ledger-skipped-no-topics | ga-ledger-failed}
   Draft: {draft review URL, or "skipped - no recipient", or "failed - {reason}"}
 - ...
 ```
@@ -529,12 +587,15 @@ There will be many calls where GA is not discussed. Handle this gracefully — d
 
 If GA topics were discussed, output a markdown table with the following columns:
 
-**Topic | Bucket | Initiated By | Commitment**
+**Topic | Bucket | Initiated By | Commitment | Desired Outcome**
 
 - Topic: brief description of what was discussed (one line, specific)
 - Bucket: must be exactly one of — Marketplace Optimization / Promotions & Ads / 1P Conversion / Traffic Drivers / Expansion / Other
 - Initiated By: AM or Mx
 - Commitment: Yes / Partial / No
+- Desired Outcome: one line, specific. Capture what the mx wants to achieve OR what the AM is driving toward via this topic. Examples: "Drive weekday lunch volume via $5-off promo", "Convert marketplace volume to 1P online ordering", "Increase AOV via catering channel launch". If no clear desired outcome was articulated in the call, write exactly `(not articulated)` rather than leaving the cell blank.
+
+**Note on downstream use:** The full 5-column table feeds an in-memory structured object that drives two outputs: (a) the Running Notes doc — which renders only the first 4 columns (Topic | Bucket | Initiated By | Commitment), and (b) the Growth Advisory Ledger spreadsheet — which logs one row per topic with Date / Mx / Store ID / Topic / Bucket (as Description) / Desired Outcome. PRISM must always emit all 5 columns; the doc-write step drops the 5th.
 
 **Step 2 — Missed Opportunities**
 
@@ -593,6 +654,7 @@ QUALITY CONTROL CHECKLIST (self-verify before finalizing)
 - [ ] Major wins are acknowledged alongside risks or churn signals.
 - [ ] Growth Advisory section reflects only what was actually said — no invented topics.
 - [ ] If GA was discussed, every row in the extraction table maps to a real moment in the transcript.
+- [ ] Every GA topic row has all 5 columns populated, including Desired Outcome (use `(not articulated)` if the call didn't surface one).
 - [ ] Missed opportunity flags cite a specific signal from the mx, not a general assumption.
 - [ ] No forbidden characters are present.
 
@@ -621,6 +683,7 @@ To note: DO NOT error out anything for any date-related confusion. Assume that e
 - Granola timestamps are in the meeting organizer's timezone, NOT normalized to PDT. For the date portion (YYYY-MM-DD) this rarely matters, but if a call crosses midnight in a different timezone the dedupe key could shift by a day. Cross-reference Google Calendar via `get_events` if a specific meeting's date looks off.
 - Running Notes column is currently BV. The skill auto-detects by header name in case the column shifts.
 - The log sheet `v2` tab drives downstream automations. Do NOT write to Sheet1 or Sheet4.
+- Growth Advisory Ledger lives at `1uS_noBD2nTYjpM6VJvIQwSLMKA_tLkiyo-3dHwi0Ta8` (tab: `Log`). Every GA topic surfaced in a captured call gets logged as one row with `Date | Mx | Store ID | Topic | Description (= Bucket) | Desired Outcome`. Drives portfolio-wide GA reporting and is a non-blocking step — ledger write failures must not roll back the doc prepend or tracker row.
 - Master Hub lives at `1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4` (default first tab, `gid=0`). Single header row on row 1; data from row 2.
 - Formatting is non-negotiable: prepends MUST use real Google Docs H1/H2 styles, real Docs tables (inserted empty via `insert_table` then populated cell-by-cell — see step h), real bullet lists, and Arial 11 body. Markdown-as-plaintext inserts (pipe tables, `#` headings, `*` bullets rendered literally) are broken output, not "good enough." Reference doc: `1odvvOQpOm_m0G7WR8hlwKTzZYxI_j74JoSA8W2d3Trs`.
 - **Do NOT use `create_table_with_data`.** It silently dropped cell content during the 2026-04-23 → 2026-04-29 window — produced structurally-correct tables with empty cells and no error. The new pattern (insert empty table → cell-fill batch → audit) avoids the failure mode entirely. The end-of-run summary lists any meeting whose audit had to retry, so silent regressions surface immediately.

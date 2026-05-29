@@ -1,0 +1,206 @@
+{
+  "store_id": "35540217",
+  "store_name": "Taichi Bubble Tea (Mt. Prospect)",
+  "install_date": "2025-10-14",
+  "windows": {
+    "pre_start": "2025-04-17",
+    "pre_end": "2025-10-13",
+    "post_start": "2025-10-14",
+    "post_end": "2026-04-12",
+    "m1_3_start": "2025-10-14",
+    "m1_3_end": "2026-01-11",
+    "m4_6_start": "2026-01-12",
+    "m4_6_end": "2026-04-11",
+    "latest_3m_start": null,
+    "latest_3m_end": null,
+    "tenure_days_since_install": 210
+  },
+  "metadata": {
+    "cuisine_type": "Japanese",
+    "region_name": "Midwest",
+    "submarket_name": "Chicago",
+    "management_type_grouped": "MANAGED SMB",
+    "cuisine_bucket": "Asian",
+    "region_bucket": "Midwest",
+    "mgmt_bucket": "Managed Smb",
+    "lifetime_osw": "449.009617",
+    "lifetime_gov_store_week": "11277.659615384617",
+    "total_active_days": "208",
+    "lifetime_card_orders": "13342",
+    "lifetime_card_gov": "335107.600000000000"
+  },
+  "blocks": {
+    "channel_pre_post": {
+      "rows": [
+        {
+          "CHANNEL": "In-store",
+          "PRE_ORDERS": 0,
+          "PRE_SUBTOTAL": "0.00",
+          "POST_ORDERS": 6113,
+          "POST_SUBTOTAL": "129923.54"
+        },
+        {
+          "CHANNEL": "Kiosk",
+          "PRE_ORDERS": 0,
+          "PRE_SUBTOTAL": "0.00",
+          "POST_ORDERS": 5093,
+          "POST_SUBTOTAL": "115328.00"
+        },
+        {
+          "CHANNEL": "Marketplace",
+          "PRE_ORDERS": 253,
+          "PRE_SUBTOTAL": "7358.43",
+          "POST_ORDERS": 1533,
+          "POST_SUBTOTAL": "44204.24"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "PRE_ORDERS": 293,
+          "PRE_SUBTOTAL": "10289.22",
+          "POST_ORDERS": 1588,
+          "POST_SUBTOTAL": "45440.98"
+        }
+      ],
+      "elapsed_s": 18.81
+    },
+    "channel_maturation": {
+      "rows": [
+        {
+          "CHANNEL": "In-store",
+          "M1_3_ORDERS": 3093,
+          "M1_3_SUBTOTAL": "67611.38",
+          "M4_6_ORDERS": 2966,
+          "M4_6_SUBTOTAL": "61182.70",
+          "LATEST_3M_ORDERS": 0,
+          "LATEST_3M_SUBTOTAL": "0.00"
+        },
+        {
+          "CHANNEL": "Kiosk",
+          "M1_3_ORDERS": 2436,
+          "M1_3_SUBTOTAL": "56519.02",
+          "M4_6_ORDERS": 2613,
+          "M4_6_SUBTOTAL": "57848.44",
+          "LATEST_3M_ORDERS": 0,
+          "LATEST_3M_SUBTOTAL": "0.00"
+        },
+        {
+          "CHANNEL": "Marketplace",
+          "M1_3_ORDERS": 577,
+          "M1_3_SUBTOTAL": "16750.31",
+          "M4_6_ORDERS": 944,
+          "M4_6_SUBTOTAL": "27108.09",
+          "LATEST_3M_ORDERS": 0,
+          "LATEST_3M_SUBTOTAL": "0.00"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "M1_3_ORDERS": 696,
+          "M1_3_SUBTOTAL": "20599.19",
+          "M4_6_ORDERS": 881,
+          "M4_6_SUBTOTAL": "24534.36",
+          "LATEST_3M_ORDERS": 0,
+          "LATEST_3M_SUBTOTAL": "0.00"
+        }
+      ],
+      "elapsed_s": 22.47
+    },
+    "mp_ops": {
+      "rows": [
+        {
+          "PRE_COMPLETED_ORDERS": 253,
+          "PRE_ERRORS": 2,
+          "PRE_AVOIDABLE_WAIT_SECONDS": "2.46742138",
+          "PRE_AVG_RATING": "4.750000",
+          "POST_COMPLETED_ORDERS": 1533,
+          "POST_ERRORS": 22,
+          "POST_AVOIDABLE_WAIT_SECONDS": "2.17215718",
+          "POST_AVG_RATING": "4.814815"
+        }
+      ],
+      "elapsed_s": 35.2
+    },
+    "mp_cancellations": {
+      "rows": [
+        {
+          "PRE_CANCELLED": 0,
+          "POST_CANCELLED": 8
+        }
+      ],
+      "elapsed_s": 44.7
+    },
+    "customer_acquisition": {
+      "rows": [
+        {
+          "CHANNEL": "Marketplace",
+          "CX_TYPE_WITHIN_STORE": "new",
+          "PRE_ORDERS": 199,
+          "PRE_SUBTOTAL": "5974.14",
+          "POST_ORDERS": 803,
+          "POST_SUBTOTAL": "23282.03"
+        },
+        {
+          "CHANNEL": "Marketplace",
+          "CX_TYPE_WITHIN_STORE": "repeat",
+          "PRE_ORDERS": 54,
+          "PRE_SUBTOTAL": "1384.29",
+          "POST_ORDERS": 730,
+          "POST_SUBTOTAL": "20922.21"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "CX_TYPE_WITHIN_STORE": "new",
+          "PRE_ORDERS": 243,
+          "PRE_SUBTOTAL": "8643.97",
+          "POST_ORDERS": 848,
+          "POST_SUBTOTAL": "25396.36"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "CX_TYPE_WITHIN_STORE": "repeat",
+          "PRE_ORDERS": 50,
+          "PRE_SUBTOTAL": "1645.25",
+          "POST_ORDERS": 740,
+          "POST_SUBTOTAL": "20044.62"
+        }
+      ],
+      "elapsed_s": 53.2
+    },
+    "sponsored_listings": {
+      "rows": [
+        {
+          "PRE_IMPRESSIONS": 4187,
+          "PRE_CLICKS": 298,
+          "PRE_ORDERS": 51,
+          "PRE_SALES": "1464.700000",
+          "PRE_AD_SPEND": "317.830000",
+          "PRE_NEW_CX": 51,
+          "POST_IMPRESSIONS": 22578,
+          "POST_CLICKS": 1699,
+          "POST_ORDERS": 362,
+          "POST_SALES": "10186.460000",
+          "POST_AD_SPEND": "1529.810000",
+          "POST_NEW_CX": 176
+        }
+      ],
+      "elapsed_s": 34.04
+    },
+    "promos": {
+      "rows": [
+        {
+          "PRE_ORDERS": 94,
+          "PRE_SALES": "2724.160000",
+          "PRE_DD_FUNDED_DISCOUNT": "222.660000",
+          "PRE_MX_FUNDED_DISCOUNT": "256.690000",
+          "PRE_NEW_CX": 68,
+          "POST_ORDERS": 900,
+          "POST_SALES": "31030.120000",
+          "POST_DD_FUNDED_DISCOUNT": "279.230000",
+          "POST_MX_FUNDED_DISCOUNT": "6028.320000",
+          "POST_NEW_CX": 487
+        }
+      ],
+      "elapsed_s": 1040.86
+    }
+  },
+  "pulled_at": "2026-05-12"
+}

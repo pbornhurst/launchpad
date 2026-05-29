@@ -1,0 +1,190 @@
+{
+  "store_id": "28386055",
+  "store_name": "Taco Prado (Mableton Pkwy SE)",
+  "install_date": "2025-10-22",
+  "windows": {
+    "pre_start": "2025-04-25",
+    "pre_end": "2025-10-21",
+    "post_start": "2025-10-22",
+    "post_end": "2026-04-20",
+    "m1_3_start": "2025-10-22",
+    "m1_3_end": "2026-01-19",
+    "m4_6_start": "2026-01-20",
+    "m4_6_end": "2026-04-19",
+    "latest_3m_start": null,
+    "latest_3m_end": null,
+    "tenure_days_since_install": 202
+  },
+  "metadata": {
+    "cuisine_type": null,
+    "region_name": "Southeast",
+    "submarket_name": "Atlanta",
+    "management_type_grouped": "UNMANAGED SMB",
+    "cuisine_bucket": "Other",
+    "region_bucket": "South",
+    "mgmt_bucket": "Unmanaged Smb",
+    "lifetime_osw": "359.100000",
+    "lifetime_gov_store_week": "9279.509400000000",
+    "total_active_days": "200",
+    "lifetime_card_orders": "10260",
+    "lifetime_card_gov": "265128.840000000000"
+  },
+  "blocks": {
+    "channel_pre_post": {
+      "rows": [
+        {
+          "CHANNEL": "In-store",
+          "PRE_ORDERS": 0,
+          "PRE_SUBTOTAL": "0.00",
+          "POST_ORDERS": 8922,
+          "POST_SUBTOTAL": "204498.93"
+        },
+        {
+          "CHANNEL": "Marketplace",
+          "PRE_ORDERS": 768,
+          "PRE_SUBTOTAL": "18919.42",
+          "POST_ORDERS": 1354,
+          "POST_SUBTOTAL": "29980.17"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "PRE_ORDERS": 30,
+          "PRE_SUBTOTAL": "579.08",
+          "POST_ORDERS": 223,
+          "POST_SUBTOTAL": "6464.53"
+        }
+      ],
+      "elapsed_s": 34.03
+    },
+    "channel_maturation": {
+      "rows": [
+        {
+          "CHANNEL": "In-store",
+          "M1_3_ORDERS": 3899,
+          "M1_3_SUBTOTAL": "89311.22",
+          "M4_6_ORDERS": 4964,
+          "M4_6_SUBTOTAL": "113886.98",
+          "LATEST_3M_ORDERS": 0,
+          "LATEST_3M_SUBTOTAL": "0.00"
+        },
+        {
+          "CHANNEL": "Marketplace",
+          "M1_3_ORDERS": 247,
+          "M1_3_SUBTOTAL": "6701.88",
+          "M4_6_ORDERS": 1095,
+          "M4_6_SUBTOTAL": "23006.61",
+          "LATEST_3M_ORDERS": 0,
+          "LATEST_3M_SUBTOTAL": "0.00"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "M1_3_ORDERS": 75,
+          "M1_3_SUBTOTAL": "2688.46",
+          "M4_6_ORDERS": 147,
+          "M4_6_SUBTOTAL": "3769.88",
+          "LATEST_3M_ORDERS": 0,
+          "LATEST_3M_SUBTOTAL": "0.00"
+        }
+      ],
+      "elapsed_s": 33.03
+    },
+    "mp_ops": {
+      "rows": [
+        {
+          "PRE_COMPLETED_ORDERS": 768,
+          "PRE_ERRORS": 43,
+          "PRE_AVOIDABLE_WAIT_SECONDS": "3.49519417",
+          "PRE_AVG_RATING": "4.365079",
+          "POST_COMPLETED_ORDERS": 1354,
+          "POST_ERRORS": 76,
+          "POST_AVOIDABLE_WAIT_SECONDS": "2.93250223",
+          "POST_AVG_RATING": "4.666667"
+        }
+      ],
+      "elapsed_s": 43.89
+    },
+    "mp_cancellations": {
+      "rows": [
+        {
+          "PRE_CANCELLED": 20,
+          "POST_CANCELLED": 28
+        }
+      ],
+      "elapsed_s": 53.89
+    },
+    "customer_acquisition": {
+      "rows": [
+        {
+          "CHANNEL": "Marketplace",
+          "CX_TYPE_WITHIN_STORE": "new",
+          "PRE_ORDERS": 237,
+          "PRE_SUBTOTAL": "5992.69",
+          "POST_ORDERS": 692,
+          "POST_SUBTOTAL": "14016.35"
+        },
+        {
+          "CHANNEL": "Marketplace",
+          "CX_TYPE_WITHIN_STORE": "repeat",
+          "PRE_ORDERS": 531,
+          "PRE_SUBTOTAL": "12926.73",
+          "POST_ORDERS": 662,
+          "POST_SUBTOTAL": "15963.82"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "CX_TYPE_WITHIN_STORE": "new",
+          "PRE_ORDERS": 18,
+          "PRE_SUBTOTAL": "371.44",
+          "POST_ORDERS": 147,
+          "POST_SUBTOTAL": "4791.33"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "CX_TYPE_WITHIN_STORE": "repeat",
+          "PRE_ORDERS": 12,
+          "PRE_SUBTOTAL": "207.64",
+          "POST_ORDERS": 76,
+          "POST_SUBTOTAL": "1673.20"
+        }
+      ],
+      "elapsed_s": 58.16
+    },
+    "sponsored_listings": {
+      "rows": [
+        {
+          "PRE_IMPRESSIONS": 2071,
+          "PRE_CLICKS": 93,
+          "PRE_ORDERS": 15,
+          "PRE_SALES": "310.920000",
+          "PRE_AD_SPEND": "74.770000",
+          "PRE_NEW_CX": 15,
+          "POST_IMPRESSIONS": 11572,
+          "POST_CLICKS": 556,
+          "POST_ORDERS": 161,
+          "POST_SALES": "3725.090000",
+          "POST_AD_SPEND": "567.580000",
+          "POST_NEW_CX": 41
+        }
+      ],
+      "elapsed_s": 46.19
+    },
+    "promos": {
+      "rows": [
+        {
+          "PRE_ORDERS": 152,
+          "PRE_SALES": "4796.020000",
+          "PRE_DD_FUNDED_DISCOUNT": "290.290000",
+          "PRE_MX_FUNDED_DISCOUNT": "930.000000",
+          "PRE_NEW_CX": 28,
+          "POST_ORDERS": 604,
+          "POST_SALES": "11819.830000",
+          "POST_DD_FUNDED_DISCOUNT": "2404.840000",
+          "POST_MX_FUNDED_DISCOUNT": "11.340000",
+          "POST_NEW_CX": 390
+        }
+      ],
+      "elapsed_s": 981.7
+    }
+  },
+  "pulled_at": "2026-05-12"
+}

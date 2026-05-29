@@ -1,0 +1,192 @@
+{
+  "store_id": "2827991",
+  "store_name": "Cracked Eggery (8th St)",
+  "business_id": "385559",
+  "install_date": "2026-03-24",
+  "tenure_days": 58,
+  "windows": {
+    "pre_start": "2025-09-25",
+    "pre_end": "2026-03-23",
+    "matched_pre_start": "2026-01-25",
+    "matched_pre_end": "2026-03-23",
+    "post_start": "2026-03-24",
+    "post_end": "2026-05-20",
+    "post_days": 58,
+    "matched_pre_days": 58,
+    "full_pre_days": 180
+  },
+  "metadata": {
+    "cuisine_type": "American",
+    "region_name": "Northeast",
+    "submarket_name": "Washington, D.C",
+    "management_type_grouped": "MANAGED SMB",
+    "lifetime_card_orders": 5600,
+    "lifetime_card_gov": 121251.86
+  },
+  "blocks": {
+    "channel_full_pre_post": {
+      "rows": [
+        {
+          "CHANNEL": "In-store",
+          "PRE_ORDERS": 0,
+          "PRE_SUBTOTAL": "0.00",
+          "POST_ORDERS": 187,
+          "POST_SUBTOTAL": "2425.35"
+        },
+        {
+          "CHANNEL": "Kiosk",
+          "PRE_ORDERS": 0,
+          "PRE_SUBTOTAL": "0.00",
+          "POST_ORDERS": 5413,
+          "POST_SUBTOTAL": "104770.30"
+        },
+        {
+          "CHANNEL": "Marketplace",
+          "PRE_ORDERS": 15672,
+          "PRE_SUBTOTAL": "405316.80",
+          "POST_ORDERS": 5417,
+          "POST_SUBTOTAL": "135082.50"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "PRE_ORDERS": 3711,
+          "PRE_SUBTOTAL": "93488.00",
+          "POST_ORDERS": 1646,
+          "POST_SUBTOTAL": "37560.25"
+        }
+      ],
+      "elapsed_s": 50.63
+    },
+    "channel_matched": {
+      "rows": [
+        {
+          "CHANNEL": "In-store",
+          "PRE_ORDERS": 0,
+          "PRE_SUBTOTAL": "0.00",
+          "POST_ORDERS": 187,
+          "POST_SUBTOTAL": "2425.35"
+        },
+        {
+          "CHANNEL": "Kiosk",
+          "PRE_ORDERS": 0,
+          "PRE_SUBTOTAL": "0.00",
+          "POST_ORDERS": 5413,
+          "POST_SUBTOTAL": "104770.30"
+        },
+        {
+          "CHANNEL": "Marketplace",
+          "PRE_ORDERS": 5369,
+          "PRE_SUBTOTAL": "139082.65",
+          "POST_ORDERS": 5417,
+          "POST_SUBTOTAL": "135082.50"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "PRE_ORDERS": 1089,
+          "PRE_SUBTOTAL": "26662.20",
+          "POST_ORDERS": 1646,
+          "POST_SUBTOTAL": "37560.25"
+        }
+      ],
+      "elapsed_s": 15.31
+    },
+    "mp_ops": {
+      "rows": [
+        {
+          "PRE_COMPLETED_ORDERS": 5369,
+          "PRE_ERRORS": 56,
+          "PRE_AVOIDABLE_WAIT_SECONDS": "1.50293200",
+          "PRE_AVG_RATING": null,
+          "POST_COMPLETED_ORDERS": 5417,
+          "POST_ERRORS": 101,
+          "POST_AVOIDABLE_WAIT_SECONDS": "1.36697981",
+          "POST_AVG_RATING": null
+        }
+      ],
+      "elapsed_s": 76.52
+    },
+    "mp_cancellations": {
+      "rows": [
+        {
+          "PRE_CANCELLED": 51,
+          "POST_CANCELLED": 54
+        }
+      ],
+      "elapsed_s": 14.13
+    },
+    "customer_acquisition": {
+      "rows": [
+        {
+          "CHANNEL": "Marketplace",
+          "CX_TYPE_WITHIN_STORE": "new",
+          "PRE_ORDERS": 1716,
+          "PRE_SUBTOTAL": "49178.85",
+          "POST_ORDERS": 1505,
+          "POST_SUBTOTAL": "41613.60"
+        },
+        {
+          "CHANNEL": "Marketplace",
+          "CX_TYPE_WITHIN_STORE": "repeat",
+          "PRE_ORDERS": 3653,
+          "PRE_SUBTOTAL": "89903.80",
+          "POST_ORDERS": 3912,
+          "POST_SUBTOTAL": "93468.90"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "CX_TYPE_WITHIN_STORE": "new",
+          "PRE_ORDERS": 580,
+          "PRE_SUBTOTAL": "15220.00",
+          "POST_ORDERS": 854,
+          "POST_SUBTOTAL": "21277.35"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "CX_TYPE_WITHIN_STORE": "repeat",
+          "PRE_ORDERS": 509,
+          "PRE_SUBTOTAL": "11442.20",
+          "POST_ORDERS": 792,
+          "POST_SUBTOTAL": "16282.90"
+        }
+      ],
+      "elapsed_s": 47.39
+    },
+    "sponsored_listings": {
+      "rows": [
+        {
+          "PRE_IMPRESSIONS": 40239,
+          "PRE_CLICKS": 3045,
+          "PRE_ORDERS": 1071,
+          "PRE_SALES": "27512.050000",
+          "PRE_AD_SPEND": "3240.170000",
+          "PRE_NEW_CX": 289,
+          "POST_IMPRESSIONS": 22444,
+          "POST_CLICKS": 1700,
+          "POST_ORDERS": 635,
+          "POST_SALES": "16644.250000",
+          "POST_AD_SPEND": "1924.840000",
+          "POST_NEW_CX": 127
+        }
+      ],
+      "elapsed_s": 25.83
+    },
+    "promos": {
+      "rows": [
+        {
+          "PRE_ORDERS": 3009,
+          "PRE_SALES": "92531.350000",
+          "PRE_DD_FUNDED_DISCOUNT": "4837.390000",
+          "PRE_MX_FUNDED_DISCOUNT": "10248.880000",
+          "PRE_NEW_CX": 1293,
+          "POST_ORDERS": 2444,
+          "POST_SALES": "76511.450000",
+          "POST_DD_FUNDED_DISCOUNT": "896.980000",
+          "POST_MX_FUNDED_DISCOUNT": "9293.920000",
+          "POST_NEW_CX": 1069
+        }
+      ],
+      "elapsed_s": 305.65
+    }
+  },
+  "pulled_at": "2026-05-21"
+}

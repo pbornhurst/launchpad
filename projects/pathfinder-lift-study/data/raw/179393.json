@@ -1,0 +1,190 @@
+{
+  "store_id": "179393",
+  "store_name": "Harold's Chicken Shack (S Wabash Ave, Chicago)",
+  "install_date": "2025-04-29",
+  "windows": {
+    "pre_start": "2024-10-31",
+    "pre_end": "2025-04-28",
+    "post_start": "2025-04-29",
+    "post_end": "2025-10-26",
+    "m1_3_start": "2025-04-29",
+    "m1_3_end": "2025-07-27",
+    "m4_6_start": "2025-07-28",
+    "m4_6_end": "2025-10-25",
+    "latest_3m_start": "2026-02-11",
+    "latest_3m_end": "2026-05-11",
+    "tenure_days_since_install": 378
+  },
+  "metadata": {
+    "cuisine_type": "Southern American",
+    "region_name": "Midwest",
+    "submarket_name": "Chicago",
+    "management_type_grouped": "MANAGED SMB",
+    "cuisine_bucket": "American",
+    "region_bucket": "Midwest",
+    "mgmt_bucket": "Managed Smb",
+    "lifetime_osw": "1319.843504",
+    "lifetime_gov_store_week": "30365.909204244033",
+    "total_active_days": "377",
+    "lifetime_card_orders": "71083",
+    "lifetime_card_gov": "1635421.110000000000"
+  },
+  "blocks": {
+    "channel_pre_post": {
+      "rows": [
+        {
+          "CHANNEL": "In-store",
+          "PRE_ORDERS": 0,
+          "PRE_SUBTOTAL": "0.00",
+          "POST_ORDERS": 37688,
+          "POST_SUBTOTAL": "760502.55"
+        },
+        {
+          "CHANNEL": "Marketplace",
+          "PRE_ORDERS": 7716,
+          "PRE_SUBTOTAL": "192562.28",
+          "POST_ORDERS": 11492,
+          "POST_SUBTOTAL": "297493.23"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "PRE_ORDERS": 33,
+          "PRE_SUBTOTAL": "942.98",
+          "POST_ORDERS": 676,
+          "POST_SUBTOTAL": "25801.74"
+        }
+      ],
+      "elapsed_s": 31.14
+    },
+    "channel_maturation": {
+      "rows": [
+        {
+          "CHANNEL": "In-store",
+          "M1_3_ORDERS": 18625,
+          "M1_3_SUBTOTAL": "382341.25",
+          "M4_6_ORDERS": 18867,
+          "M4_6_SUBTOTAL": "374244.13",
+          "LATEST_3M_ORDERS": 17166,
+          "LATEST_3M_SUBTOTAL": "329297.38"
+        },
+        {
+          "CHANNEL": "Marketplace",
+          "M1_3_ORDERS": 6122,
+          "M1_3_SUBTOTAL": "159974.23",
+          "M4_6_ORDERS": 5315,
+          "M4_6_SUBTOTAL": "135942.80",
+          "LATEST_3M_ORDERS": 3812,
+          "LATEST_3M_SUBTOTAL": "104113.25"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "M1_3_ORDERS": 335,
+          "M1_3_SUBTOTAL": "13772.94",
+          "M4_6_ORDERS": 339,
+          "M4_6_SUBTOTAL": "11986.80",
+          "LATEST_3M_ORDERS": 254,
+          "LATEST_3M_SUBTOTAL": "9404.65"
+        }
+      ],
+      "elapsed_s": 71.3
+    },
+    "mp_ops": {
+      "rows": [
+        {
+          "PRE_COMPLETED_ORDERS": 7716,
+          "PRE_ERRORS": 293,
+          "PRE_AVOIDABLE_WAIT_SECONDS": "2.74940328",
+          "PRE_AVG_RATING": "4.343750",
+          "POST_COMPLETED_ORDERS": 11492,
+          "POST_ERRORS": 497,
+          "POST_AVOIDABLE_WAIT_SECONDS": "2.65543427",
+          "POST_AVG_RATING": "4.235518"
+        }
+      ],
+      "elapsed_s": 31.17
+    },
+    "mp_cancellations": {
+      "rows": [
+        {
+          "PRE_CANCELLED": 92,
+          "POST_CANCELLED": 202
+        }
+      ],
+      "elapsed_s": 35.83
+    },
+    "customer_acquisition": {
+      "rows": [
+        {
+          "CHANNEL": "Marketplace",
+          "CX_TYPE_WITHIN_STORE": "new",
+          "PRE_ORDERS": 3501,
+          "PRE_SUBTOTAL": "93764.98",
+          "POST_ORDERS": 6228,
+          "POST_SUBTOTAL": "171612.78"
+        },
+        {
+          "CHANNEL": "Marketplace",
+          "CX_TYPE_WITHIN_STORE": "repeat",
+          "PRE_ORDERS": 4215,
+          "PRE_SUBTOTAL": "98797.30",
+          "POST_ORDERS": 5264,
+          "POST_SUBTOTAL": "125880.45"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "CX_TYPE_WITHIN_STORE": "new",
+          "PRE_ORDERS": 33,
+          "PRE_SUBTOTAL": "942.98",
+          "POST_ORDERS": 596,
+          "POST_SUBTOTAL": "24252.09"
+        },
+        {
+          "CHANNEL": "Storefront",
+          "CX_TYPE_WITHIN_STORE": "repeat",
+          "PRE_ORDERS": 0,
+          "PRE_SUBTOTAL": "0.00",
+          "POST_ORDERS": 80,
+          "POST_SUBTOTAL": "1549.65"
+        }
+      ],
+      "elapsed_s": 52.63
+    },
+    "sponsored_listings": {
+      "rows": [
+        {
+          "PRE_IMPRESSIONS": null,
+          "PRE_CLICKS": null,
+          "PRE_ORDERS": null,
+          "PRE_SALES": null,
+          "PRE_AD_SPEND": null,
+          "PRE_NEW_CX": null,
+          "POST_IMPRESSIONS": null,
+          "POST_CLICKS": null,
+          "POST_ORDERS": null,
+          "POST_SALES": null,
+          "POST_AD_SPEND": null,
+          "POST_NEW_CX": null
+        }
+      ],
+      "elapsed_s": 0.43
+    },
+    "promos": {
+      "rows": [
+        {
+          "PRE_ORDERS": 5249,
+          "PRE_SALES": "149816.640000",
+          "PRE_DD_FUNDED_DISCOUNT": "1254.680000",
+          "PRE_MX_FUNDED_DISCOUNT": "22328.200000",
+          "PRE_NEW_CX": 2938,
+          "POST_ORDERS": 7865,
+          "POST_SALES": "228306.730000",
+          "POST_DD_FUNDED_DISCOUNT": "2581.790000",
+          "POST_MX_FUNDED_DISCOUNT": "36040.120000",
+          "POST_NEW_CX": 5540
+        }
+      ],
+      "elapsed_s": 315.31
+    }
+  },
+  "pulled_at": "2026-05-12"
+}
