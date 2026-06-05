@@ -6,8 +6,7 @@ Prepare a comprehensive brief for a merchant call.
 
 1. **Identify the call:**
    - If a mx name/ID is provided, use that directly.
-   - If no mx specified, check today's calendar using `mcp__google-workspace__get_events`:
-     - `user_google_email: "philip.bornhurst@doordash.com"`
+   - If no mx specified, check today's calendar using `mcp__claude_ai_Google_Calendar__list_events`.
    - Identify the next mx call and extract the mx name from the event.
 
 2. **Run a full mx-lookup** (follow mx-lookup skill instructions):
@@ -19,15 +18,11 @@ Prepare a comprehensive brief for a merchant call.
 
 3. **Pull additional context:**
 
-   a. **Recent emails** — Use `mcp__google-workspace__search_gmail_messages`:
-      - `user_google_email: "philip.bornhurst@doordash.com"`
+   a. **Recent emails** — Use `mcp__claude_ai_Gmail__search_threads`:
       - `query`: mx name or contact email
       - Summarize last 3-5 exchanges
 
-   b. **Product Feedback** — Use `mcp__google-workspace__read_sheet_values`:
-      - `spreadsheet_id: "1-EylRCLxhpStfEoj-8ga9Ex_26dHBoWgxU6Yr_hT0Y4"`
-      - `range_name: "The Final Final Boss"`
-      - `user_google_email: "philip.bornhurst@doordash.com"`
+   b. **Product Feedback** — Use `gws sheets +read --spreadsheet 1-EylRCLxhpStfEoj-8ga9Ex_26dHBoWgxU6Yr_hT0Y4 --range "The Final Final Boss"`:
       - Filter for this mx's feedback entries
 
    c. **Intercom tickets** (primary support channel) — Use `mcp__intercom__search_conversations` to search for recent conversations mentioning this mx:
@@ -35,8 +30,7 @@ Prepare a comprehensive brief for a merchant call.
       - If contact isn't clearly identifiable, use `mcp__intercom__get_contact` and cross-reference against Master Hub by business name, phone, or email
       - Summarize any open/recent tickets — this is where most support activity lives
 
-   d. **Running notes doc** — If a notes link is in Master Hub, use `mcp__google-workspace__get_doc_as_markdown` to read it:
-      - `user_google_email: "philip.bornhurst@doordash.com"`
+   d. **Running notes doc** — If a notes link is in Master Hub, read it with `gws docs documents get --params '{"documentId":"DOC_ID","includeTabsContent":true}'` (or `mcp__claude_ai_Google_Drive__read_file_content`).
 
 4. **Compile into call prep brief:**
 

@@ -45,7 +45,6 @@ You are a support intelligence analyst for Phil Bornhurst, Head of Account Manag
 - Email: philip.bornhurst@doordash.com
 - Timezone: America/Los_Angeles (PST/PDT)
 - Direct report: Mallory Thornley (Account Manager)
-- CRITICAL: Every google-workspace tool call requires `user_google_email: "philip.bornhurst@doordash.com"`
 
 **Terminology:** Always use "mx" for merchant (lowercase). Include Store IDs and portal links.
 
@@ -177,17 +176,16 @@ Deduplicate against existing Pattern Alerts.
 
 ### Step 6: Write to Tracker
 
-- Append new rows to "Conversation Log"
-- Append new alerts to "Pattern Alerts"
-- Recalculate and update "Contact Frequency" — counts (7d/30d/90d) should ONLY include conversations where Conv Type = `support_issue`, `inquiry`, or `slack_escalation`
+- Append new rows to "Conversation Log" via `gws sheets +append --spreadsheet ID --range "Conversation Log" --values '[[...]]'`
+- Append new alerts to "Pattern Alerts" via `gws sheets +append --spreadsheet ID --range "Pattern Alerts" --values '[[...]]'`
+- Recalculate and update "Contact Frequency" via `gws sheets spreadsheets values update --params '{"spreadsheetId":"ID","range":"Contact Frequency!A2","valueInputOption":"USER_ENTERED"}' --json '{"values":[[...]]}'` — counts (7d/30d/90d) should ONLY include conversations where Conv Type = `support_issue`, `inquiry`, or `slack_escalation`
 
 ### Step 7: Compile Report
 
 Create a Google Doc report:
-- Use `mcp__google-workspace__import_to_google_doc` with `source_format: "html"`
-- `folder_id`: use the "support intelligence" folder ID from CLAUDE.md Key Folders (subfolder of 2026)
-- Title: "Support Intelligence Report — [start date] to [end date]"
-- Share with doordash.com domain via `mcp__google-workspace__manage_drive_access`
+- Build the styled HTML (per the structure below), then convert to a Doc: `gws drive files create --json '{"name":"Support Intelligence Report — [start date] to [end date]","mimeType":"application/vnd.google-apps.document","parents":["FOLDER_ID"]}' --upload report.html --upload-content-type "text/html"`
+- `parents`: use the "support intelligence" folder ID from CLAUDE.md Key Folders (subfolder of 2026)
+- Share with doordash.com domain via `gws drive permissions create --params '{"fileId":"ID"}' --json '{"role":"writer","type":"domain","domain":"doordash.com"}'`
 
 **Report HTML structure:**
 

@@ -32,9 +32,7 @@ Scan both support channels for recent activity: Slack escalations + Intercom inb
 4. **Identify the mx** for each valid inbound:
    a. Check the contact's company/business name
    b. If unclear, use `mcp__intercom__get_contact` for full contact details
-   c. Cross-reference against Master Hub (`mcp__google-workspace__read_sheet_values`):
-      - `spreadsheet_id: "1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4"`
-      - `user_google_email: "philip.bornhurst@doordash.com"`
+   c. Cross-reference against Master Hub via `gws sheets +read --spreadsheet 1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4 --range "B1:E800"` (single full-range read; no 50-row cap):
       - Search by business name, contact name, phone, or email
    d. If matched, include Store ID and tier
 5. Highlight notable tickets: ICP/T1 mx, Phil/Mallory's accounts, repeat contacts, urgent themes

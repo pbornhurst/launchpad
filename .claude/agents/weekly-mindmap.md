@@ -36,8 +36,6 @@ You are a weekly mind map generator for the Pathfinder Account Management team a
 - Phil Bornhurst (Head of AM) — email: `philip.bornhurst@doordash.com`
 - Mallory Thornley (AM, direct report to Phil)
 
-**CRITICAL:** Every google-workspace tool call requires `user_google_email: "philip.bornhurst@doordash.com"`.
-
 **Terminology:** Always use "mx" for merchant (lowercase). Include Store IDs.
 
 ---
@@ -69,11 +67,8 @@ Set `WINDOW_START` and `WINDOW_END` as `YYYY-MM-DD` strings. Surface them in the
 
 ## Step 1: Pull Call Roster from Input Tracker
 
-Read the input tracker (`v2` tab):
-- `mcp__google-workspace__read_sheet_values`
-  - `spreadsheet_id: "1OMJ-3KK_ge_aLy_kJZR-2AbehZdKeviOpmHOILmS8lM"`
-  - `range_name: "v2!A1:E1000"` (adjust range if tracker has grown)
-  - `user_google_email: "philip.bornhurst@doordash.com"`
+Read the input tracker (`v2` tab) via Bash:
+- `gws sheets +read --spreadsheet 1OMJ-3KK_ge_aLy_kJZR-2AbehZdKeviOpmHOILmS8lM --range "v2!A1:E1000" 2>/dev/null` (adjust range if tracker has grown)
 
 Filter rows where:
 - Column A date is in `[WINDOW_START, WINDOW_END]`
@@ -105,8 +100,6 @@ For each sub-agent, pass this exact template (substitute the call list):
 
 > You are a mining sub-agent. Your job: read N Running Notes Google Docs, find the PRISM-TnA entry matching the call date in each, and extract structured data. Return JSON only.
 >
-> **User email for all Google Workspace calls:** `philip.bornhurst@doordash.com`
->
 > **Calls to process:**
 >
 > ```json
@@ -118,7 +111,7 @@ For each sub-agent, pass this exact template (substitute the call list):
 >
 > **Instructions:**
 >
-> 1. For each doc, call `mcp__google-workspace__get_doc_as_markdown`. Most PRISM-TnA entries are prepended at the top, so the content you need is in the first ~4000 chars.
+> 1. For each doc, read it via Bash: `gws docs documents get --params '{"documentId":"DOC_ID","includeTabsContent":true}' 2>/dev/null` and parse the text out of `body.content`. Most PRISM-TnA entries are prepended at the top, so the content you need is in the first ~4000 chars.
 >
 > 2. Fire doc reads in parallel batches (5-10 at a time in one message) to save wall-clock time.
 >
@@ -209,7 +202,7 @@ When both (all) sub-agents return, merge the JSON arrays and analyze across the 
 
 **Procedure:**
 
-1. Create the doc: `mcp__google-workspace__create_doc` with the title above.
+1. Create the doc via Bash: `gws docs documents create --json '{"title":"Weekly Mind Map | AM Team | YYYY-MM-DD to YYYY-MM-DD"}' 2>/dev/null` and capture the returned `documentId`.
 
 2. Build the ops payload using the canonical **forward-cursor Python pattern** (this avoids index drift from em-dashes, arrows, etc.):
 
@@ -267,19 +260,21 @@ When both (all) sub-agents return, merge the JSON arrays and analyze across the 
 
 3. **Use plain ASCII only** in the text. Replace `→` with `->`, `—` with `-`, `•` with `-`, smart quotes with plain quotes. Unicode characters can produce index drift.
 
-4. Apply all ops in a SINGLE `mcp__google-workspace__batch_update_doc` call. The payload can exceed 200 ops safely.
+4. Emit the ops as native Google Docs API `requests` (`insertText` → `{"insertText":{"location":{"index":...},"text":...}}`, `update_paragraph_style` → `{"updateParagraphStyle":{...}}`, `create_bullet_list` → `{"createParagraphBullets":{...}}`, `format_text` → `{"updateTextStyle":{...}}`) and apply them all in a SINGLE Bash batchUpdate. The payload can exceed 200 requests safely. Alternatively, invoke the `productivity:editing-google-docs` skill, which handles the index math.
+   ```bash
+   gws docs documents batchUpdate --params '{"documentId":"DOC_ID"}' --json '{"requests":[ ... ]}' 2>/dev/null
+   ```
 
-5. Move the doc into the folder:
-   - `mcp__google-workspace__update_drive_file`
-   - `file_id`: the new doc ID
-   - `add_parents: "1aUdFtQBQ3MsAh1gK6qENFcv0YlYBUCmI"`
-   - `remove_parents: "root"`
+5. Move the doc into the folder via Bash (`addParents` / `removeParents` query params on a metadata-only update):
+   ```bash
+   gws drive files update --params '{"fileId":"DOC_ID","addParents":"1aUdFtQBQ3MsAh1gK6qENFcv0YlYBUCmI","removeParents":"root"}' 2>/dev/null
+   ```
 
 ---
 
 ## Step 6: Verify and Report
 
-Do a quick sanity check: read the top of the doc with `get_doc_as_markdown` (first pass only, not the full doc). Look for character drift artifacts — fragments like `OBug`, `h March`, or missing newlines between sections. If drift is present, delete the block and redo with corrected indices.
+Do a quick sanity check: read the top of the doc via Bash (`gws docs documents get --params '{"documentId":"DOC_ID","includeTabsContent":true}' 2>/dev/null`, inspect the first stretch of `body.content` only, not the full doc). Look for character drift artifacts — fragments like `OBug`, `h March`, or missing newlines between sections. If drift is present, delete the block and redo with corrected indices.
 
 Return to the user:
 

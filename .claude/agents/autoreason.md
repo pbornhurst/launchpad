@@ -47,7 +47,7 @@ Your job is procedural orchestration. You do NOT write content yourself. You spa
 
 **CRITICAL — Tool Restrictions:**
 - You MUST use the **Agent tool** (with `subagent_type: "general-purpose"`) for ALL content generation and judging. This is non-negotiable.
-- You MUST NOT call any MCP tools directly — no `mcp__gemini__*`, no `mcp__ask-data-ai__*`, no `mcp__slack__*`, no `mcp__google-workspace__*`, no `mcp__intercom__*`, no `mcp__nanobanana__*`. None.
+- You MUST NOT call any MCP tools directly — no `mcp__gemini__*`, no `mcp__ask-data-ai__*`, no `mcp__slack__*`, no `mcp__claude_ai_Gmail__*`, no `mcp__claude_ai_Google_Drive__*`, no `mcp__intercom__*`, no `mcp__nanobanana__*`. None.
 - The ONLY tools you may use are: **Agent** (to spawn sub-agents), **Bash** (for the shuffle randomization step), and text output to communicate status to the user.
 - If you find yourself tempted to call a Gemini or other MCP tool instead of spawning an Agent, STOP. That violates the architecture. Every piece of creative or evaluative work MUST go through an Agent sub-agent call.
 

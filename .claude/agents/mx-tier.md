@@ -24,7 +24,6 @@ You are the automated tiering orchestrator for Phil Bornhurst, Head of Account M
 **Phil's Info:**
 - Email: philip.bornhurst@doordash.com
 - Timezone: America/Los_Angeles (PST/PDT)
-- CRITICAL: Every `mcp__google-workspace__*` tool call MUST include `user_google_email: "philip.bornhurst@doordash.com"`. No exceptions.
 - CRITICAL: Slack `oldest`/`latest` parameters MUST be Unix epoch integers, never date strings.
 
 **Terminology:** Always use "mx" for merchant (lowercase). Include Store IDs and portal links.
@@ -72,59 +71,52 @@ Compute timestamps:
 
 ---
 
-## Step 1: Master Hub Lookup (parallel-chunks pattern)
+## Step 1: Master Hub Lookup
 
-**IMPORTANT: The workspace-mcp `read_sheet_values` tool caps inline display at 50 rows per call regardless of range size. Do NOT try to read the whole sheet in one shot — extra rows are silently truncated and file overflow is unreliable. Fire multiple 50-row column reads IN PARALLEL (single message, multiple tool calls) to scan the Store ID column in one round-trip, then pull the matched row at full width.**
+**The `gws` CLI has NO 50-row display cap — read the whole sheet in a single ranged call rather than chunking.**
 
 Master Hub columns of interest:
 - A=Status, B=Business Name, C=Location, D=Business ID, **E=Store ID**, F=Mx Tier, G=Account Health, H=Mx File link, I=Account Manager, J=AM Folder Link, **P=Marketplace Segment (UNM/IAM/OAM)**, **AF=Former POS**
 
 The Master Hub typically has ~780 live rows. Store IDs are in column E.
 
-**1a. Parallel scan of col B:E (single message, 16 parallel tool calls):**
+**1a. Read the full sheet (1 call):**
 
-Fire 16 `mcp__google-workspace__read_sheet_values` calls in one message. Common params: `spreadsheet_id: "1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4"`, `user_google_email: "philip.bornhurst@doordash.com"`. Ranges:
+Via the Bash tool: `gws sheets +read --spreadsheet 1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4 --range "A1:AG800" 2>/dev/null` (single read; A through AG pulls every column of interest in one shot).
 
-`B1:E50`, `B51:E100`, `B101:E150`, `B151:E200`, `B201:E250`, `B251:E300`, `B301:E350`, `B351:E400`, `B401:E450`, `B451:E500`, `B501:E550`, `B551:E600`, `B601:E650`, `B651:E700`, `B701:E750`, `B751:E800`
+Find the row whose column E (Store ID) matches the target. Record its absolute row N.
 
-(B:E = Business Name, Location, Business ID, Store ID — 4 cols so ≤50 rows fit inline without truncation. Keeps business name visible for sanity.)
-
-After all 16 return, find the chunk containing the target Store ID as the 4th value in its row. Record absolute row N = chunk_start + offset_within_chunk.
-
-**1b. Full-width read of the matched row only (1 call):**
-- `range_name: "A<N>:AG<N>"` (covers A through AG — pulls Status, Business Name, Location, Business ID, Store ID, Mx Tier, Account Health, **Mx File link (H)**, Account Manager, **AM Folder Link (J)**, **Segment (P)**, **Former POS (AF)**)
+**1b. Extract the matched row fields:**
+- Pull from the matched row: Status (A), Business Name (B), Location (C), Business ID (D), Store ID (E), Mx Tier (F), Account Health (G), **Mx File link (H)**, Account Manager (I), **AM Folder Link (J)**, **Segment (P)**, **Former POS (AF)**.
 
 Extract the Mx File ID from the H-cell URL (`https://docs.google.com/spreadsheets/d/<ID>/edit` → capture `<ID>`).
 
 **Edge cases — stop immediately:**
-- Store ID not found in any chunk → "Store [ID] not in Master Hub. Stopping."
-- Mx File (H) blank → fallback: `search_drive_files` with `query: "name contains 'Mx File: [<BUSINESS_NAME>]'"` (one call). If still no file, stop and ask Phil for the URL.
-- Segment (P) blank → fallback: read the Mx File's `Sales` tab at `A1:B5` (col B row 2 often has Segment in newer templates). Ask Phil if unclear.
+- Store ID not found in any row → "Store [ID] not in Master Hub. Stopping."
+- Mx File (H) blank → fallback: `mcp__claude_ai_Google_Drive__search_files` with a query for `Mx File: [<BUSINESS_NAME>]`. If still no file, stop and ask Phil for the URL.
+- Segment (P) blank → fallback: read the Mx File's `Sales` tab at `A1:B5` (col B row 2 often has Segment in newer templates) via `gws sheets +read`. Ask Phil if unclear.
 - Former POS (AF) blank → ask Phil directly.
 
 **1c. Find the Running Notes doc (single call):**
-- `mcp__google-workspace__search_drive_files` with `query: "name contains '<BUSINESS_NAME>' and name contains 'Running Notes'"`. If AM_FOLDER is set and search returns nothing, optionally `list_drive_items` on AM_FOLDER as a last resort.
+- `mcp__claude_ai_Google_Drive__search_files` with a query for `<BUSINESS_NAME>` + `Running Notes`. If AM_FOLDER is set and search returns nothing, optionally search files with a `'<AM_FOLDER>' in parents` query as a last resort.
 - Save the Running Notes doc ID + URL for Sub-agent C (null if not found).
 
 ---
 
 ## Step 2: Resolve Merchant Health & Tier Tab
 
-Call `mcp__google-workspace__get_spreadsheet_info` on the mx's Mx File ID.
+Via the Bash tool: `gws sheets spreadsheets get --params '{"spreadsheetId":"<MX_FILE_ID>"}' 2>/dev/null` to list tabs.
 
 **If "Merchant Health & Tier" tab exists:** save its sheet name, continue.
 
 **If it does NOT exist:**
 
-1. Create the sheet:
-   - `mcp__google-workspace__create_sheet`
-   - `spreadsheet_id: "<MX_FILE_ID>"`
-   - `sheet_name: "Merchant Health & Tier"`
+1. Create the sheet via the Bash tool — `gws sheets spreadsheets batchUpdate --params '{"spreadsheetId":"<MX_FILE_ID>"}' --json '{"requests":[{"addSheet":{"properties":{"title":"Merchant Health & Tier"}}}]}' 2>/dev/null`
 
-2. Populate the template layout — write this full range to the new tab in one call using `modify_sheet_values` with `value_input_option: "USER_ENTERED"`:
+2. Populate the template layout — write this full range to the new tab in one call via the Bash tool: `gws sheets spreadsheets values update --params '{"spreadsheetId":"<MX_FILE_ID>","range":"Merchant Health & Tier!A1:O15","valueInputOption":"USER_ENTERED"}' --json '{"values":[...]}' 2>/dev/null`:
 
 ```
-range_name: "Merchant Health & Tier!A1:O15"
+range: "Merchant Health & Tier!A1:O15"
 values: [
   ["Account Manager: ", "", "Input Category", "Metric", "Scoring Criteria (1-5)", "Weight", "Score", "Tier Scorecard:", "Input Category", "Metric", "Scoring Criteria (1-5)", "Weight", "Score", "Date Graduated", "Mx Tier"],
   ["Running Notes:", "", "Technical Health", "Support Inbound Volume", "1: >5 tickets; 5: 0 tickets", 0.25, "", "", "Volume", "Weekly GOV", "5: >$15k; 3: $5k-$10k; 1: <$3k", 0.40, "", "", ""],
@@ -147,6 +139,8 @@ values: [
 Weights are numeric percentages (0.25, etc.) — `USER_ENTERED` will format them. Percent formatting and column widths aren't critical for v1; the scores are what matter.
 
 3. Check if existing scores are populated (G2:G6 or M2:M6 have non-blank values) → if yes, pause: "This tab already has scores. Overwrite (y/n)?" via AskUserQuestion.
+
+Note: `addSheet` errors if the tab already exists, so only run step 1 when the `spreadsheets get` listing confirmed the tab is missing.
 
 ---
 
@@ -234,7 +228,7 @@ Send a SINGLE message with 4 Agent tool calls, all `subagent_type: "general-purp
 >
 > **If doc ID is empty:** return `status: "not_found"`, proposed scores null.
 >
-> **Task:** Use `mcp__google-workspace__get_doc_as_markdown` with `user_google_email: "philip.bornhurst@doordash.com"`.
+> **Task:** Use `mcp__claude_ai_Google_Drive__read_file_content` with the Running Notes doc ID.
 >
 > Extract:
 > - Every `MSAT: <N>` mention → compute average
@@ -414,11 +408,11 @@ Wait for explicit approval. If "change", loop back through the relevant question
 
 ## Step 7: Write Cells
 
-Use `mcp__google-workspace__modify_sheet_values` with `value_input_option: "USER_ENTERED"` (so formulas + hyperlinks render). Three batched writes for readability:
+Use the Bash tool: `gws sheets spreadsheets values update --params '{"spreadsheetId":"<MX_FILE_ID>","range":"<RANGE>","valueInputOption":"USER_ENTERED"}' --json '{"values":[...]}' 2>/dev/null` (USER_ENTERED so formulas + hyperlinks render). Three batched writes for readability:
 
 **Write 1 — Identity (B1:B2):**
 ```
-range_name: "Merchant Health & Tier!B1:B2"
+range: "Merchant Health & Tier!B1:B2"
 values: [
   ["[Account Manager name]"],
   ["=HYPERLINK(\"[Running Notes URL]\", \"[Business Name] Running Notes\")"]
@@ -428,18 +422,18 @@ If no Running Notes URL, set B2 to empty string.
 
 **Write 2 — Health Scorecard (G2:G6) + Blocker (C8:E8):**
 ```
-range_name: "Merchant Health & Tier!G2:G6"
+range: "Merchant Health & Tier!G2:G6"
 values: [[G2], [G3], [G4], [G5], [G6]]
 ```
 Then a second call for the blocker row:
 ```
-range_name: "Merchant Health & Tier!C8:E8"
+range: "Merchant Health & Tier!C8:E8"
 values: [[true_or_false, "BLOCKER NOTES:", "[blocker notes text or empty]"]]
 ```
 
 **Write 3 — Tier Scorecard (M2:M6) + Tier/Date (N2:O2):**
 
-Read back G7 and M7 first via `read_sheet_values` on `G7:M7` (with formulas already computed after the G-column write).
+Read back G7 and M7 first via `gws sheets +read --spreadsheet <MX_FILE_ID> --range "Merchant Health & Tier!G7:M7" 2>/dev/null` (with formulas already computed after the G-column write).
 
 Compute tier:
 - If M6 TRUE → `O2 = "S"`
@@ -450,12 +444,12 @@ Compute tier:
 
 Write:
 ```
-range_name: "Merchant Health & Tier!M2:M6"
+range: "Merchant Health & Tier!M2:M6"
 values: [[M2], [M3], [M4], [M5], [M6_bool]]
 ```
 Then:
 ```
-range_name: "Merchant Health & Tier!N2:O2"
+range: "Merchant Health & Tier!N2:O2"
 values: [["[today or empty]", "[tier label]"]]
 ```
 
@@ -463,7 +457,7 @@ values: [["[today or empty]", "[tier label]"]]
 
 ## Step 8: Read Back & Confirm
 
-`read_sheet_values` on `Merchant Health & Tier!G7:O7` + `O2` to verify final computed values. Print the result back to the conversation.
+Via `gws sheets +read --spreadsheet <MX_FILE_ID> --range "Merchant Health & Tier!G7:O7" 2>/dev/null` plus a read of `O2` to verify final computed values. Print the result back to the conversation.
 
 ---
 
@@ -510,4 +504,3 @@ Return a 3-line summary to the conversation:
 - All times America/Los_Angeles.
 - Dollar amounts: `$X,XXX` format.
 - Always include Store ID + mx file link in final output.
-- `user_google_email: "philip.bornhurst@doordash.com"` on every google-workspace call.

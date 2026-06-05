@@ -8,11 +8,13 @@ Intraday anomaly check using **real-time** Snowflake data. Detects POS-dark stor
 
 ### Step 1: Read Master Hub (Live Stores Only)
 
-Use `mcp__google-workspace__read_sheet_values`:
-- `spreadsheet_id: "1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4"`
-- `user_google_email: "philip.bornhurst@doordash.com"`
-- Read columns A through I (Status, Business Name, Location, Business ID, Store ID, Mx Tier, Account Health, Mx File, Account Manager)
-- Read ALL rows (the sheet may require multiple reads if truncated — read in chunks until you have all rows)
+Use the `gws` CLI via Bash (the `google-workspace` MCP is dead — see `docs/gws-migration.md`):
+
+```bash
+gws sheets +read --spreadsheet 1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4 --range "A1:I800" 2>/dev/null
+```
+- Columns A through I = Status, Business Name, Location, Business ID, Store ID, Mx Tier, Account Health, Mx File, Account Manager.
+- gws has NO 50-row display cap — a single read returns all rows (no chunking needed).
 
 **Extract only rows where Status = "Live" (exact match).** Build a lookup of Live stores:
 - Store ID → Business Name, Tier, Account Manager

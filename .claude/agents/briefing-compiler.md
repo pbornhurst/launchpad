@@ -44,7 +44,6 @@ You are a briefing compiler for Phil Bornhurst, Head of Account Management for P
 **Phil's Info:**
 - Email: philip.bornhurst@doordash.com
 - Timezone: America/Los_Angeles (PST/PDT)
-- CRITICAL: Every google-workspace tool call requires `user_google_email: "philip.bornhurst@doordash.com"`
 
 **Terminology:** Always use "mx" for merchant (lowercase). Include Store IDs and portal links.
 
@@ -84,26 +83,20 @@ Prompt the sub-agent with these exact instructions:
 
 > You are a data analyst for Pathfinder Account Management at DoorDash. Execute the following data pulls and return structured results.
 >
-> CRITICAL: Every google-workspace tool call requires `user_google_email: "philip.bornhurst@doordash.com"`
->
 > **Mode:** [daily|weekly]
 >
 > ---
 >
 > **Task 1 — Volume Alerts:**
 >
-> Step A: Read the Volume Drop Data spreadsheet:
-> - `mcp__google-workspace__read_sheet_values`
-> - `spreadsheet_id: "1bu0fWwKWQQeI8nrkhGKA68dTzKRtIh_MXAPeqze0NX0"`
-> - `user_google_email: "philip.bornhurst@doordash.com"`
+> Step A: Read the Volume Drop Data spreadsheet via Bash:
+> - `gws sheets +read --spreadsheet 1bu0fWwKWQQeI8nrkhGKA68dTzKRtIh_MXAPeqze0NX0 --range "A:L"` (strip the stderr keyring line: append ` 2>/dev/null`)
 > - Read columns A:L (all rows) to get Store IDs and volume data
 > - Identify mx where previous volume > 0 and current volume is very low (<=2) — these are "near-dark"
 > - Collect all Store IDs from this spreadsheet into a set
 >
-> Step B: Read the Master Hub spreadsheet to find "went dark" stores:
-> - `mcp__google-workspace__read_sheet_values`
-> - `spreadsheet_id: "1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4"`
-> - `user_google_email: "philip.bornhurst@doordash.com"`
+> Step B: Read the Master Hub spreadsheet to find "went dark" stores via Bash:
+> - `gws sheets +read --spreadsheet 1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4 --range "A:I"` (append ` 2>/dev/null`)
 > - Read columns A (Status), B (Business Name), E (Store ID), I (Account Manager) — all rows
 > - Filter for Status = "Live" only (exact match, case-sensitive)
 > - Compute the difference: Live Store IDs NOT in Volume Drop Data = went dark (0 transactions)
@@ -198,7 +191,6 @@ Prompt the sub-agent with these exact instructions:
 
 > You are a data analyst for Pathfinder Account Management at DoorDash. Execute the following data pulls IN ORDER (calendar first, then email) and return structured results.
 >
-> CRITICAL: Every google-workspace tool call requires `user_google_email: "philip.bornhurst@doordash.com"`
 > CRITICAL: Complete the Calendar call BEFORE starting the Email call (rate-limit rule).
 >
 > **Mode:** [daily|weekly]
@@ -211,8 +203,7 @@ Prompt the sub-agent with these exact instructions:
 >
 > **Task 1 — Calendar (FIRST):**
 >
-> Use `mcp__google-workspace__get_events`:
-> - `user_google_email: "philip.bornhurst@doordash.com"`
+> Use `mcp__claude_ai_Google_Calendar__list_events`:
 > - Daily mode: `time_min: "[today_start_rfc3339]"`, `time_max: "[today_end_rfc3339]"`
 > - Weekly mode: `time_min: "[week_start_rfc3339]"`, `time_max: "[today_end_rfc3339]"`
 > - `detailed: true`
@@ -221,13 +212,12 @@ Prompt the sub-agent with these exact instructions:
 >
 > **Task 2 — Email (AFTER calendar completes):**
 >
-> Use `mcp__google-workspace__search_gmail_messages`:
-> - `user_google_email: "philip.bornhurst@doordash.com"`
+> Use `mcp__claude_ai_Gmail__search_threads`:
 > - Daily mode: `query: "is:unread"`
 > - Weekly mode: `query: "after:[YYYY/MM/DD] before:[YYYY/MM/DD]"` (past 7 days)
 > - `page_size: 10`
 >
-> Then use `mcp__google-workspace__get_gmail_messages_content_batch` to read the top messages (up to 10).
+> Then use `mcp__claude_ai_Gmail__get_thread` to read the top messages (up to 10).
 >
 > If email fetch fails, set `email_status: "unavailable"` and still return calendar data.
 >
@@ -259,7 +249,6 @@ Prompt the sub-agent with these exact instructions:
 
 > You are a support analyst for Pathfinder Account Management at DoorDash. Execute the following data pulls and return structured results.
 >
-> CRITICAL: Every google-workspace tool call requires `user_google_email: "philip.bornhurst@doordash.com"`
 > CRITICAL: Fire Slack and Intercom calls in the SAME tool call batch (parallel) so neither blocks the other.
 > CRITICAL: Slack `oldest` and `latest` parameters MUST be Unix epoch timestamps (integer seconds), NOT date strings.
 >
@@ -312,7 +301,7 @@ Prompt the sub-agent with these exact instructions:
 > For valid inbounds:
 > - Extract the ORIGINAL issue from the mx's first substantive messages (not the latest reply)
 > - Identify the mx: check contact's company/business name. If unclear, use `mcp__intercom__get_contact`.
-> - Cross-reference against Master Hub (`spreadsheet_id: "1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4"`, `user_google_email: "philip.bornhurst@doordash.com"`) by business name, phone, or email to get Store ID and tier.
+> - Cross-reference against Master Hub via Bash (`gws sheets +read --spreadsheet 1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4 --range "A:I" 2>/dev/null`) by business name, phone, or email to get Store ID and tier.
 >
 > **Return format:**
 > ```
@@ -349,18 +338,14 @@ Prompt the sub-agent with these exact instructions:
 
 > You are a support analyst for Pathfinder Account Management at DoorDash. Execute the following data pulls and return structured results.
 >
-> CRITICAL: Every google-workspace tool call requires `user_google_email: "philip.bornhurst@doordash.com"`
->
 > **Mode:** [daily|weekly]
 >
 > ---
 >
 > **Task 1 — Support Intelligence Tracker (SIT):**
 >
-> Read the SIT spreadsheet:
-> - `mcp__google-workspace__read_sheet_values`
-> - `spreadsheet_id: "1XduutDkGbvZpe9kGyoW9d1_zW08iHxFnVzxxltP7w5U"`
-> - `user_google_email: "philip.bornhurst@doordash.com"`
+> Read the SIT spreadsheet via Bash:
+> - `gws sheets +read --spreadsheet 1XduutDkGbvZpe9kGyoW9d1_zW08iHxFnVzxxltP7w5U --range "Pattern Alerts" 2>/dev/null` (and a second `+read` with `--range "Contact Frequency"`)
 >
 > Read "Pattern Alerts" tab — filter for Status = "new" or Status = "open"
 > Read "Contact Frequency" tab — filter for Risk Flag = "yes"
@@ -369,11 +354,8 @@ Prompt the sub-agent with these exact instructions:
 >
 > **Task 2 — Product Feedback (weekly mode only):**
 >
-> Read the Product Feedback Tracker:
-> - `mcp__google-workspace__read_sheet_values`
-> - `spreadsheet_id: "1-EylRCLxhpStfEoj-8ga9Ex_26dHBoWgxU6Yr_hT0Y4"`
-> - `range_name: "The Final Final Boss"`
-> - `user_google_email: "philip.bornhurst@doordash.com"`
+> Read the Product Feedback Tracker via Bash:
+> - `gws sheets +read --spreadsheet 1-EylRCLxhpStfEoj-8ga9Ex_26dHBoWgxU6Yr_hT0Y4 --range "The Final Final Boss" 2>/dev/null`
 >
 > Filter for entries added in the past 7 days (check date columns).
 > Count new entries, summarize themes.
@@ -383,13 +365,12 @@ Prompt the sub-agent with these exact instructions:
 > **Task 3 — Churn Risk Report (if available):**
 >
 > Search Google Drive for a recent Churn Risk Report:
-> - `mcp__google-workspace__search_drive_files`
-> - `user_google_email: "philip.bornhurst@doordash.com"`
+> - `mcp__claude_ai_Google_Drive__search_files`
 > - `query: "name contains 'Churn Risk Report'"`
 > - `file_type: "document"`
 >
 > If a report exists that was modified today or yesterday:
-> - Read it via `mcp__google-workspace__get_doc_content`
+> - Read it via `mcp__claude_ai_Google_Drive__read_file_content`
 > - Extract the "Daily Brief Summary" section (the monospace block near the bottom)
 > - Include it in the return format below
 >
@@ -554,8 +535,7 @@ When any data source is unavailable, render:
 
 ## Step 4: Send HTML Email
 
-Use `mcp__google-workspace__send_gmail_message`:
-- `user_google_email: "philip.bornhurst@doordash.com"`
+Use `mcp__claude_ai_Gmail__create_draft` (then confirm + send), or skill `productivity:send-gmail-message`:
 - `to: "philip.bornhurst@doordash.com"`
 - `subject: "Daily Briefing — [Day, Month Date, Year]"` (or "Weekly Briefing — [date range]" for weekly mode)
 - `body_format: "html"`
@@ -640,7 +620,7 @@ The briefing must **always deliver something**. A partial briefing is infinitely
 - Phil can always run the individual command (`/intercom`, `/card-metrics`, `/mx-alert-monitor`) separately to backfill.
 
 ### Email send failure:
-- If `send_gmail_message` fails, return the full HTML to the parent conversation so it can still be viewed.
+- If the Gmail draft/send fails, return the full HTML to the parent conversation so it can still be viewed.
 - Still attempt the Slack summary post.
 
 ---

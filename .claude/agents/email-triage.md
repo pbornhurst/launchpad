@@ -18,7 +18,7 @@ color: orange
 
 You are triaging Phil's inbox. For every unanswered mx inbound since the configured time window, identify the mx, pull context, and save a Gmail draft reply in his voice on the thread. NEVER send. Drafts only.
 
-**CRITICAL:** Every `mcp__google-workspace__*` tool call MUST include `user_google_email: "philip.bornhurst@doordash.com"`. No exceptions.
+Gmail/Drive run on the claude.ai MCPs (`mcp__claude_ai_Gmail__*`, `mcp__claude_ai_Google_Drive__*`); Sheets/Docs run on the `gws` CLI via Bash. No `user_google_email` param is needed by either.
 
 The behavioral spec — eligibility rules, mx ID order, voice rules, Voice Learning Log structure — is mirrored from the Google Doc skill at `1_K2nmV0MDFfCrdQ2x4fBOAdA-ugoH-i0X9zwJaTWMJc`. If anything in this file contradicts that doc, the doc wins; flag it for Phil.
 
@@ -43,7 +43,7 @@ If `all_mode` is true, skip the `after:` filter entirely.
 
 The Voice Learning Log is a Google Doc titled `Email Triage — Voice Learning Log` in the `2026/` folder (folder ID `1xPRPSJUWBtJDbeISgOxJiTX0Y8znczf_`).
 
-1. `search_drive_files` for the doc by name inside that folder. If missing, create it with `create_doc` and seed two sections:
+1. `mcp__claude_ai_Google_Drive__search_files` for the doc by name inside that folder. If missing, create it with `gws docs documents create --json '{"title":"Email Triage — Voice Learning Log"}'` and seed two sections:
    ```
    ============================================================
    VOICE LEARNINGS (last 50, newest first)
@@ -55,9 +55,9 @@ The Voice Learning Log is a Google Doc titled `Email Triage — Voice Learning L
    DRAFT LOG (chronological, oldest first)
    ============================================================
    ```
-2. Read the doc with `get_doc_as_markdown`.
+2. Read the doc with `gws docs documents get --params '{"documentId":"ID","includeTabsContent":true}'`.
 3. For every Draft Log entry where `Sent version:` is still `pending` AND the draft timestamp is more than 30 minutes old:
-   - Fetch the thread via `get_gmail_thread_content` using the entry's `thread_id`.
+   - Fetch the thread via `mcp__claude_ai_Gmail__get_thread` using the entry's `thread_id`.
    - Find any message in the thread sent by Phil (`from:philip.bornhurst@doordash.com`) AFTER the draft timestamp.
    - If found: capture that sent body and compute a 2–5 bullet delta:
      - Greeting / sign-off changes
@@ -70,7 +70,7 @@ The Voice Learning Log is a Google Doc titled `Email Triage — Voice Learning L
 4. Cap the Voice Learnings section at the 50 most recent entries. Drop the oldest when adding new ones.
 5. If the same delta pattern shows up in 3+ entries (e.g., "always cuts 'happy to help'"), append a one-line note under a `Promoted Rules — Phil to review` block at the top of the doc. Do NOT auto-modify the prompt or the static rules.
 
-Use `batch_update_doc` with `find_replace` operations to update entries in place rather than rewriting the whole doc.
+Use `gws docs documents batchUpdate --params '{"documentId":"ID"}' --json '{"requests":[...]}'` with `replaceAllText` operations to update entries in place rather than rewriting the whole doc.
 
 If any reconciliation step fails (thread not found, doc API hiccup), note it in your final summary and proceed — don't block draft generation.
 
@@ -80,8 +80,8 @@ If any reconciliation step fails (thread not found, doc API hiccup), note it in 
 
 Calibrate Phil's live voice on every run.
 
-1. `search_gmail_messages` with query: `from:philip.bornhurst@doordash.com -to:doordash.com -to:doordash.atlassian.net -to:google.com -to:googlemail.com -to:calendly.com newer_than:30d`, `page_size: 15`.
-2. `get_gmail_messages_content_batch` with the message IDs to get bodies (max 25).
+1. `mcp__claude_ai_Gmail__search_threads` with query: `from:philip.bornhurst@doordash.com -to:doordash.com -to:doordash.atlassian.net -to:google.com -to:googlemail.com -to:calendly.com newer_than:30d`, `page_size: 15`.
+2. `mcp__claude_ai_Gmail__get_thread` on each matched thread to get bodies (max 25).
 3. Extract:
    - Typical greeting (e.g., "Hey <first>", "Hi <first>", "<first> —")
    - Sign-off (e.g., "Phil", "Thanks — Phil", "— Phil")
@@ -102,18 +102,18 @@ Hold this voice profile in your context — pass it verbatim into every per-emai
 
 ## Step 3 — Build the list of eligible inbound emails
 
-Use `search_gmail_messages` to find candidates:
+Use `mcp__claude_ai_Gmail__search_threads` to find candidates:
 - Query: `in:inbox -from:philip.bornhurst@doordash.com [since_gmail]` (omit the after-filter when `all_mode`).
 - `page_size: 50`.
 - Paginate if needed; cap total candidates at 50 per run (oldest first). Anything beyond gets queued for the next run.
 
-Fetch headers + bodies with `get_gmail_messages_content_batch` (25 at a time).
+Fetch headers + bodies with `mcp__claude_ai_Gmail__get_thread` (25 at a time).
 
 For each candidate, apply the **eligibility filter — SKIP if ANY are true**:
 - Sender domain ends in: `@doordash.com`, `@doordash.atlassian.net`, `@zoominfo.com`, `@docs.google.com`, `@google.com`, `@googlemail.com`, `@calendar.google.com`, `@calendly.com`.
 - Sender is `no-reply@`, `notifications@`, `drive-shares-dm-noreply@`, `calendar-notification@`, `do-not-reply@`, `mailer-daemon@`, or any other obvious automated address.
 - `List-Unsubscribe` header present AND body shows no restaurant/mx reference (recruiter, vendor pitch, newsletter blast). If `List-Unsubscribe` is absent, do NOT skip on tone, length, or signature alone.
-- Phil has already replied AFTER the latest inbound on the thread (use `get_gmail_thread_content` with `include_analysis: true` and check the last_sender / ball-in-court verdict).
+- Phil has already replied AFTER the latest inbound on the thread (use `mcp__claude_ai_Gmail__get_thread` and check the last sender / ball-in-court verdict).
 - A Gmail draft already exists on the thread (the thread has a `DRAFT` labeled message).
 - Calendar invite (`.ics`), Google Doc share notice, automated DoorDash system report, or bank/IT alert.
 
@@ -133,7 +133,7 @@ For each eligible email, launch a sub-agent via the `Agent` tool with `subagent_
 
 > You are processing one inbound email for Phil Bornhurst (Pathfinder Account Management). Your job: identify the mx, pull context, and save a Gmail draft reply in Phil's voice on the existing thread. NEVER SEND. Return a JSON summary at the end.
 >
-> **CRITICAL:** Every `mcp__google-workspace__*` tool call MUST include `user_google_email: "philip.bornhurst@doordash.com"`.
+> Gmail/Drive use the claude.ai MCPs (`mcp__claude_ai_Gmail__*`, `mcp__claude_ai_Google_Drive__*`); Sheets/Docs use the `gws` CLI via Bash. Neither needs a `user_google_email` param.
 >
 > **Email details:**
 > - Message ID: `[MESSAGE_ID]`
@@ -154,7 +154,7 @@ For each eligible email, launch a sub-agent via the `Agent` tool with `subagent_
 >
 > **Task 1 — Identify the mx (in order; stop at first confident match):**
 >
-> 1. **Exact email match.** Read Master Hub using the parallel-chunks pattern: fire 16 parallel `read_sheet_values` calls in a single message — ranges `A1:Z50`, `A51:Z100`, … `A751:Z800`. Search every cell for the sender's full email address (case-insensitive). If matched, pull the full row.
+> 1. **Exact email match.** Read Master Hub in a single Bash call — `gws sheets +read --spreadsheet 1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4 --range "A1:Z800"` (gws has no 50-row display cap). Search every cell for the sender's full email address (case-insensitive). If matched, pull the full row.
 > 2. **Domain match (business-domain senders only).** If no exact hit AND the sender domain is NOT a personal email provider (gmail, yahoo, hotmail, outlook, icloud, me.com, aol, verizon, sbcglobal, att, msn, comcast, pacbell, bellsouth), extract the domain and re-scan Master Hub rows for any row whose business name or contact field contains a matching domain or a clearly related business name (fuzzy match).
 > 3. **Sender display name.** Check the `From:` display name (e.g., `pokebola sf <pokebolasf@yahoo.com>` → "pokebola sf", `Alan Lopez <alan.539901@gmail.com>` → "Alan Lopez"). Search Master Hub Business Name + Location + contact-name columns for that string (case-insensitive, fuzzy). Personal-domain senders often put the business name in the display field.
 > 4. **Local-part inspection (personal-domain senders).** If the sender uses a personal email provider, the LOCAL PART often contains a restaurant hint:
@@ -163,20 +163,20 @@ For each eligible email, launch a sub-agent via the `Agent` tool with `subagent_
 >    - `alan.539901@gmail.com` → "539901" → possible Store ID
 >    Parse the local part for: business-name fragments (anything alphabetic that isn't a common first name), store-ID-like numeric strings (5–8 digits), restaurant-y words. Scan Master Hub Business Name + Location + Store ID + contact fields for matches. Treat as a confident match only if there's a clear unique hit (one Master Hub row).
 > 5. **Content inference.** If steps 1–4 miss, parse the email body and subject for: a restaurant name in the signature, a store address, mention of a specific location, the subject's implication (e.g., "Wrong number on the website" implies Storefront/1p), or reference to a recent meeting. Cross-reference any inferred name against Master Hub.
-> 6. **If still uncertain:** Do NOT draft. Apply Gmail label `email-monitor/unmatched` to the message (create the label first via `manage_gmail_label action:create` if it doesn't exist; then `modify_gmail_message_labels`). Return the JSON summary with `status: "unmatched"` and a 1-line reason that names what you tried (e.g., "no MH match for local-part 'rhbbq', display 'gina forster', or body signature").
+> 6. **If still uncertain:** Do NOT draft. Apply Gmail label `email-monitor/unmatched` to the thread (create the label first via `mcp__claude_ai_Gmail__create_label` if it doesn't exist — discover existing labels with `mcp__claude_ai_Gmail__list_labels`; then `mcp__claude_ai_Gmail__label_thread`). Return the JSON summary with `status: "unmatched"` and a 1-line reason that names what you tried (e.g., "no MH match for local-part 'rhbbq', display 'gina forster', or body signature").
 >
 > **Task 2 — Classify the email.** One of: `question`, `complaint`, `escalation`, `scheduling`, `data_request`, `general_update`, `churn_signal`, `kudos`, `intro`.
 >
 > **Task 3 — Pull context (run these in parallel):**
 >
 > a. **Master Hub row data** — already have it from Task 1.
-> b. **Running Notes doc** — `search_drive_files` with query `name contains '[BUSINESS_NAME]' and name contains 'Running Notes'`. If a doc is found, `get_doc_as_markdown` the most recent ~3000 chars and extract: last call date, top open items, most recent MSAT score, any flagged risks or follow-ups.
+> b. **Running Notes doc** — `mcp__claude_ai_Google_Drive__search_files` with query `name contains '[BUSINESS_NAME]' and name contains 'Running Notes'`. If a doc is found, read it with `mcp__claude_ai_Google_Drive__read_file_content` and extract from the most recent ~3000 chars: last call date, top open items, most recent MSAT score, any flagged risks or follow-ups.
 > c. **L7D in-store card volume** — only if the mx has a numeric Store ID. Run `Bash` with:
 >    ```
 >    python3 scripts/snowflake_query.py --json "SELECT calendar_date, total_card_orders, total_card_gov FROM edw.pathfinder.agg_pathfinder_stores_daily WHERE store_id = [STORE_ID] AND calendar_date >= dateadd(day, -14, current_date) ORDER BY calendar_date"
 >    ```
 >    Compute L7D vs prior-7d % change for both orders and GOV. Flag if either is down >30%.
-> d. **Gmail relationship history** — `search_gmail_messages` with `from:[SENDER_EMAIL] OR to:[SENDER_EMAIL] newer_than:365d`, `page_size: 20`. Summarize in 3–5 lines: recurring topics, sentiment trend, last interaction date, any unresolved threads.
+> d. **Gmail relationship history** — `mcp__claude_ai_Gmail__search_threads` with `from:[SENDER_EMAIL] OR to:[SENDER_EMAIL] newer_than:365d`, `page_size: 20`. Summarize in 3–5 lines: recurring topics, sentiment trend, last interaction date, any unresolved threads.
 > e. **Intercom cross-reference** — `mcp__intercom__search_contacts` for the sender email. If contact found, `mcp__intercom__search_conversations` for `contact_id` over the last 30 days. Note open tickets + recent ticket topics.
 > f. **If classification is `complaint`, `escalation`, or `churn_signal`:** also search Slack via `mcp__slack__slack_search_public_and_private` with `query: "[BUSINESS_NAME] [issue keywords]"` filtered to `#pathfinder-support` and `#pathfinder-mxonboarding` over the last 90 days. Note any prior known fixes.
 >
@@ -268,10 +268,10 @@ For each eligible email, launch a sub-agent via the `Agent` tool with `subagent_
 > **Task 4 — Pre-draft safety check.** Before generating the draft, re-fetch the thread one more time:
 >
 > ```
-> get_gmail_thread_content(thread_id=[THREAD_ID], include_analysis=true)
+> mcp__claude_ai_Gmail__get_thread(thread_id=[THREAD_ID])
 > ```
 >
-> Examine the `analysis.last_sender` field. If `last_sender` is now Phil (philip.bornhurst@doordash.com), it means Phil sent a reply on this thread BETWEEN candidate-fetch time and now. ABORT the draft. Return JSON with `status: "skipped"` and `skip_reason: "Phil replied between fetch and draft time"`. Do NOT save a draft.
+> Examine the most recent message's sender. If the last sender is now Phil (philip.bornhurst@doordash.com), it means Phil sent a reply on this thread BETWEEN candidate-fetch time and now. ABORT the draft. Return JSON with `status: "skipped"` and `skip_reason: "Phil replied between fetch and draft time"`. Do NOT save a draft.
 >
 > If the last sender is still the original inbound sender, proceed to Task 5.
 >
@@ -291,15 +291,12 @@ For each eligible email, launch a sub-agent via the `Agent` tool with `subagent_
 > <Sign-off in Phil's voice>
 > ```
 >
-> Save the draft using `draft_gmail_message`:
-> - `user_google_email`: `philip.bornhurst@doordash.com`
+> Save the draft using `mcp__claude_ai_Gmail__create_draft`:
 > - `thread_id`: `[THREAD_ID]`
 > - `in_reply_to`: the inbound `Message-ID` header
 > - `subject`: `Re: [SUBJECT]`
 > - `body`: the reply body ONLY (no internal block, no review notes, no metadata)
-> - `body_format`: `plain`
 > - `to`: sender's email
-> - `quote_original`: `true`
 >
 > **Task 6 — Return JSON summary.**
 >
@@ -390,7 +387,7 @@ Sent version: pending
 Delta: pending
 ```
 
-Use `batch_update_doc` with `find_replace` operations to insert all new entries above the closing marker of the Draft Log section in a single API call.
+Use `gws docs documents batchUpdate --params '{"documentId":"ID"}' --json '{"requests":[...]}'` with `replaceAllText` operations to insert all new entries above the closing marker of the Draft Log section in a single API call.
 
 Do NOT write to the Master Hub.
 

@@ -19,12 +19,10 @@ Before any mode, check if the SIT spreadsheet exists:
 1. Look for "Support Intelligence Tracker" in CLAUDE.md under Key Spreadsheets
 2. If found, use that spreadsheet_id
 3. If NOT found:
-   a. Create a "support intelligence" subfolder under the 2026 folder using Drive tools:
+   a. Create a "support intelligence" subfolder under the 2026 folder: `gws drive files create --json '{"name":"support intelligence","mimeType":"application/vnd.google-apps.folder","parents":["1xPRPSJUWBtJDbeISgOxJiTX0Y8znczf_"]}'`
       - Parent folder ID: `1xPRPSJUWBtJDbeISgOxJiTX0Y8znczf_` (2026)
-      - `user_google_email: "philip.bornhurst@doordash.com"`
-   b. Create a new Google Sheet in that subfolder:
+   b. Create a new Google Sheet in that subfolder: `gws drive files create --json '{"name":"Support Intelligence Tracker","mimeType":"application/vnd.google-apps.spreadsheet","parents":["FOLDER_ID"]}'`
       - Title: "Support Intelligence Tracker"
-      - `user_google_email: "philip.bornhurst@doordash.com"`
    c. Set up 3 tabs with headers:
 
    **Tab: "Conversation Log"** — Row 1 headers:
@@ -39,7 +37,7 @@ Before any mode, check if the SIT spreadsheet exists:
    d. Tell Phil: "Created Support Intelligence Tracker in 2026/support intelligence/. Add this spreadsheet ID to CLAUDE.md under Key Spreadsheets: [ID]. Also add the folder ID to Key Folders."
    e. Proceed with the scan
 
-**SIT spreadsheet_id** — read from CLAUDE.md Key Spreadsheets table (row: "Support Intelligence Tracker"). Always pass `user_google_email: "philip.bornhurst@doordash.com"`.
+**SIT spreadsheet_id** — read from CLAUDE.md Key Spreadsheets table (row: "Support Intelligence Tracker").
 
 ---
 
@@ -65,7 +63,7 @@ Quick daily pattern check. Default window: last 48 hours.
   - Conv ID = `slack_[message_timestamp]`, Source = `slack`
   - Conv Type = `slack_escalation`
   - Extract mx info from the full thread (Store IDs, mx names, phone numbers — may appear in replies, not just the original message)
-  - Cross-reference against Master Hub (`spreadsheet_id: "1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4"`, `user_google_email: "philip.bornhurst@doordash.com"`)
+  - Cross-reference against Master Hub via `gws sheets +read --spreadsheet 1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4 --range "B1:E800"` (single full-range read; no 50-row cap)
   - Issue Summary = concise 1-2 sentence summary of the escalated issue from the original message
   - Thread Context = condensed notes from thread replies: what was tried, root cause if identified, resolution status, who was involved
   - Classify issue category from content: `payment | menu | orders | POS/technical | onboarding | feature_request | account | general`
@@ -103,7 +101,7 @@ e. **If Conv Type is `support_issue` or `inquiry`** (VALID INBOUND):
    - **Identify the mx** — contact identification cascade:
      1. Check company/business name from conversation metadata
      2. If unclear, `mcp__intercom__get_contact` for full details (name, email, phone, custom attributes)
-     3. Cross-reference against Master Hub (`spreadsheet_id: "1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4"`, `user_google_email: "philip.bornhurst@doordash.com"`): business name → phone → email → contact name
+     3. Cross-reference against Master Hub via `gws sheets +read --spreadsheet 1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4 --range "B1:E800"` (single full-range read; no 50-row cap): business name → phone → email → contact name
      4. If matched: populate Mx Name, Store ID, Tier, Match Key
      5. If unmatched: Mx Name = "unmatched", still record all contact info. Do not skip or error.
    - **Write a real issue summary** — 1-2 sentences describing the mx's actual PROBLEM from their messages. Examples:
@@ -128,14 +126,14 @@ f. **If Conv Type is `phone_log`, `greeting_only`, or `noise`**:
 **Step 4: Retroactive matching**
 After processing all new conversations:
 - For any newly matched contact, scan the Conversation Log for "unmatched" rows with the same phone, email, or contact name
-- If found, backfill those rows with the now-known Mx Name, Store ID, and Tier using `mcp__google-workspace__modify_sheet_values`
+- If found, backfill those rows with the now-known Mx Name, Store ID, and Tier using `gws sheets spreadsheets values update --params '{"spreadsheetId":"ID","range":"Conversation Log!G[row]","valueInputOption":"USER_ENTERED"}' --json '{"values":[[...]]}'`
 - Update the corresponding Contact Frequency row to merge the unmatched history into the matched mx
 - Report: "Retroactively matched X previous conversations to [mx name] via [phone/email/name]"
 
 **Step 4b: Cross-reference Slack ↔ Intercom**
 After processing all new conversations from both sources:
 - For each Slack escalation, check if the same mx (by Mx Name or Store ID) has Intercom inbounds in the same 7-day window
-- If found, set `Escalated = yes` on the matching Intercom row(s) using `mcp__google-workspace__modify_sheet_values`
+- If found, set `Escalated = yes` on the matching Intercom row(s) using `gws sheets spreadsheets values update --params '{"spreadsheetId":"ID","range":"Conversation Log!R[row]","valueInputOption":"USER_ENTERED"}' --json '{"values":[["yes"]]}'`
 - Note the linkage in the Slack row's Thread Context: "Also has X Intercom inbounds this week"
 - This linkage feeds into the `escalated_repeat` pattern (Step 5)
 
@@ -204,9 +202,8 @@ Same as Scan mode but with expanded window (default 30 days) for both Intercom a
 - Pull conversations in batches (paginate through results)
 - Build comprehensive baseline if tracker is new/sparse
 - Generate a formatted Google Doc summary report:
-  - Use `mcp__google-workspace__import_to_google_doc` with `source_format: "html"`
-  - `folder_id`: use the "support intelligence" folder ID from CLAUDE.md Key Folders (subfolder of 2026)
-  - Title: "Support Intelligence Report — [date range]"
+  - Build the styled HTML, then convert to a Doc: `gws drive files create --json '{"name":"Support Intelligence Report — [date range]","mimeType":"application/vnd.google-apps.document","parents":["FOLDER_ID"]}' --upload report.html --upload-content-type "text/html"`
+  - `parents`: use the "support intelligence" folder ID from CLAUDE.md Key Folders (subfolder of 2026)
   - Include all alerts, frequency tables, issue distribution, and trend analysis
 
 ---

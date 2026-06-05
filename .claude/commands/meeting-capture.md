@@ -60,16 +60,12 @@ Do these once per command run, before any per-meeting work:
 
 **Master Hub header confirmation** (future-proof against column shifts):
 
-- `mcp__google-workspace__read_sheet_values`
-  - `spreadsheet_id: "1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4"`
-  - `range_name: "A1:CA1"`
-  - `user_google_email: "philip.bornhurst@doordash.com"`
+- `gws sheets +read --spreadsheet 1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4 --range "A1:CA1"`
 - Locate the column index where header equals exactly `"Running Notes"`. Expected: column BV (index 73). If it has moved, use the discovered column.
 
-**Master Hub body.** The `read_sheet_values` tool display-truncates at ~50 rows even on successful larger reads, which makes per-row lookups flaky. Instead:
+**Master Hub body.** gws has no 50-row display cap, so a single ranged read returns the full sheet:
 
-- Call `mcp__google-workspace__get_drive_file_download_url` with `file_id: "1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4"` and `export_format: "xlsx"`.
-- Parse the downloaded `.xlsx` with Python + `openpyxl` (install via `pip3 install openpyxl` if needed). Use the first/default sheet. Headers on row 1, data from row 2.
+- `gws sheets +read --spreadsheet 1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4 --range "A1:CA800"` (widen the row bound if the book grows past 800 rows). Headers on row 1, data from row 2.
 - Build an in-memory dict keyed by Store ID (column E, index 4), capturing:
   - Business Name (column B, index 1)
   - Store ID (column E, index 4)
@@ -83,10 +79,7 @@ Normalize Store IDs to strings (strip whitespace) when indexing.
 
 **Tracker dedupe set:**
 
-- `mcp__google-workspace__read_sheet_values`
-  - `spreadsheet_id: "1OMJ-3KK_ge_aLy_kJZR-2AbehZdKeviOpmHOILmS8lM"`
-  - `range_name: "v2!A:B"`
-  - `user_google_email: "philip.bornhurst@doordash.com"`
+- `gws sheets +read --spreadsheet 1OMJ-3KK_ge_aLy_kJZR-2AbehZdKeviOpmHOILmS8lM --range "v2!A:B"`
 - Build a set of `(store_id, date)` tuples from existing rows. Normalize date to `YYYY-MM-DD` (strip the time portion).
 - Also capture `next_row_index` = current row count + 1 for appending later.
 
@@ -145,9 +138,9 @@ PRISM-TnA gives you the content. Parse it into this structured form in memory be
 
 The reference target format is doc `1odvvOQpOm_m0G7WR8hlwKTzZYxI_j74JoSA8W2d3Trs`. Real H1/H2, real Docs tables, real bullets, Arial 11 body. Raw markdown as text is not acceptable.
 
-**Design constraint: 3 API calls per meeting, zero intermediate `inspect_doc_structure` calls.** Positions are precomputed with the table-span formula below and applied in a single order-sensitive pipeline.
+**Design constraint: 3 API calls per meeting, zero intermediate structure-readback calls.** Positions are precomputed with the table-span formula below and applied in a single order-sensitive pipeline.
 
-**Table-span formula.** A `create_table_with_data` insert at position `P` with `R` rows × `C` cols and `S` total characters of cell content (sum of `len(cell)` across all cells, no newlines counted) occupies this many indices:
+**Table-span formula.** An `insertTable` populated insert at position `P` with `R` rows × `C` cols and `S` total characters of cell content (sum of `len(cell)` across all cells, no newlines counted) occupies this many indices:
 
 ```
 span = 3 + R + 2*R*C + S
@@ -157,14 +150,14 @@ Derivation (verified empirically on a 4×2 / 90-char-content table that shifted 
 
 Use this to precompute, ahead of Call 1, exactly where every future position lands after all 6 tables are inserted.
 
-**Call 1 — `batch_update_doc`: text skeleton + paragraph styles + bullets + fonts (single call, all at pre-table positions).**
+**Call 1 — `gws docs documents batchUpdate`: text skeleton + paragraph styles + bullets + fonts (single call, all at pre-table positions).**
 
 Why at pre-table positions: format operations on a range attach character formatting to those characters. Subsequently inserting tables shifts the characters to higher indices but they retain the formatting. So applying bullets and font to the original range works — the formatting moves with the text.
 
 Walk the content in document order with a forward cursor starting at `cursor = 1`. For each block `(text, style)`:
 
-1. Append `insert_text` op at `cursor` with `text + "\n"`.
-2. If `style` is a heading, append `update_paragraph_style` over `[cursor, cursor + len(text+"\n")]` with the named style.
+1. Append `insertText` op at `cursor` with `text + "\n"`.
+2. If `style` is a heading, append `updateParagraphStyle` over `[cursor, cursor + len(text+"\n")]` with the named style.
 3. `cursor += len(text + "\n")`.
 
 Block order (same as before, with placeholder blank lines where tables will land):
@@ -187,12 +180,15 @@ Block order (same as before, with placeholder blank lines where tables will land
 | N+9 | `Growth Advisory` | HEADING_2 |
 | N+10..11 | blank placeholders for GA topics + GA score (only if GA has data; else skip both and write the "No GA discussed" paragraph directly) | NORMAL_TEXT |
 | N+12 | `{ga_composite_line}` | NORMAL_TEXT |
-| N+13 | `Gut Check` | HEADING_2 |
-| N+14 | `{gut_check_text}` | NORMAL_TEXT |
-| N+15 | `MSAT Prediction` | HEADING_2 |
-| N+16 | `{msat_line}` | NORMAL_TEXT |
-| N+17 | `===` | NORMAL_TEXT |
-| N+18 | `` (blank) | NORMAL_TEXT |
+| N+13 | `Upsell` | HEADING_2 |
+| N+14..15 | blank placeholders for Upsell opportunities + Upsell score (only if upsell has data; else skip both and write the "No upsell discussed" paragraph directly) | NORMAL_TEXT |
+| N+16 | `{upsell_composite_line}` | NORMAL_TEXT |
+| N+17 | `Gut Check` | HEADING_2 |
+| N+18 | `{gut_check_text}` | NORMAL_TEXT |
+| N+19 | `MSAT Prediction` | HEADING_2 |
+| N+20 | `{msat_line}` | NORMAL_TEXT |
+| N+21 | `===` | NORMAL_TEXT |
+| N+22 | `` (blank) | NORMAL_TEXT |
 
 Track during this walk:
 - `bullet_first_index` = start_index of first bullet paragraph
@@ -201,14 +197,14 @@ Track during this walk:
 
 At the end of the op list for Call 1, append these operations (all referencing the positions just computed, which are still valid because no tables have been inserted yet):
 
-- `create_bullet_list` over `[bullet_first_index, bullet_last_end]`, `list_type: UNORDERED`
-- `format_text` over `[1, prepend_end]` with `font_family: "Arial"`, `font_size: 11`
-- `format_text` over the title's range with `font_size: 22`, `bold: true` (H1 override — named style alone doesn't carry font size in this tool)
-- `format_text` over each H2's range with `font_size: 14`, `bold: true`
+- `createParagraphBullets` over `[bullet_first_index, bullet_last_end]`, `bulletPreset: BULLET_DISC_CIRCLE_SQUARE`
+- `updateTextStyle` over `[1, prepend_end]` with `font_family: "Arial"`, `font_size: 11`
+- `updateTextStyle` over the title's range with `font_size: 22`, `bold: true` (H1 override — named style alone doesn't carry font size)
+- `updateTextStyle` over each H2's range with `font_size: 14`, `bold: true`
 
-Fire this as ONE `batch_update_doc` call.
+Fire this as ONE `gws docs documents batchUpdate` call.
 
-**Calls 2-7 — `create_table_with_data` × 6, bottom-up.**
+**Calls 2-7 — `gws docs documents batchUpdate` (`insertTable` + cell content) × 6, bottom-up.**
 
 Insert tables in DESCENDING placeholder-index order so earlier placeholders' indices remain valid as later tables are inserted. Given the placeholder positions tracked in Call 1, the order is typically:
 
@@ -219,33 +215,28 @@ Insert tables in DESCENDING placeholder-index order so earlier placeholders' ind
 5. Action Items placeholder
 6. Metadata placeholder (lowest index)
 
-For each table:
+For each table, fire one `gws docs documents batchUpdate --params '{"documentId":"{doc_id}"}'` with an `insertTable` request at `{placeholder.start_index}` (rows/columns sized to the data), followed by the cell-content `insertText` ops (header row bold; Metadata key-value table is not bold). Schematically:
 
 ```
-mcp__google-workspace__create_table_with_data
-  document_id: {doc_id}
-  user_google_email: philip.bornhurst@doordash.com
-  tab_id: t.0                         # or the actual tab id if different
-  index: {placeholder.start_index}
-  bold_headers: true                  # false for Metadata (key-value, not tabular)
-  table_data: [[headers], [row], ...]
+gws docs documents batchUpdate --params '{"documentId":"{doc_id}"}' --json '{"requests":[
+  {"insertTable": {"location": {"index": {placeholder.start_index}}, "rows": R, "columns": C}},
+  {"insertText": {"location": {"index": <cell_index>}, "text": "<cell text>"}},
+  ...
+]}'
 ```
 
 Because bullets and font were applied to the original range in Call 1, the formatting stays with the text as tables push it down. Tables get their own default formatting, which is fine — the Launchpad reference doc's tables are not specially formatted beyond bold headers.
 
-**Call 8 — `modify_sheet_values` to append the tracker row** (unchanged from step i below).
+**Call 8 — `gws sheets +append` to append the tracker row** (unchanged from step i below).
 
-**Cost accounting.** 1 super-batch + 6 table inserts + 1 tracker append = 8 API calls per meeting. No `inspect_doc_structure` calls required. If GA has no topics and score, the table count drops to 4 and total calls drop to 6.
+**Cost accounting.** 1 super-batch + 6 table inserts + 1 tracker append = 8 API calls per meeting. No structure-readback calls required. If GA has no topics and score, the table count drops to 4 and total calls drop to 6.
 
 **If ANY call fails** (permissions, schema, etc.), mark the meeting `failed-doc-write`, log which call failed, and continue to the next meeting without rollback. Partial prepends are acceptable.
 
-**i. Append to tracker.** Use `mcp__google-workspace__modify_sheet_values`:
+**i. Append to tracker.** Use `gws sheets +append`:
 
-- `spreadsheet_id: "1OMJ-3KK_ge_aLy_kJZR-2AbehZdKeviOpmHOILmS8lM"`
-- `range_name: "v2!A{next_row_index}:E{next_row_index}"`
-- `user_google_email: "philip.bornhurst@doordash.com"`
-- `value_input_option: "USER_ENTERED"`
-- `values:` one row with five cells:
+- `gws sheets +append --spreadsheet 1OMJ-3KK_ge_aLy_kJZR-2AbehZdKeviOpmHOILmS8lM --range "v2" --values '[[...]]'` (`valueInputOption` defaults to `USER_ENTERED`; the append targets the next empty row of the `v2` tab).
+- one row with five cells:
   - `A`: `{YYYY-MM-DD} 0:00:00` (matches existing row format, e.g. `2025-07-20 0:00:00`)
   - `B`: Store ID (string)
   - `C`: Business Name (from Master Hub)
@@ -314,8 +305,9 @@ SECTION ORDER (output in this exact order)
 5. **Tone & Character** — markdown table **Person | Tone | Notes**; include all real speakers, mapping any "Unknown Speaker" to the most likely actual speaker.
 6. **Insights or Flags** — balanced paragraph that surfaces key wins, themes, risks, or opportunities; weigh positives and negatives evenly.
 7. **Growth Advisory** — identify, extract, and evaluate all growth advisory activity in the call. See full instructions below.
-8. **Gut Check** — neutral paragraph reading between the lines for churn signs, trust issues, or red tape; acknowledge positive relationship signals before noting concerns.
-9. **MSAT Prediction** — format exactly: **MSAT Prediction: X / 5 —** brief justification <= 25 words. Default to 4 / 5 unless material risk factors outweigh positives.
+8. **Upsell** — identify, extract, and evaluate all upsell activity in the call (package upgrades, hardware, à la carte add-ons). See full instructions below.
+9. **Gut Check** — neutral paragraph reading between the lines for churn signs, trust issues, or red tape; acknowledge positive relationship signals before noting concerns.
+10. **MSAT Prediction** — format exactly: **MSAT Prediction: X / 5 —** brief justification <= 25 words. Default to 4 / 5 unless material risk factors outweigh positives.
 
 ---
 
@@ -377,6 +369,65 @@ Composite labels: Exemplary (4.5-5.0) / Strong (4.0-4.4) / Developing (3.0-3.9) 
 
 ---
 
+SECTION 8 INSTRUCTIONS — UPSELL
+
+Upsell is any discussion aimed at moving the mx onto a higher-value package or adding paid products — distinct from Growth Advisory (optimizing what they already have). Upsell covers: package upgrades (Starter → Boost → Pro), hardware (Self-Serve Kiosk, KDS, additional terminals), and à la carte add-ons (Omni-Channel Loyalty, Gift Cards, Mobile App, custom Website). Selling a new product/tier = Upsell; optimizing existing = Growth Advisory. Do not double-count the same moment in both sections.
+
+There will be many calls where upsell is not discussed. Handle this gracefully — do not force it.
+
+**Step 1 — Upsell Opportunity Extraction**
+
+If upsell opportunities were discussed, output a markdown table with the following columns:
+
+**Opportunity | Product/Package | Initiated By | Commitment**
+
+- Opportunity: brief description of the upsell discussed (one line, specific)
+- Product/Package: must be exactly one of — Boost / Pro / Kiosk / KDS / Loyalty / Giftcards / Mobile App / Website / Additional Terminal / Other
+- Initiated By: AM or Mx
+- Commitment: Yes / Partial / No
+
+**Step 2 — Missed Opportunities**
+
+If the mx raised a pain point or signal that was a natural opening for an upsell and the AM did not engage with it, flag it on its own line in this format:
+
+"Missed opportunity: [what the mx said or signaled] -> [the product/package the AM could have pitched]"
+
+If no missed opportunities exist, omit this line entirely.
+
+**Step 3 — Upsell Score**
+
+Score the AM on the following two dimensions. Output a markdown table **Dimension | Score | Label**, followed by a single composite line.
+
+Specificity — was the pitch tied to the right product/package for the mx's tier/GOV, concrete, and value-framed?
+
+- 5 / Exemplary — right-fit product pitched with quantified value or tailored pain framing
+- 4 / Strong — clear, relevant pitch with supporting rationale; minor gaps only
+- 3 / Developing — product raised but pitch was generic or not tier-matched
+- 2 / Surface-Level — mentioned briefly with no real substance
+- 1 / Absent — not raised despite a clear opening
+
+Actionability — did the conversation produce a next step or mx commitment (demo booked, contract sent, trial agreed)?
+
+- 5 / Exemplary — concrete next step secured with mx commitment
+- 4 / Strong — next step defined; mx commitment was soft or implied
+- 3 / Developing — discussed but no clear follow-through established
+- 2 / Surface-Level — raised then dropped; no action path created
+- 1 / Absent — no action or follow-through of any kind
+
+After the table, output the composite on its own line:
+
+**Upsell Score: X.X / 5 — [Label]**
+
+Composite labels: Exemplary (4.5-5.0) / Strong (4.0-4.4) / Developing (3.0-3.9) / Surface-Level (2.0-2.9) / Absent (1.0-1.9)
+
+**Handling edge cases:**
+
+- No upsell discussed, no missed opportunities: output exactly — "No upsell opportunities were discussed in this call. No missed opportunities identified. Score: N/A" — and skip the table and scoring entirely.
+- No upsell discussed, but a missed opportunity exists: skip the extraction table, output the missed opportunity flag, and score both dimensions as 1 / Absent. Composite: 1.0 / 5 — Absent.
+- Read the room: on escalation/complaint calls where the mx is venting, pushing an upsell is inappropriate — score N/A rather than penalizing as a missed opportunity.
+
+---
+
 GLOBAL WRITING RULES
 
 - Tone must be clear, professional, skimmable, and slightly optimistic without downplaying real risks.
@@ -393,7 +444,9 @@ QUALITY CONTROL CHECKLIST (self-verify before finalizing)
 - [ ] Major wins are acknowledged alongside risks or churn signals.
 - [ ] Growth Advisory section reflects only what was actually said — no invented topics.
 - [ ] If GA was discussed, every row in the extraction table maps to a real moment in the transcript.
-- [ ] Missed opportunity flags cite a specific signal from the mx, not a general assumption.
+- [ ] Upsell section reflects only what was actually said — no invented opportunities; Product/Package is one of the allowed values.
+- [ ] Upsell vs Growth Advisory classified correctly (new product/tier = Upsell; optimizing existing = GA); no moment double-counted.
+- [ ] Missed opportunity flags (GA and Upsell) cite a specific signal from the mx, not a general assumption.
 - [ ] No forbidden characters are present.
 
 ERROR HANDLING
@@ -417,8 +470,8 @@ To note: DO NOT error out anything for any date-related confusion. Assume that e
 ## Notes
 
 - The command relies on Phil adding an `mx call` marker and a Store ID to the top of each Granola meeting's private notes. Without the marker the meeting is ignored.
-- Granola timestamps are in the meeting organizer's timezone, NOT normalized to PDT. For the date portion (YYYY-MM-DD) this rarely matters, but if a call crosses midnight in a different timezone the dedupe key could shift by a day. Cross-reference Google Calendar via `get_events` if a specific meeting's date looks off.
+- Granola timestamps are in the meeting organizer's timezone, NOT normalized to PDT. For the date portion (YYYY-MM-DD) this rarely matters, but if a call crosses midnight in a different timezone the dedupe key could shift by a day. Cross-reference Google Calendar via `mcp__claude_ai_Google_Calendar__list_events` if a specific meeting's date looks off.
 - Running Notes column is currently BV. The command auto-detects by header name in case the column shifts.
 - The log sheet `v2` tab drives downstream automations. Do NOT write to Sheet1 or Sheet4.
 - Master Hub lives at `1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4` (default first tab, `gid=0`). Single header row on row 1; data from row 2.
-- Formatting is non-negotiable: prepends MUST use real Google Docs H1/H2 styles, real Docs tables (via `create_table_with_data`), real bullet lists, and Arial 11 body. Markdown-as-plaintext inserts (pipe tables, `#` headings, `*` bullets rendered literally) are broken output, not "good enough." Reference doc: `1odvvOQpOm_m0G7WR8hlwKTzZYxI_j74JoSA8W2d3Trs`.
+- Formatting is non-negotiable: prepends MUST use real Google Docs H1/H2 styles, real Docs tables (via `gws docs documents batchUpdate` `insertTable`), real bullet lists, and Arial 11 body. Markdown-as-plaintext inserts (pipe tables, `#` headings, `*` bullets rendered literally) are broken output, not "good enough." Reference doc: `1odvvOQpOm_m0G7WR8hlwKTzZYxI_j74JoSA8W2d3Trs`.

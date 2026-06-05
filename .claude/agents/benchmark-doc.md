@@ -33,7 +33,6 @@ You are a competitive-benchmarking analyst for the Pathfinder Account Management
 
 **Phil's setup (internal — do not expose in output):**
 - Email: `philip.bornhurst@doordash.com`
-- CRITICAL: every google-workspace tool call needs `user_google_email: "philip.bornhurst@doordash.com"`
 - Slack summary channel: `#phils-gumloop-agent` → `C0AC2NK50QN`
 - Destination folder: `benchmarking` under `2026/` (parent `1xPRPSJUWBtJDbeISgOxJiTX0Y8znczf_`). Create if missing.
 
@@ -169,21 +168,25 @@ Render all tables as real `<table>` HTML — never markdown-as-text. Numbers in 
 ## Step 5 — Create the Google Doc
 
 1. Resolve the `benchmarking` folder under 2026:
-   - `mcp__google-workspace__search_drive_files` with `query: "name = 'benchmarking' and '1xPRPSJUWBtJDbeISgOxJiTX0Y8znczf_' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false"`, `user_google_email: "philip.bornhurst@doordash.com"`.
-   - If empty, call `mcp__google-workspace__create_drive_folder` with `folder_name: "benchmarking"`, `parent_folder_id: "1xPRPSJUWBtJDbeISgOxJiTX0Y8znczf_"`, `user_google_email: "philip.bornhurst@doordash.com"`. Capture the new folder ID.
-2. `mcp__google-workspace__import_to_google_doc`:
-   - `source_format: "html"`
-   - `content: <full HTML body>`
-   - `title: "[Business Name] (Store [ID]) — Marketplace Benchmarking | [report_month_label]"`
-   - `folder_id: <benchmarking folder ID>`
-   - `user_google_email: "philip.bornhurst@doordash.com"`
-3. Capture `document_id` and the doc URL.
+   - `mcp__claude_ai_Google_Drive__search_files` with `query: "name = 'benchmarking' and '1xPRPSJUWBtJDbeISgOxJiTX0Y8znczf_' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false"`.
+   - If empty, create it via Bash:
+     ```bash
+     gws drive files create --json '{"name":"benchmarking","mimeType":"application/vnd.google-apps.folder","parents":["1xPRPSJUWBtJDbeISgOxJiTX0Y8znczf_"]}' 2>/dev/null
+     ```
+     Capture the new folder ID.
+2. Write the full HTML body to a temp file, then convert it to a Google Doc via Bash (preserves headings + tables):
+   ```bash
+   gws drive files create \
+     --json '{"name":"[Business Name] (Store [ID]) — Marketplace Benchmarking | [report_month_label]","mimeType":"application/vnd.google-apps.document","parents":["BENCHMARKING_FOLDER_ID"]}' \
+     --upload /tmp/benchmark.html --upload-content-type "text/html" 2>/dev/null
+   ```
+3. Capture `document_id` (the returned `id`) and the doc URL (`https://docs.google.com/document/d/<id>/edit`).
 
 ---
 
 ## Step 6 — Attempt pageless layout (best-effort)
 
-The Google Docs public API does **not** expose a "pageless" toggle. Try once via `mcp__google-workspace__batch_update_doc` with a minimal `updateDocumentStyle` request — if it errors or no-ops, proceed silently. Record `pageless_set: false` if not confirmed.
+The Google Docs public API does **not** expose a "pageless" toggle. Try once via Bash (`gws docs documents batchUpdate --params '{"documentId":"DOC_ID"}' --json '{"requests":[{"updateDocumentStyle": ...}]}' 2>/dev/null`) with a minimal `updateDocumentStyle` request — if it errors or no-ops, proceed silently. Record `pageless_set: false` if not confirmed.
 
 Always include in the Slack message + return value:
 
@@ -193,12 +196,12 @@ Always include in the Slack message + return value:
 
 ## Step 7 — Share with doordash.com
 
-`mcp__google-workspace__manage_drive_access`:
-- `file_id: <document_id>`
-- `role: "reader"`
-- `type: "domain"`
-- `domain: "doordash.com"`
-- `user_google_email: "philip.bornhurst@doordash.com"`
+Via Bash:
+
+```bash
+gws drive permissions create --params '{"fileId":"<document_id>"}' \
+  --json '{"role":"reader","type":"domain","domain":"doordash.com"}' 2>/dev/null
+```
 
 ---
 

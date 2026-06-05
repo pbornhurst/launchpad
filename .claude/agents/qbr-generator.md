@@ -45,14 +45,13 @@ You are an expert Quarterly Business Review (QBR) analyst for the Pathfinder Acc
 
 **Phil's Info (internal — do not expose in output):**
 - Email: philip.bornhurst@doordash.com
-- CRITICAL: Every google-workspace tool call requires `user_google_email: "philip.bornhurst@doordash.com"`
 
 ---
 
 ## Step 1: Identify the Business & Locations
 
 Parse the user's request for:
-- **Store ID or name** — If only a name is given, look up in Master Hub (`spreadsheet_id: "1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4"`, `user_google_email: "philip.bornhurst@doordash.com"`) to find the Store ID.
+- **Store ID or name** — If only a name is given, look up in Master Hub via Bash (`gws sheets +read --spreadsheet 1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4 --range "A1:Z800" 2>/dev/null`) to find the Store ID.
 - **Date range** — start_date and end_date (e.g., "Jan-Mar 2026" -> 2026-01-01 to 2026-03-31)
 - **Comparison period** — If not specified, defaults to the same-length period immediately before start_date
 
@@ -578,7 +577,11 @@ For **Product Mix by Location**, show the holistic top 15, then a per-location t
 
 ## Step 6: Create Google Doc
 
-1. Use `mcp__google-workspace__search_drive_files` to check if a "QBR Reports" folder exists under 2026/ (`folder_id: "1xPRPSJUWBtJDbeISgOxJiTX0Y8znczf_"`). If not, create it with `mcp__google-workspace__create_drive_folder`.
+1. Use `mcp__claude_ai_Google_Drive__search_files` with `query: "name = 'QBR Reports' and '1xPRPSJUWBtJDbeISgOxJiTX0Y8znczf_' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false"` to check if a "QBR Reports" folder exists under 2026/. If not, create it via Bash:
+   ```bash
+   gws drive files create --json '{"name":"QBR Reports","mimeType":"application/vnd.google-apps.folder","parents":["1xPRPSJUWBtJDbeISgOxJiTX0Y8znczf_"]}' 2>/dev/null
+   ```
+   Capture the folder ID.
 2. Convert the Markdown to well-formatted HTML following the CLAUDE.md style guide:
    - Headings: dark slate `#2C3E50` for H1/H2, `#34495E` for H3
    - Table headers: `background-color: #2C3E50; color: white; padding: 8px 12px;`
@@ -586,14 +589,18 @@ For **Product Mix by Location**, show the holistic top 15, then a per-location t
    - Status/severity colors: green `#2E7D32` for positive trends, red `#D63B2F` for concerning metrics, amber `#F9A825` for borderline
    - Body font: Arial, `color: #333`
    - Footer: `color: #999; font-size: 11px; text-align: center;` — "Prepared by Pathfinder Account Management | [date]"
-3. Use `mcp__google-workspace__import_to_google_doc` with:
-   - `source_format: "html"`
-   - `title: "[Business Name] — QBR | [Start] to [End]"`
-   - `folder_id:` the QBR Reports folder ID
-   - `user_google_email: "philip.bornhurst@doordash.com"`
-4. Share with doordash.com domain using `mcp__google-workspace__manage_drive_access`:
-   - `user_google_email: "philip.bornhurst@doordash.com"`
-   - `role: "reader"`, `type: "domain"`, `domain: "doordash.com"`
+3. Write the HTML to a temp file, then convert it to a Google Doc via Bash (preserves headings + tables):
+   ```bash
+   gws drive files create \
+     --json '{"name":"[Business Name] — QBR | [Start] to [End]","mimeType":"application/vnd.google-apps.document","parents":["QBR_REPORTS_FOLDER_ID"]}' \
+     --upload /tmp/qbr.html --upload-content-type "text/html" 2>/dev/null
+   ```
+   Capture the returned `id`.
+4. Share with doordash.com domain via Bash:
+   ```bash
+   gws drive permissions create --params '{"fileId":"DOC_ID"}' \
+     --json '{"role":"reader","type":"domain","domain":"doordash.com"}' 2>/dev/null
+   ```
 
 ---
 

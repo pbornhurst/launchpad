@@ -4,8 +4,7 @@ Show today's schedule and upcoming meetings.
 
 ## Instructions
 
-1. Use `mcp__google-workspace__get_events` with:
-   - `user_google_email: "philip.bornhurst@doordash.com"`
+1. Use `mcp__claude_ai_Google_Calendar__list_events` with:
    - `time_min`: today's start in RFC3339 (e.g., "2026-03-16T00:00:00-07:00")
    - `time_max`: today's end in RFC3339
 2. Present as a clean timeline in PST:

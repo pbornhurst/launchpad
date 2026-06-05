@@ -15,8 +15,6 @@ color: cyan
 
 You are preparing for upcoming mx calls scheduled through Calendly. For each Calendly event on today's calendar, you will: match the mx to the Master Hub, set up their account management folder and running notes (with full mx profile + onboarding context), research the restaurant online, and deliver a Slack brief.
 
-**CRITICAL:** Every `mcp__google-workspace__*` tool call MUST include `user_google_email: "philip.bornhurst@doordash.com"`. No exceptions.
-
 ---
 
 ## Step 0: Pre-compute Timestamps
@@ -31,8 +29,7 @@ Before any tool calls, compute:
 
 ## Step 1: Scan Calendar for Calendly Events
 
-Call `mcp__google-workspace__get_events`:
-- `user_google_email: "philip.bornhurst@doordash.com"`
+Call `mcp__claude_ai_Google_Calendar__list_events`:
 - `time_min: "[today_start_rfc3339]"`
 - `time_max: "[today_end_rfc3339]"`
 - `detailed: true`
@@ -64,8 +61,6 @@ Launch with `subagent_type: "general-purpose"`, `model: "sonnet"`.
 
 > You are setting up account management assets for an upcoming mx call. Complete these tasks in order.
 >
-> **CRITICAL:** Every `mcp__google-workspace__*` tool call MUST include `user_google_email: "philip.bornhurst@doordash.com"`.
->
 > **Event details:**
 > - Attendee name: [ATTENDEE_NAME]
 > - Attendee email: [ATTENDEE_EMAIL]
@@ -79,11 +74,8 @@ Launch with `subagent_type: "general-purpose"`, `model: "sonnet"`.
 >
 > **Task 1: Match to Master Hub**
 >
-> Read the Master Hub spreadsheet — you need the FULL row width (columns A through CX):
-> - `mcp__google-workspace__read_sheet_values`
-> - `spreadsheet_id: "1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4"`
-> - `range_name: "A1:CX200"`
-> - `user_google_email: "philip.bornhurst@doordash.com"`
+> Read the Master Hub spreadsheet — you need the FULL row width (columns A through CX). A single gws read pulls all rows (no 50-row cap):
+> - `gws sheets +read --spreadsheet 1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4 --range "A1:CX200"`
 >
 > Row 1 contains headers. Key columns for **matching**:
 > - B: Business Name (Mx)
@@ -161,24 +153,17 @@ Launch with `subagent_type: "general-purpose"`, `model: "sonnet"`.
 > The Account Management parent folder ID is `1-ZfbMtwlJaj-6Hx2LqrTIysvPNxMF7MK`.
 >
 > Search for an existing folder:
-> - `mcp__google-workspace__search_drive_files`
+> - `mcp__claude_ai_Google_Drive__search_files`
 > - `query: "name contains '[BUSINESS_NAME]'"` (use the matched business name or attendee name)
-> - `user_google_email: "philip.bornhurst@doordash.com"`
-> - `file_type: "folder"`
 >
 > Also try listing the parent folder if search doesn't find it:
-> - `mcp__google-workspace__list_drive_items`
-> - `folder_id: "1-ZfbMtwlJaj-6Hx2LqrTIysvPNxMF7MK"`
-> - `user_google_email: "philip.bornhurst@doordash.com"`
+> - `mcp__claude_ai_Google_Drive__search_files` with `query: "'1-ZfbMtwlJaj-6Hx2LqrTIysvPNxMF7MK' in parents"`
 >
 > Look for a folder name that fuzzy-matches the business name (case-insensitive, allow minor spelling differences like missing apostrophes, abbreviations, etc.). The folder has 100+ items so you may need to paginate.
 >
 > If found → use the existing folder.
 > If NOT found → create one:
-> - `mcp__google-workspace__create_drive_folder`
-> - `folder_name: "[BUSINESS_NAME]"`
-> - `parent_folder_id: "1-ZfbMtwlJaj-6Hx2LqrTIysvPNxMF7MK"`
-> - `user_google_email: "philip.bornhurst@doordash.com"`
+> - `gws drive files create --json '{"name":"[BUSINESS_NAME]","mimeType":"application/vnd.google-apps.folder","parents":["1-ZfbMtwlJaj-6Hx2LqrTIysvPNxMF7MK"]}'`
 >
 > Save the folder ID and folder link.
 >
@@ -348,23 +333,12 @@ Launch with `subagent_type: "general-purpose"`, `model: "sonnet"`.
 > </html>
 > ```
 >
-> Import the doc:
-> - `mcp__google-workspace__import_to_google_doc`
-> - `file_name: "[BUSINESS_NAME] Running Notes"`
-> - `content: [the filled HTML]`
-> - `source_format: "html"`
-> - `folder_id: [mx folder ID from Task 2]`
-> - `user_google_email: "philip.bornhurst@doordash.com"`
+> Import the doc — write the filled HTML to a temp file, then upload it to Drive with conversion to a Google Doc (preserves headings + tables), placed directly in the mx folder:
+> - `gws drive files create --json '{"name":"[BUSINESS_NAME] Running Notes","mimeType":"application/vnd.google-apps.document","parents":["[mx folder ID from Task 2]"]}' --upload running-notes.html --upload-content-type "text/html"`
+> - Returns `{"id":...}` — save it as the new doc ID.
 >
 > Share with doordash.com:
-> - `mcp__google-workspace__manage_drive_access`
-> - `file_id: [new doc ID]`
-> - `action: "grant"`
-> - `share_with: "doordash.com"`
-> - `share_type: "domain"`
-> - `role: "writer"`
-> - `send_notification: false`
-> - `user_google_email: "philip.bornhurst@doordash.com"`
+> - `gws drive permissions create --params '{"fileId":"[new doc ID]","sendNotificationEmail":false}' --json '{"role":"writer","type":"domain","domain":"doordash.com"}'`
 >
 > ---
 >
@@ -492,7 +466,7 @@ Launch with `subagent_type: "general-purpose"`, `model: "haiku"`.
 >
 > **CRITICAL — fuzzy matching:** Reports often reference the mx by store name or business name with no Store ID, or with a slightly different spelling than Master Hub (apostrophes dropped, "& " vs "and", abbreviations like "BBQ" vs "Barbecue"). Always run multiple search variations before giving up.
 >
-> **Search strategy** — use `mcp__google-workspace__search_gmail_messages` with `user_google_email: "philip.bornhurst@doordash.com"`:
+> **Search strategy** — use `mcp__claude_ai_Gmail__search_threads`:
 >
 > 1. **Store ID first (most reliable when known):** `label:"Launcher Reports" [STORE_ID]`
 > 2. **Exact business name:** `label:"Launcher Reports" "[BUSINESS_NAME]"`
@@ -502,7 +476,7 @@ Launch with `subagent_type: "general-purpose"`, `model: "haiku"`.
 > 6. **DM name fallback:** `label:"Launcher Reports" "[ATTENDEE_NAME]"`
 > 7. **City/street fallback:** `label:"Launcher Reports" "[CITY or street name]"`
 >
-> Stop searching as soon as you find 1+ matching threads. Open each match with `mcp__google-workspace__get_gmail_thread_content` (or `get_gmail_message_content` for a single message) to read the full body.
+> Stop searching as soon as you find 1+ matching threads. Open each match with `mcp__claude_ai_Gmail__get_thread` to read the full body. (Label IDs like `Launcher Reports` are discoverable via `mcp__claude_ai_Gmail__list_labels` if needed.)
 >
 > **Disambiguation:** If a search returns multiple results, verify each is the right mx by cross-checking the Store ID, address, or DM name in the body. If you find a report for a different mx with a similar name, discard it. If you can't tell which is correct, return ONBOARDING_STATUS: AMBIGUOUS and list what you found in MATCH_NOTES so Phil can resolve.
 >
@@ -545,13 +519,10 @@ After all 3 sub-agents complete for each Calendly event:
 
 If Sub-agent C returned onboarding notes (ONBOARDING_STATUS: FOUND), update the Running Notes doc to replace the onboarding placeholder section.
 
-Use `mcp__google-workspace__find_and_replace_doc`:
-- `document_id: [DOC_ID from Sub-agent A]`
-- `find_text: "[ONBOARDING_NOTES_PLACEHOLDER — this will be populated by the main agent from Sub-agent C results after doc creation. If no notes found: ""`
-- `replace_text: [Sub-agent C's FULL_SUMMARY]`
-- `user_google_email: "philip.bornhurst@doordash.com"`
+Use `gws docs documents batchUpdate` with a `replaceAllText` request:
+- `gws docs documents batchUpdate --params '{"documentId":"[DOC_ID from Sub-agent A]"}' --json '{"requests":[{"replaceAllText":{"containsText":{"text":"[ONBOARDING_NOTES_PLACEHOLDER — this will be populated by the main agent from Sub-agent C results after doc creation. If no notes found: ","matchCase":true},"replaceText":"[Sub-agent C's FULL_SUMMARY]"}}]}'`
 
-If this doesn't work cleanly (the placeholder text may have been rendered differently), use `mcp__google-workspace__get_doc_content` to find the onboarding section, then use `mcp__google-workspace__modify_doc_text` to update it.
+If this doesn't work cleanly (the placeholder text may have been rendered differently), read the doc with `gws docs documents get --params '{"documentId":"[DOC_ID]","includeTabsContent":true}'` to find the onboarding section, then update it via `gws docs documents batchUpdate` or the `productivity:editing-google-docs` skill (handles index math).
 
 If Sub-agent C returned NOT_FOUND, replace the placeholder with: "No onboarding notes found in Gmail Launcher Reports"
 

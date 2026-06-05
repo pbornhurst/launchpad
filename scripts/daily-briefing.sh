@@ -47,18 +47,16 @@ while ! ifconfig 2>/dev/null | grep -q "inet 100\.\|inet 10\.39\."; do
 done
 echo "Tailscale VPN connected (waited ${WAITED}s)" >> "${LOG_FILE}"
 
-# MCP warm-up: force Google Workspace MCP server init and OAuth token refresh
-# before the main briefing. Uses haiku for speed. Failure here is non-fatal —
-# the retry logic below handles persistent MCP issues.
-echo "Warming up MCP servers..." >> "${LOG_FILE}"
+# Auth warm-up: confirm the gws CLI token is valid (and trigger a refresh) before
+# the main briefing. The google-workspace MCP is dead — Sheets/Docs run through gws.
+# Failure here is non-fatal — the retry logic below handles persistent issues.
+echo "Warming up gws auth..." >> "${LOG_FILE}"
 cd "${WORKSPACE}"
-"${CLAUDE_BIN}" \
-  --print \
-  --dangerously-skip-permissions \
-  --model haiku \
-  "Use the google-workspace list_calendars tool with user_google_email philip.bornhurst@doordash.com. Just confirm it works." \
-  >> "${LOG_FILE}" 2>&1 || echo "WARN: MCP warm-up failed (non-fatal, will retry)" >> "${LOG_FILE}"
-echo "MCP warm-up complete." >> "${LOG_FILE}"
+/Users/philip.bornhurst/.npm-global/bin/gws sheets +read \
+  --spreadsheet 1uS_noBD2nTYjpM6VJvIQwSLMKA_tLkiyo-3dHwi0Ta8 \
+  --range "Log!A1:A1" \
+  >> "${LOG_FILE}" 2>&1 || echo "WARN: gws warm-up failed (non-fatal — token may need re-auth: gws auth login)" >> "${LOG_FILE}"
+echo "gws warm-up complete." >> "${LOG_FILE}"
 
 # Build the prompt based on mode
 if [ "${MODE}" = "weekly" ]; then

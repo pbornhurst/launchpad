@@ -33,9 +33,7 @@ Check Intercom for recent mx inbound support texts, or search a specific mx's su
    c. **Identify the mx** (for valid inbounds):
       - Check the contact's company/business name field in the conversation
       - If unclear, use `mcp__intercom__get_contact` to pull full contact details (name, email, phone, custom attributes)
-      - Cross-reference against Master Hub (`mcp__google-workspace__read_sheet_values`):
-        - `spreadsheet_id: "1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4"`
-        - `user_google_email: "philip.bornhurst@doordash.com"`
+      - Cross-reference against Master Hub via `gws sheets +read --spreadsheet 1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4 --range "B1:E800"` (single full-range read; no 50-row cap):
         - Search by business name, contact name, phone number, or email
       - If matched, include Store ID, tier, and portal link in output
 

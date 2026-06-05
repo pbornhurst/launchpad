@@ -7,15 +7,12 @@ Cross-reference a merchant across Master Hub, volume data, support history, and 
 1. Accept a merchant name, Store ID, or partial match as input.
 2. Pull data from these sources in parallel:
 
-   a. **Master Hub** — Use `mcp__google-workspace__read_sheet_values`
-      - `spreadsheet_id: "1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4"`
-      - `user_google_email: "philip.bornhurst@doordash.com"`
-      - On first use, read row 1 to discover column headers
-      - Find the mx row. Extract: Store ID, Account Manager, Status, Tier, MSAT, notes link
+   a. **Master Hub** — Use Bash: `gws sheets +read --spreadsheet 1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4 --range "A1:CB800" 2>/dev/null`
+      - Single read — gws has no 50-row display cap (Master Hub is ~80 columns wide, so read the full width)
+      - Row 1 holds the column headers. Key columns: A=Status, B=Business Name, E=Store ID, F=Mx Tier, G=Account Health, I=Account Manager, J=AM Folder Link, M=Mx Portal link
+      - Find the mx row. Extract: Store ID, Account Manager, Status, Tier, Account Health, AM Folder Link, portal link
 
-   b. **Volume Drop Data** — Use `mcp__google-workspace__read_sheet_values`
-      - `spreadsheet_id: "1bu0fWwKWQQeI8nrkhGKA68dTzKRtIh_MXAPeqze0NX0"`
-      - `user_google_email: "philip.bornhurst@doordash.com"`
+   b. **Volume Drop Data** — Use Bash: `gws sheets +read --spreadsheet 1bu0fWwKWQQeI8nrkhGKA68dTzKRtIh_MXAPeqze0NX0 --range "A1:Z800"`
       - Find the mx row. Extract: current volume, previous volume, trend
 
    c. **Intercom** (primary support) — Use `mcp__intercom__search_conversations` with the mx name

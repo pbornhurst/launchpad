@@ -13,9 +13,9 @@ Scan recent Granola meetings for mx calls, generate structured PRISM-TnA notes f
 
 ### 1. Discover candidates (one list call, one batched fetch, in-memory tier walk)
 
-**Design:** the front-end discovery does at most **3 API calls**: one `list_meetings`, one `read_sheet_values` for the tracker dedupe set, and one or two `get_meetings` batches. The tier walk is purely in-memory over the already-fetched data — its job is the stop-the-world early-exit, not gating I/O.
+**Design:** the front-end discovery does at most **3 API calls**: one `list_meetings`, one `gws sheets +read` for the tracker dedupe set, and one or two `get_meetings` batches. The tier walk is purely in-memory over the already-fetched data — its job is the stop-the-world early-exit, not gating I/O.
 
-**Parallelization:** Step 3's reads (Master Hub header + xlsx download + tracker dedupe) are independent of Step 1c's `get_meetings` batch. Fire them in the same message as parallel tool calls — the tier walk in 1d needs both sets of data, but neither needs the other to start. This is the difference between a serial 4-call chain and a 2-round-trip discovery phase.
+**Parallelization:** Step 3's reads (Master Hub header + body + tracker dedupe) are independent of Step 1c's `get_meetings` batch. Fire them in the same message as parallel tool calls — the tier walk in 1d needs both sets of data, but neither needs the other to start. This is the difference between a serial 4-call chain and a 2-round-trip discovery phase.
 
 **1a. List meetings — 7-day custom window.** Call `mcp__granola__list_meetings` with:
 - `time_range: "custom"`
@@ -27,7 +27,7 @@ Why custom over `last_30_days`: a 30-day window returns ~130+ meeting summaries 
 **1b. Parse, tier-bucket, and emit IDs in one Python invocation.** Pipe the `list_meetings` text through a single `python3 <<PY ... PY` Bash call that:
 
 1. Regex-extracts each `<meeting id="..." title="..." date="...">` triplet.
-2. Parses the date string (`%b %d, %Y %I:%M %p` after stripping the trailing `PDT`/`PST`) and computes `hours_ago = (datetime.now() - parsed_dt).total_seconds() / 3600`. (Granola timestamps render in the event creator's timezone — usually PT for Phil's calendar, but cross-reference Google Calendar via `get_events` if a specific meeting's date looks off.)
+2. Parses the date string (`%b %d, %Y %I:%M %p` after stripping the trailing `PDT`/`PST`) and computes `hours_ago = (datetime.now() - parsed_dt).total_seconds() / 3600`. (Granola timestamps render in the event creator's timezone — usually PT for Phil's calendar, but cross-reference Google Calendar via `mcp__claude_ai_Google_Calendar__list_events` if a specific meeting's date looks off.)
 3. Sorts newest-first.
 4. Buckets each meeting into Tier 1-5 by `hours_ago`:
    - Tier 1: 0-2h
@@ -81,16 +81,12 @@ Do these once per command run, before any per-meeting work:
 
 **Master Hub header confirmation** (future-proof against column shifts):
 
-- `mcp__google-workspace__read_sheet_values`
-  - `spreadsheet_id: "1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4"`
-  - `range_name: "A1:CA1"`
-  - `user_google_email: "philip.bornhurst@doordash.com"`
+- `gws sheets +read --spreadsheet 1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4 --range "A1:CA1"`
 - Locate the column index where header equals exactly `"Running Notes"`. Expected: column BV (index 73). If it has moved, use the discovered column.
 
-**Master Hub body.** The `read_sheet_values` tool display-truncates at ~50 rows even on successful larger reads, which makes per-row lookups flaky. Instead:
+**Master Hub body.** gws has no 50-row display cap, so a single ranged read returns the full sheet:
 
-- Call `mcp__google-workspace__get_drive_file_download_url` with `file_id: "1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4"` and `export_format: "xlsx"`.
-- Parse the downloaded `.xlsx` with Python + `openpyxl` (install via `pip3 install openpyxl --break-system-packages` if needed). Use the first/default sheet. Headers on row 1, data from row 2.
+- `gws sheets +read --spreadsheet 1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4 --range "A1:CA800"` (widen the row bound if the book grows past 800 rows). Headers on row 1, data from row 2.
 - Build an in-memory dict keyed by Store ID (column E, index 4), capturing:
   - Business Name (column B, index 1)
   - Store ID (column E, index 4)
@@ -104,10 +100,7 @@ Normalize Store IDs to strings (strip whitespace) when indexing.
 
 **Tracker dedupe set:**
 
-- `mcp__google-workspace__read_sheet_values`
-  - `spreadsheet_id: "1OMJ-3KK_ge_aLy_kJZR-2AbehZdKeviOpmHOILmS8lM"`
-  - `range_name: "v2!A:B"`
-  - `user_google_email: "philip.bornhurst@doordash.com"`
+- `gws sheets +read --spreadsheet 1OMJ-3KK_ge_aLy_kJZR-2AbehZdKeviOpmHOILmS8lM --range "v2!A:B"`
 - Build a set of `(store_id, date)` tuples from existing rows. Normalize date to `YYYY-MM-DD` (strip the time portion).
 - Also capture `next_row_index` = current row count + 1 for appending later.
 
@@ -220,24 +213,24 @@ PRISM-TnA gives you the content. Parse it into this structured form in memory be
 
 The reference target format is doc `1odvvOQpOm_m0G7WR8hlwKTzZYxI_j74JoSA8W2d3Trs`. Real H1/H2, real Docs tables, real bullets, Arial 11 body. Raw markdown as text is not acceptable.
 
-**Why table writes are now 2-step + audited.** The previous design used `create_table_with_data` to insert a populated table in one call. Across the 2026-04-23 → 2026-04-29 window that call silently dropped cell content under load — produced structurally-correct tables (right rows × cols) with every cell empty, no error returned. Root cause never confirmed (suspected silent payload drop or index drift in the bottom-up insert sequence). The new design separates table skeleton from cell content, then audits before declaring success — so silent failures become visible and recoverable.
+**Why table writes are now 2-step + audited.** The previous design used a single populated-table insert in one call. Across the 2026-04-23 → 2026-04-29 window that call silently dropped cell content under load — produced structurally-correct tables (right rows × cols) with every cell empty, no error returned. Root cause never confirmed (suspected silent payload drop or index drift in the bottom-up insert sequence). The new design separates table skeleton from cell content, then audits before declaring success — so silent failures become visible and recoverable.
 
 **Design: 4 doc calls per meeting (was 7), with audit + at-most-one retry on empty cells.**
 
-**Table-span formula** (still used to pre-compute positions for Call 1 — empty tables only, so `S = 0`):
+**Table-span formula** — VERIFIED on gws 2026-06-05 (see [`docs/gws-migration.md`](../../../docs/gws-migration.md) "Docs batchUpdate gotchas"):
 
 ```
-span_empty = 3 + R + 2*R*C
+span_empty = 2 + R + 2*R*C
 ```
 
-For a 4×2 metadata table that's 27 indices. For an N-row × 3-col Action Items table (incl. header) it's `3 + N + 6N = 3 + 7N`. Sum these spans when computing cursor positions ahead of all table inserts.
+For a 4×2 metadata table that's 22 indices; a 2×3 table is 16. (The old `3 + R + 2*R*C` was off by one.) Sum these spans when computing cursor positions ahead of all table inserts. **More robust:** prefer the placeholder pattern (insert text with placeholder lines, replace placeholders with tables bottom-up, re-read for cell indices) over forward-cursor math through interleaved tables — `insertTable` injects an implicit paragraph that drifts the cursor.
 
-**Call 1 — `batch_update_doc`: text skeleton + paragraph styles + bullets + fonts + EMPTY tables (single call).**
+**Call 1 — `gws docs documents batchUpdate`: text skeleton + paragraph styles + bullets + fonts + EMPTY tables (single call).**
 
 Walk content with forward cursor `cursor = 1`. For each block:
 
-1. Append `insert_text` op at `cursor` with `text + "\n"` (or `insert_table` for table blocks — see below).
-2. If `style` is a heading, append `update_paragraph_style` over `[cursor, cursor + len(text+"\n")]`.
+1. Append `insertText` op at `cursor` with `text + "\n"` (or `insertTable` for table blocks — see below).
+2. If `style` is a heading, append `updateParagraphStyle` over `[cursor, cursor + len(text+"\n")]`.
 3. Advance `cursor` by `len(text+"\n")` for text blocks, or by `span_empty(R, C)` for table blocks.
 
 Block order (tables now inserted directly, no placeholder blanks):
@@ -246,27 +239,31 @@ Block order (tables now inserted directly, no placeholder blanks):
 |---|---|---|
 | 1 | `{title}` | HEADING_1 |
 | 2 | `Metadata` | HEADING_2 |
-| 3 | empty 4×2 table | `insert_table` — 4 rows, 2 cols, no `bold_headers` (key-value layout) |
+| 3 | empty 4×2 table | `insertTable` — 4 rows, 2 cols, no bold headers (key-value layout) |
 | 4 | `Detailed Bullet Notes` | HEADING_2 |
 | 5..N | each bullet text | NORMAL_TEXT |
 | N+1 | `Action Items` | HEADING_2 |
-| N+2 | empty `(1+rows_ai)×3` table | `insert_table` — `bold_headers: true` |
+| N+2 | empty `(1+rows_ai)×3` table | `insertTable` — bold header row |
 | N+3 | `Feature Requests, Gaps & Product Feedback` | HEADING_2 |
-| N+4 | empty `(1+rows_fr)×3` table | `insert_table` — `bold_headers: true` (skip block if no feature requests; write "(none surfaced this call)" as NORMAL_TEXT instead) |
+| N+4 | empty `(1+rows_fr)×3` table | `insertTable` — bold header row (skip block if no feature requests; write "(none surfaced this call)" as NORMAL_TEXT instead) |
 | N+5 | `Tone & Character` | HEADING_2 |
-| N+6 | empty `(1+rows_tc)×3` table | `insert_table` — `bold_headers: true` |
+| N+6 | empty `(1+rows_tc)×3` table | `insertTable` — bold header row |
 | N+7 | `Insights or Flags` | HEADING_2 |
 | N+8 | `{insights_text}` | NORMAL_TEXT |
 | N+9 | `Growth Advisory` | HEADING_2 |
-| N+10 | empty `(1+rows_ga_topics)×4` table | `insert_table` (only if `growth_advisory.has_topics`; else skip and write "No growth advisory topics discussed.") |
-| N+11 | empty `(1+3)×3` table for GA score | `insert_table` (only if GA has score data; rows = 3 dimensions: Specificity, Actionability, Composite OR however many score rows the prompt produced) |
+| N+10 | empty `(1+rows_ga_topics)×4` table | `insertTable` (only if `growth_advisory.has_topics`; else skip and write "No growth advisory topics discussed.") |
+| N+11 | empty `(1+3)×3` table for GA score | `insertTable` (only if GA has score data; rows = 3 dimensions: Specificity, Actionability, Composite OR however many score rows the prompt produced) |
 | N+12 | `{ga_composite_line}` | NORMAL_TEXT |
-| N+13 | `Gut Check` | HEADING_2 |
-| N+14 | `{gut_check_text}` | NORMAL_TEXT |
-| N+15 | `MSAT Prediction` | HEADING_2 |
-| N+16 | `{msat_line}` | NORMAL_TEXT |
-| N+17 | `===` | NORMAL_TEXT |
-| N+18 | `` (blank) | NORMAL_TEXT |
+| N+13 | `Upsell` | HEADING_2 |
+| N+14 | empty `(1+rows_upsell_opps)×4` table | `insertTable` (only if `upsell.has_opportunities`; else skip and write "No upsell opportunities discussed.") |
+| N+15 | empty `(1+3)×3` table for Upsell score | `insertTable` (only if Upsell has score data; same shape as the GA score table) |
+| N+16 | `{upsell_composite_line}` | NORMAL_TEXT |
+| N+17 | `Gut Check` | HEADING_2 |
+| N+18 | `{gut_check_text}` | NORMAL_TEXT |
+| N+19 | `MSAT Prediction` | HEADING_2 |
+| N+20 | `{msat_line}` | NORMAL_TEXT |
+| N+21 | `===` | NORMAL_TEXT |
+| N+22 | `` (blank) | NORMAL_TEXT |
 
 Track during the walk:
 - `bullet_first_index` / `bullet_last_end` — for the bullet list op
@@ -274,16 +271,19 @@ Track during the walk:
 - `table_positions[]` — list of `(table_kind, start_index, rows, cols)` tuples in document order, used by Call 3
 
 At the end of the op list, append:
-- `create_bullet_list` over `[bullet_first_index, bullet_last_end]`, `list_type: UNORDERED`
-- `format_text` over `[1, prepend_end]` with `font_family: "Arial"`, `font_size: 11`
-- `format_text` over the title's range with `font_size: 22`, `bold: true`
-- `format_text` over each H2's range with `font_size: 14`, `bold: true`
+- **`updateParagraphStyle` `NORMAL_TEXT` over EVERY non-heading paragraph you inserted (bullets + normal body + `===` + blank).** REQUIRED: text inserted at index 1 inherits the namedStyleType of the doc's current top paragraph — which on a Running Notes doc is the previous capture's `HEADING_1` title. If you only style the headings, all your body/bullet text silently comes out as Heading 1. Setting NORMAL_TEXT explicitly on non-headings is the fix. (Verified 2026-06-05 — see [`docs/gws-migration.md`](../../../docs/gws-migration.md).)
+- `createParagraphBullets` over `[bullet_first_index, bullet_last_end]`, `bulletPreset: BULLET_DISC_CIRCLE_SQUARE`
+- `updateTextStyle` over `[1, prepend_end]` with `font_family: "Arial"`, `font_size: 11`
+- `updateTextStyle` over the title's range with `font_size: 22`, `bold: true`
+- `updateTextStyle` over each H2's range with `font_size: 14`, `bold: true`
 
-Fire this as ONE `batch_update_doc` call.
+Fire this as ONE `gws docs documents batchUpdate` call.
 
-**Call 2 — `inspect_doc_structure detailed=true`: capture cell positions.**
+**Call 2 — `gws docs documents get` (`includeTabsContent: true`): capture cell positions.**
 
-After Call 1 lands, read back the doc structure. For each table in `table_positions`, walk the corresponding table in the structure response and capture every cell's `start_index`. Build `cell_writes[]` — a list of `(cell_start_index, text)` tuples covering every cell that should have content.
+After Call 1 lands, read back the doc structure (inspect the `body.content` array). For each table in `table_positions`, walk the corresponding table in the structure response and capture every cell's **inner-paragraph** start index — `cell["content"][0]["startIndex"]` (= `tableCell.startIndex + 1`), NOT the raw `tableCell.startIndex`. Build `cell_writes[]` — a list of `(inner_paragraph_index, text)` tuples covering every cell that should have content. (Inserting at the raw cell startIndex fails with `"insertion index must be inside the bounds of an existing paragraph"` — verified 2026-06-05.)
+
+**Note on identifying YOUR tables:** the doc already contains tables from prior captures. After prepending, YOUR new tables are the first `len(table_positions)` tables by ascending `startIndex` (they sit at the top). Scope cell-fill, un-bold, and audit to that top slice — do not touch tables from older notes.
 
 For each table kind, the cell-text mapping is:
 - **Metadata (4×2)**: rows = `[["Date", date], ["Account Manager", am], ["Merchant Contact", contact], ["Business Name", name]]`. `bold_headers` is OFF for this table — the left column is the "key", not a header.
@@ -292,25 +292,27 @@ For each table kind, the cell-text mapping is:
 - **Tone**: row 0 = `["Person", "Tone", "Notes"]`, rows 1+ = entries from `tone`.
 - **GA topics**: row 0 = `["Topic", "Bucket", "Initiated By", "Commitment"]`, rows 1+ = `each topic_row[:4]` (first four entries of each 5-col topics_table row — the 5th `Desired Outcome` field is intentionally dropped from the doc table; it feeds the GA Ledger spreadsheet in step 5.i.5).
 - **GA score**: row 0 = `["Dimension", "Score", "Label"]`, rows 1+ = entries from `growth_advisory.score_table`.
+- **Upsell opportunities (1+n)×4**: row 0 = `["Opportunity", "Product/Package", "Initiated By", "Commitment"]`, rows 1+ = `each opp_row[:4]` (first four entries of each 5-col upsell row — the 5th `Desired Outcome` field is intentionally dropped from the doc table; it feeds the Upsell tab of the GA Ledger in step 5.i.6).
+- **Upsell score**: row 0 = `["Dimension", "Score", "Label"]`, rows 1+ = entries from `upsell.score_table`.
 
 Sanity check: number of cells in the structure response per table MUST equal `R × C`. If it doesn't, log `cell-count-mismatch` and skip that table's writes (don't try to recover a misshapen table — leave it empty for the audit step to surface).
 
-**Call 3 — `batch_update_doc` with `insert_text` ops in REVERSE document order.**
+**Call 3 — `gws docs documents batchUpdate` with `insertText` ops in REVERSE document order.**
 
 Sort `cell_writes[]` by `cell_start_index` DESCENDING. Insert each cell's text at its start_index. Reverse order keeps earlier indices valid as later cells get filled.
 
 If a cell text is empty (legitimately — e.g. a Tone row where Notes is blank), skip the op. Empty insertions are no-ops anyway, but skipping avoids polluting the audit signal.
 
-Fire as ONE `batch_update_doc` call.
+Fire as ONE `gws docs documents batchUpdate` call.
 
-**Call 3b — `batch_update_doc` to un-bold every body cell (REQUIRED, runs immediately after Call 3 cell-fill).**
+**Call 3b — `gws docs documents batchUpdate` to un-bold every body cell (REQUIRED, runs immediately after Call 3 cell-fill).**
 
 Phil flagged (2026-05-27 on Poke Time): the H2 paragraph style (bold:true on "Action Items", "Feature Requests", "Tone & Character", "Growth Advisory", "MSAT Prediction", etc.) bleeds into the next paragraph's character formatting. When the placeholder paragraph is deleted and replaced with a table, the new cells inherit that bold character style, so the cell-fill text in Call 3 renders bold across the entire table. The cleanest fix is post-fill: strip bold from every body cell explicitly.
 
 **Rule:** never bold unless it's the title row.
 
 - **Metadata table** (`has_header: False`) → ALL cells un-bolded. The left column is a key, not a header.
-- **All other tables** (action_items, feature_requests, tone, ga_topics, ga_score) → row 0 stays bold (header), rows 1+ un-bolded.
+- **All other tables** (action_items, feature_requests, tone, ga_topics, ga_score, upsell_opps, upsell_score) → row 0 stays bold (header), rows 1+ un-bolded.
 
 **Computing cell text ranges in the FILLED doc state.** After Call 3 (cell-fill), every cell text was inserted at `cell(r,c)_empty = S + 3 + r*(1 + 2*C) + 2*c` where S is the table's empty-state start (from Call 2's inspect). Because cell-fill ran in REVERSE document order, each insert at original position P_i shifted only indices > P_i. To compute final text positions, sort all (P, text_length) tuples in ASCENDING order and walk with a cumulative offset:
 
@@ -324,42 +326,40 @@ for c in cells:
 
 Each cell's text now occupies `[final_pos, final_pos + len(text))`.
 
-**Build ops.** One `format_text` op per body cell with `bold: False`. Skip empty cells. Skip header cells (they should remain bold).
+**Build ops.** One `updateTextStyle` op per body cell with `bold: False`. Skip empty cells. Skip header cells (they should remain bold).
 
-Fire as ONE `batch_update_doc` call. No verification needed — if bold strips don't land, the visual is still acceptable (worst case a stray bold cell), and the next /meeting-capture run won't re-process this meeting.
+Fire as ONE `gws docs documents batchUpdate` call. No verification needed — if bold strips don't land, the visual is still acceptable (worst case a stray bold cell), and the next /meeting-capture run won't re-process this meeting.
 
-**Call 4 — `inspect_doc_structure detailed=true` (audit) + at-most-one retry.**
+**Call 4 — `gws docs documents get` (`includeTabsContent: true`) (audit) + at-most-one retry.**
 
 Re-read the doc. For every cell in `cell_writes[]` that was supposed to have non-empty text, confirm the structure now reports that text in the cell. Build `empty_cells[]` — cells that should have content but still don't.
 
 - If `empty_cells[]` is empty → audit passed. Record `audit-passed` in the meeting status. Proceed to step i.
-- If `empty_cells[]` is non-empty → fire ONE retry `batch_update_doc` with insert_text ops for the missing cells (positions re-resolved from the audit's structure response, sorted reverse-descending). Record `audit-retried-N-cells` in the meeting status. Do NOT audit a second time — accept whatever lands. The tracker row gets a `partial-content` note. The end-of-run summary lists every meeting that needed a retry so Phil can spot-check.
+- If `empty_cells[]` is non-empty → fire ONE retry `gws docs documents batchUpdate` with insertText ops for the missing cells (positions re-resolved from the audit's structure response, sorted reverse-descending). Record `audit-retried-N-cells` in the meeting status. Do NOT audit a second time — accept whatever lands. The tracker row gets a `partial-content` note. The end-of-run summary lists every meeting that needed a retry so Phil can spot-check.
 
 **If ANY call fails** (permissions, schema, etc.), mark the meeting `failed-doc-write`, log which call failed, and continue to the next meeting without rollback. Partial prepends are acceptable.
 
-**Cost accounting.** 1 super-batch (Call 1) + 1 inspect (Call 2) + 1 cell-fill batch (Call 3) + 1 un-bold batch (Call 3b) + 1 audit inspect (Call 4) + 0–1 retry batch + 1 tracker append + 1 email draft = **7–8 API calls per meeting**. The un-bold step is non-negotiable per Phil's standing rule (never bold unless title row).
+**Cost accounting.** 1 super-batch (Call 1) + 1 doc-get (Call 2) + 1 cell-fill batch (Call 3) + 1 un-bold batch (Call 3b) + 1 audit doc-get (Call 4) + 0–1 retry batch + 1 tracker append + 1 email draft = **7–8 API calls per meeting**. The un-bold step is non-negotiable per Phil's standing rule (never bold unless title row).
 
 **i. Append to tracker (with verification + at-most-one retry).**
 
 The tracker write is the **non-negotiable** finishing step. Doc prepends without tracker rows are how mx calls go missing in downstream automations (daily brief, weekly mind map, mx-tier scoring). Treat tracker-write failures with the same audit-and-retry rigor as the doc-write step. Historical incident: 4 meetings from 2026-04-21 to 2026-04-29 had Running Notes prepended but no tracker rows — required manual back-fill.
 
-**i.1 — Append.** Use `mcp__google-workspace__modify_sheet_values`:
+**i.1 — Write.** Use a deterministic `values.update` to a computed row — NOT `+append` (it can't target a tab) and NOT bare-range `values append` (it misfires into stray columns and `INSERT_ROWS` shifts live data — verified 2026-06-05, see [`docs/gws-migration.md`](../../../docs/gws-migration.md)):
 
-- `spreadsheet_id: "1OMJ-3KK_ge_aLy_kJZR-2AbehZdKeviOpmHOILmS8lM"`
-- `range_name: "v2!A{next_row_index}:E{next_row_index}"`
-- `user_google_email: "philip.bornhurst@doordash.com"`
-- `value_input_option: "USER_ENTERED"`
-- `values:` one row with five cells:
+- Count column A: `gws sheets +read --spreadsheet 1OMJ-3KK_ge_aLy_kJZR-2AbehZdKeviOpmHOILmS8lM --range "v2!A:A"` → `next_row_index = len(values) + 1`.
+- Write: `gws sheets spreadsheets values update --params '{"spreadsheetId":"1OMJ-3KK_ge_aLy_kJZR-2AbehZdKeviOpmHOILmS8lM","range":"v2!A{next_row_index}:E{next_row_index}","valueInputOption":"USER_ENTERED"}' --json '{"values":[[...]]}'`.
+- one row with five cells:
   - `A`: `{YYYY-MM-DD} 0:00:00` (matches existing row format, e.g. `2025-07-20 0:00:00`)
   - `B`: Store ID (string)
   - `C`: Business Name (from Master Hub)
   - `D`: `"Phil"`
   - `E`: Running Notes URL (full URL from Master Hub column BV)
 
-**i.2 — Verify.** Immediately after the append, call `mcp__google-workspace__read_sheet_values` on `v2!A{next_row_index}:E{next_row_index}` and confirm the row landed with the expected Store ID in column B and a non-empty URL in column E.
+**i.2 — Verify.** Immediately after the append, run `gws sheets +read --spreadsheet 1OMJ-3KK_ge_aLy_kJZR-2AbehZdKeviOpmHOILmS8lM --range "v2!A{next_row_index}:E{next_row_index}"` and confirm the row landed with the expected Store ID in column B and a non-empty URL in column E.
 
 - Verify pass: `read[0][1] == store_id` (string match) AND `read[0][4]` starts with `"https://docs.google.com/document/d/"`. → record `tracker-written` and continue.
-- Verify fail (read returned an empty row, wrong Store ID, or short URL): fire ONE retry of the same `modify_sheet_values` call to the same range. Then re-read once more.
+- Verify fail (read returned an empty row, wrong Store ID, or short URL): fire ONE retry `gws sheets +append` of the same row. Then re-read once more.
   - Retry pass → record `tracker-retried` and continue.
   - Retry fail → record `tracker-write-failed` with the read-back values, surface loudly in the summary. Do NOT skip the email draft. Do NOT corrupt downstream state — the in-memory dedupe set should NOT include this `(store_id, date)` so a re-run of /meeting-capture will pick it up again.
 
@@ -376,28 +376,46 @@ Portfolio-wide rollup of every GA topic surfaced across all captured calls. The 
 **Ledger spreadsheet:**
 - `spreadsheet_id: "1uS_noBD2nTYjpM6VJvIQwSLMKA_tLkiyo-3dHwi0Ta8"`
 - Tab: `Log`
-- Columns: `Date | Mx | Store ID | Topic | Description | Desired Outcome`
+- Columns: `Date | Mx | Store ID | Topic | Description | Desired Outcome | Account Manager`
 
 **Logic:**
 
-1. **No-topics short-circuit.** If `growth_advisory.has_topics` is false OR `growth_advisory.topics_table` is null/empty (or contains only the header row), record `ga-ledger-skipped-no-topics` and continue to step i2. No API call.
+1. **No-topics short-circuit.** If `growth_advisory.has_topics` is false OR `growth_advisory.topics_table` is null/empty (or contains only the header row), record `ga-ledger-skipped-no-topics` and continue to step i.6. No API call.
 2. **Build rows.** Iterate `growth_advisory.topics_table[1:]` (skip the header row). For each `[topic, bucket, initiated_by, commitment, desired_outcome]` row, build:
-   - `[meeting_date, business_name, store_id, topic, bucket, desired_outcome]`
-   - `meeting_date` is the YYYY-MM-DD value from step 5e; `business_name` and `store_id` are the same values used in the tracker append above.
-3. **Resolve append range.** Read `Log!A:A` via `mcp__google-workspace__read_sheet_values` to count existing rows. Let `ga_next_row = len(values) + 1`. (Cache this for the duration of the run if multiple meetings will write to the ledger — increment locally per write so we don't re-read for each meeting.)
-4. **Append.** Single `mcp__google-workspace__modify_sheet_values` call:
-   - `spreadsheet_id: "1uS_noBD2nTYjpM6VJvIQwSLMKA_tLkiyo-3dHwi0Ta8"`
-   - `range_name: "Log!A{ga_next_row}:F{ga_next_row + N - 1}"` (N = number of topic rows)
-   - `value_input_option: "USER_ENTERED"`
-   - `values:` the N rows built in step 2.
-5. **Verify.** Re-read the appended range. Confirm:
+   - `[meeting_date, business_name, store_id, topic, bucket, desired_outcome, am]`
+   - `meeting_date` is the YYYY-MM-DD value from step 5e; `business_name` and `store_id` are the same values used in the tracker append above; `am` is the same Account Manager value written to the doc Metadata table (Call 2) — the AM who owns the mx / ran the call (no longer assumed to be Phil now that the ledger is team-wide).
+3. **Resolve append range.** Read `Log!A:A` via `gws sheets +read --spreadsheet 1uS_noBD2nTYjpM6VJvIQwSLMKA_tLkiyo-3dHwi0Ta8 --range "Log!A:A"` to count existing rows. Let `ga_next_row = len(values) + 1`. (Cache this for the duration of the run if multiple meetings will write to the ledger — increment locally per write so we don't re-read for each meeting.)
+4. **Write (deterministic, not append).** Single `values.update` to the computed block — bare-range append misfires (see [`docs/gws-migration.md`](../../../docs/gws-migration.md)):
+   - `gws sheets spreadsheets values update --params '{"spreadsheetId":"1uS_noBD2nTYjpM6VJvIQwSLMKA_tLkiyo-3dHwi0Ta8","range":"Log!A{ga_next_row}:G{ga_next_row + N - 1}","valueInputOption":"USER_ENTERED"}' --json '{"values":[[...], ...]}'`.
+   - `values:` the N rows built in step 2 (7 columns each, ending in `am`).
+5. **Verify.** Re-read the appended range (`gws sheets +read --spreadsheet 1uS_noBD2nTYjpM6VJvIQwSLMKA_tLkiyo-3dHwi0Ta8 --range "Log!A{ga_next_row}:G{ga_next_row + N - 1}"`). Confirm:
    - Row count returned equals N.
    - For each row, column D (Topic) matches the input topic string.
    - On match → record `ga-ledger-written-N` and increment the cached `ga_next_row` by N.
-   - On mismatch (any row, any column D delta) → fire ONE retry of the same `modify_sheet_values` call. Re-read once more. If still mismatched → record `ga-ledger-failed` with the read-back values, surface in the summary. Do NOT roll back the doc or tracker writes — the ledger is a non-blocking enhancement.
-6. **Non-blocking.** Ledger failures must NOT prevent the email draft (step i2) or the next meeting in the batch from running. Treat the same way as `email-draft-failed`: log, surface, continue.
+   - On mismatch (any row, any column D delta) → fire ONE retry `gws sheets +append` of the same rows. Re-read once more. If still mismatched → record `ga-ledger-failed` with the read-back values, surface in the summary. Do NOT roll back the doc or tracker writes — the ledger is a non-blocking enhancement.
+6. **Non-blocking.** Ledger failures must NOT prevent the Upsell append (step i.6), the email draft (step i2), or the next meeting in the batch from running. Treat the same way as `email-draft-failed`: log, surface, continue.
 
 **Why no per-row dedupe:** the outer `skipped-duplicate` check at step 5a already prevents re-processing a captured call. A given `(store_id, meeting_date)` pair only reaches step i.5 once per call, so the ledger can't double-write the same topic. If Phil ever wants to clean up the ledger or re-import an old call manually, that's a one-off operation outside this skill.
+
+**i.6. Append Upsell opportunities to the GA Ledger `Upsell` tab.**
+
+Portfolio-wide rollup of every upsell opportunity surfaced across all captured calls. Mirrors i.5 exactly, writing to the `Upsell` tab instead of `Log`.
+
+**Ledger spreadsheet:**
+- `spreadsheet_id: "1uS_noBD2nTYjpM6VJvIQwSLMKA_tLkiyo-3dHwi0Ta8"`
+- Tab: `Upsell`
+- Columns: `Date | Mx | Store ID | Opportunity | Product/Package | Desired Outcome | Account Manager`
+
+**Logic:**
+
+1. **No-opportunities short-circuit.** If `upsell.has_opportunities` is false OR `upsell.opps_table` is null/empty (or contains only the header row), record `upsell-ledger-skipped-no-opps` and continue to step i2. No API call.
+2. **Build rows.** Iterate `upsell.opps_table[1:]` (skip the header row). For each `[opportunity, product_package, initiated_by, commitment, desired_outcome]` row, build:
+   - `[meeting_date, business_name, store_id, opportunity, product_package, desired_outcome, am]`
+   - same `meeting_date`, `business_name`, `store_id`, and `am` values as the GA append in i.5.
+3. **Resolve append range.** Read `Upsell!A:A` via `gws sheets +read --spreadsheet 1uS_noBD2nTYjpM6VJvIQwSLMKA_tLkiyo-3dHwi0Ta8 --range "Upsell!A:A"` to count existing rows. Let `upsell_next_row = len(values) + 1`. Cache it per run, incrementing locally per write.
+4. **Write (deterministic, not append).** `gws sheets spreadsheets values update --params '{"spreadsheetId":"1uS_noBD2nTYjpM6VJvIQwSLMKA_tLkiyo-3dHwi0Ta8","range":"Upsell!A{upsell_next_row}:G{upsell_next_row + N - 1}","valueInputOption":"USER_ENTERED"}' --json '{"values":[[...], ...]}'`.
+5. **Verify.** Re-read (`gws sheets +read --spreadsheet 1uS_noBD2nTYjpM6VJvIQwSLMKA_tLkiyo-3dHwi0Ta8 --range "Upsell!A{upsell_next_row}:G{upsell_next_row + N - 1}"`). Confirm row count equals N and column D (Opportunity) matches the input. On match → record `upsell-ledger-written-N` and increment cached `upsell_next_row`. On mismatch → ONE retry, re-read; if still off → record `upsell-ledger-failed` and surface. Never roll back the doc/tracker writes.
+6. **Non-blocking.** Same as i.5 — failures log, surface, and continue.
 
 **i2. Draft follow-up email to merchant contact.**
 
@@ -458,9 +476,8 @@ Rules:
 - If Action Items is empty (rare but possible), replace the bullet list with a single line: "No action items on our side from today — appreciated the conversation."
 - Keep it under ~180 words total. Phil values concise.
 
-**Create the draft** via `mcp__google-workspace__draft_gmail_message`:
+**Create the draft** via `mcp__claude_ai_Gmail__create_draft`:
 
-- `user_google_email: "philip.bornhurst@doordash.com"`
 - `to: [resolved_email]`
 - `subject: "{Business Name} — follow-up from our call on {YYYY-MM-DD}"`
 - `body: composed_body` (plain text)
@@ -473,7 +490,7 @@ Capture the returned `draft_id` and construct the review URL: `https://mail.goog
 - Recipient lookup returned nothing → mark `email-skipped-no-recipient` (already handled above).
 - Do NOT roll back the doc prepend or tracker row. The email draft is a nice-to-have; the core capture is already committed.
 
-**Cowork tool fallback:** If `mcp__google-workspace__draft_gmail_message` is not available in the current context, use the `gws` CLI (load `core:using-gmail` skill first for correct syntax). The draft-creation command there is equivalent.
+**Fallback:** If `mcp__claude_ai_Gmail__create_draft` is not available in the current context, use the `gws gmail` CLI (the draft-creation command there is equivalent).
 
 **j. Record status** as `processed` for the summary. Also record:
 - The doc-write outcome (`audit-passed`, `audit-retried-N-cells`, or `failed-doc-write`).
@@ -483,7 +500,7 @@ Capture the returned `draft_id` and construct the review URL: `https://mail.goog
 
 ### 6. Summary report
 
-**Final reconciliation pass.** Before printing the summary, re-read `v2!A:E` from the tracker once more and build a fresh set of `(store_id, date)` pairs. For each meeting marked `processed` in this run, confirm its `(store_id, meeting_date)` is in that set. Any meeting that was processed but is NOT in the tracker = a silent drop. Add it to a `tracker-missing[]` list and surface loudly in the summary. Do NOT auto-retry from the reconciliation step — by this point we've already had two attempts in step i, and a third silent failure means something deeper is wrong (auth drop, sheet permissions, etc.) that warrants Phil's attention.
+**Final reconciliation pass.** Before printing the summary, re-read `v2!A:E` from the tracker once more (`gws sheets +read --spreadsheet 1OMJ-3KK_ge_aLy_kJZR-2AbehZdKeviOpmHOILmS8lM --range "v2!A:E"`) and build a fresh set of `(store_id, date)` pairs. For each meeting marked `processed` in this run, confirm its `(store_id, meeting_date)` is in that set. Any meeting that was processed but is NOT in the tracker = a silent drop. Add it to a `tracker-missing[]` list and surface loudly in the summary. Do NOT auto-retry from the reconciliation step — by this point we've already had two attempts in step i, and a third silent failure means something deeper is wrong (auth drop, sheet permissions, etc.) that warrants Phil's attention.
 
 Print a concise summary:
 
@@ -528,16 +545,17 @@ Per Launchpad convention: graceful degradation, no retries. A single failing mee
 
 ---
 
-## Tool-name reference (Cowork)
+## Tool-name reference
 
-The MCP tool names above (`mcp__granola__*`, `mcp__google-workspace__*`) come from the Waypoint project's `.mcp.json` and are the preferred invocations when available. If a tool fails with "not found" in a different Cowork context, the functional equivalents are:
+Google Workspace access runs through the `gws` CLI and the claude.ai MCPs — the legacy `mcp__google-workspace__*` MCP is dead (see `docs/gws-migration.md`). The invocations used above:
 
-- Granola operations → `granola` CLI (skill: `core:using-granola`). Load the skill first to get correct syntax.
-- Google Sheets reads/writes → `gws` CLI (skill: `core:using-google-sheets`).
-- Google Docs batch updates and table inserts → `gws` CLI (skill: `core:using-google-docs`).
-- Google Drive file export/download → `gws` CLI (skill: `core:using-google-drive`).
+- Granola operations → `mcp__granola__*` (preferred). Fallback: `granola` CLI (skill: `core:using-granola`); load the skill first for correct syntax.
+- Google Sheets reads → `gws sheets +read`. Tab-scoped WRITES → read col A to find the next row, then `gws sheets spreadsheets values update` to an explicit `Tab!A{n}:…` range. Do NOT use `+append` (no tab targeting) or bare-range `values append` (misfires + shifts data) — see [`docs/gws-migration.md`](../../../docs/gws-migration.md).
+- Google Docs reads + batch updates / table inserts → `gws docs documents get` / `gws docs documents batchUpdate` (skill: `productivity:editing-google-docs`, which handles index math).
+- Gmail draft → `mcp__claude_ai_Gmail__*` (fallback: `gws gmail`).
+- Google Calendar lookups → `mcp__claude_ai_Google_Calendar__*`.
 
-Do not precheck auth — the bin wrappers handle browser popups automatically. If a command stalls 10-30s and output contains `[bridge] auth`, tell Phil: "A browser window should have opened on your Mac for authentication. Please complete the sign-in there."
+Drop the `user_google_email` param entirely — neither gws nor the claude.ai MCPs need it. gws prints clean JSON to stdout; strip the stderr `Using keyring backend` line before parsing (`gws … 2>/dev/null | python3 …`).
 
 ---
 
@@ -572,8 +590,9 @@ SECTION ORDER (output in this exact order)
 5. **Tone & Character** — markdown table **Person | Tone | Notes**; include all real speakers, mapping any "Unknown Speaker" to the most likely actual speaker.
 6. **Insights or Flags** — balanced paragraph that surfaces key wins, themes, risks, or opportunities; weigh positives and negatives evenly.
 7. **Growth Advisory** — identify, extract, and evaluate all growth advisory activity in the call. See full instructions below.
-8. **Gut Check** — neutral paragraph reading between the lines for churn signs, trust issues, or red tape; acknowledge positive relationship signals before noting concerns.
-9. **MSAT Prediction** — format exactly: **MSAT Prediction: X / 5 —** brief justification <= 25 words. Default to 4 / 5 unless material risk factors outweigh positives.
+8. **Upsell** — identify, extract, and evaluate all upsell activity in the call (package upgrades, hardware, à la carte add-ons). See full instructions below.
+9. **Gut Check** — neutral paragraph reading between the lines for churn signs, trust issues, or red tape; acknowledge positive relationship signals before noting concerns.
+10. **MSAT Prediction** — format exactly: **MSAT Prediction: X / 5 —** brief justification <= 25 words. Default to 4 / 5 unless material risk factors outweigh positives.
 
 ---
 
@@ -638,6 +657,68 @@ Composite labels: Exemplary (4.5-5.0) / Strong (4.0-4.4) / Developing (3.0-3.9) 
 
 ---
 
+SECTION 8 INSTRUCTIONS — UPSELL
+
+Upsell is any discussion aimed at moving the mx onto a higher-value package or adding paid products. This is distinct from Growth Advisory (which is about helping the mx grow their existing business). Upsell covers: package upgrades (Starter → Boost → Pro), hardware (Self-Serve Kiosk, KDS, additional terminals), and à la carte add-ons (Omni-Channel Loyalty, Gift Cards, Mobile App, custom Website). If a topic is about selling the mx a new DoorDash product or tier, it is Upsell; if it is about optimizing what they already have, it is Growth Advisory. A single moment can occasionally be both — log it under whichever the conversation primarily drove toward; do not double-count the same moment in both sections.
+
+There will be many calls where upsell is not discussed. Handle this gracefully — do not force it.
+
+**Step 1 — Upsell Opportunity Extraction**
+
+If upsell opportunities were discussed, output a markdown table with the following columns:
+
+**Opportunity | Product/Package | Initiated By | Commitment | Desired Outcome**
+
+- Opportunity: brief description of the upsell discussed (one line, specific)
+- Product/Package: must be exactly one of — Boost / Pro / Kiosk / KDS / Loyalty / Giftcards / Mobile App / Website / Additional Terminal / Other
+- Initiated By: AM or Mx
+- Commitment: Yes / Partial / No
+- Desired Outcome: one line, specific. Capture the business goal the upsell would serve OR the next step the AM is driving toward. Examples: "Upgrade Starter to Boost to capture loyalty + commission-free site", "Add Self-Serve Kiosk to bust the lunch line and lift AOV". If no clear desired outcome was articulated, write exactly `(not articulated)` rather than leaving the cell blank.
+
+**Note on downstream use:** The full 5-column table feeds an in-memory structured object that drives two outputs: (a) the Running Notes doc — which renders only the first 4 columns (Opportunity | Product/Package | Initiated By | Commitment), and (b) the GA Ledger `Upsell` tab — which logs one row per opportunity with Date / Mx / Store ID / Opportunity / Product/Package / Desired Outcome / Account Manager. PRISM must always emit all 5 columns; the doc-write step drops the 5th.
+
+**Step 2 — Missed Opportunities**
+
+If the mx raised a pain point or signal that was a natural opening for an upsell and the AM did not engage with it, flag it on its own line in this format:
+
+"Missed opportunity: [what the mx said or signaled] -> [the product/package the AM could have pitched]"
+
+If no missed opportunities exist, omit this line entirely.
+
+**Step 3 — Upsell Score**
+
+Score the AM on the following two dimensions. Output a markdown table **Dimension | Score | Label**, followed by a single composite line.
+
+Specificity — was the pitch tied to the right product/package for the mx's tier/GOV, concrete, and value-framed (e.g. the Sandler pain-funnel "math play" or "brand play")?
+
+- 5 / Exemplary — right-fit product pitched with quantified value or tailored pain framing
+- 4 / Strong — clear, relevant pitch with supporting rationale; minor gaps only
+- 3 / Developing — product raised but pitch was generic or not tier-matched
+- 2 / Surface-Level — mentioned briefly with no real substance
+- 1 / Absent — not raised despite a clear opening
+
+Actionability — did the conversation produce a next step or mx commitment (demo booked, contract sent, trial agreed)?
+
+- 5 / Exemplary — concrete next step secured with mx commitment
+- 4 / Strong — next step defined; mx commitment was soft or implied
+- 3 / Developing — discussed but no clear follow-through established
+- 2 / Surface-Level — raised then dropped; no action path created
+- 1 / Absent — no action or follow-through of any kind
+
+After the table, output the composite on its own line:
+
+**Upsell Score: X.X / 5 — [Label]**
+
+Composite labels: Exemplary (4.5-5.0) / Strong (4.0-4.4) / Developing (3.0-3.9) / Surface-Level (2.0-2.9) / Absent (1.0-1.9)
+
+**Handling edge cases (mirror Growth Advisory):**
+
+- No upsell discussed, no missed opportunities: output exactly — "No upsell opportunities were discussed in this call. No missed opportunities identified. Score: N/A" — and skip the table and scoring entirely.
+- No upsell discussed, but a missed opportunity exists: skip the extraction table, output the missed opportunity flag, and score both dimensions as 1 / Absent. Composite: 1.0 / 5 — Absent.
+- **Read the room (same rule as GA):** on escalation or complaint calls where the mx is venting about an unresolved issue, pushing an upsell is inappropriate — the correct AM behavior is NOT to pitch, so score Upsell as N/A rather than penalizing as a missed opportunity.
+
+---
+
 GLOBAL WRITING RULES
 
 - Tone must be clear, professional, skimmable, and slightly optimistic without downplaying real risks.
@@ -655,7 +736,10 @@ QUALITY CONTROL CHECKLIST (self-verify before finalizing)
 - [ ] Growth Advisory section reflects only what was actually said — no invented topics.
 - [ ] If GA was discussed, every row in the extraction table maps to a real moment in the transcript.
 - [ ] Every GA topic row has all 5 columns populated, including Desired Outcome (use `(not articulated)` if the call didn't surface one).
-- [ ] Missed opportunity flags cite a specific signal from the mx, not a general assumption.
+- [ ] Upsell section reflects only what was actually said — no invented opportunities; each row maps to a real transcript moment.
+- [ ] Every Upsell opportunity row has all 5 columns populated, with Product/Package set to one of the allowed values.
+- [ ] Upsell vs Growth Advisory classified correctly (selling a new product/tier = Upsell; optimizing existing = GA); no moment double-counted in both.
+- [ ] Missed opportunity flags (GA and Upsell) cite a specific signal from the mx, not a general assumption.
 - [ ] No forbidden characters are present.
 
 ERROR HANDLING
@@ -680,11 +764,13 @@ To note: DO NOT error out anything for any date-related confusion. Assume that e
 ## Notes
 
 - The skill relies on Phil adding an `mx call` marker and a Store ID to the top of each Granola meeting's private notes. Without the marker the meeting is ignored.
-- Granola timestamps are in the meeting organizer's timezone, NOT normalized to PDT. For the date portion (YYYY-MM-DD) this rarely matters, but if a call crosses midnight in a different timezone the dedupe key could shift by a day. Cross-reference Google Calendar via `get_events` if a specific meeting's date looks off.
+- Granola timestamps are in the meeting organizer's timezone, NOT normalized to PDT. For the date portion (YYYY-MM-DD) this rarely matters, but if a call crosses midnight in a different timezone the dedupe key could shift by a day. Cross-reference Google Calendar via `mcp__claude_ai_Google_Calendar__list_events` if a specific meeting's date looks off.
 - Running Notes column is currently BV. The skill auto-detects by header name in case the column shifts.
 - The log sheet `v2` tab drives downstream automations. Do NOT write to Sheet1 or Sheet4.
-- Growth Advisory Ledger lives at `1uS_noBD2nTYjpM6VJvIQwSLMKA_tLkiyo-3dHwi0Ta8` (tab: `Log`). Every GA topic surfaced in a captured call gets logged as one row with `Date | Mx | Store ID | Topic | Description (= Bucket) | Desired Outcome`. Drives portfolio-wide GA reporting and is a non-blocking step — ledger write failures must not roll back the doc prepend or tracker row.
+- Growth Advisory Ledger lives at `1uS_noBD2nTYjpM6VJvIQwSLMKA_tLkiyo-3dHwi0Ta8` and has two tabs, both team-wide (the `Account Manager` column is the AM who ran the call, no longer assumed to be Phil):
+  - `Log` — every GA topic logged as `Date | Mx | Store ID | Topic | Description (= Bucket) | Desired Outcome | Account Manager` (step i.5).
+  - `Upsell` — every upsell opportunity logged as `Date | Mx | Store ID | Opportunity | Product/Package | Desired Outcome | Account Manager` (step i.6).
+  Both drive portfolio-wide reporting and are non-blocking — ledger write failures must not roll back the doc prepend or tracker row.
 - Master Hub lives at `1ndVs2lPhS5frpkEV0KzK7ec5aS18fmr9h1BQEu099E4` (default first tab, `gid=0`). Single header row on row 1; data from row 2.
-- Formatting is non-negotiable: prepends MUST use real Google Docs H1/H2 styles, real Docs tables (inserted empty via `insert_table` then populated cell-by-cell — see step h), real bullet lists, and Arial 11 body. Markdown-as-plaintext inserts (pipe tables, `#` headings, `*` bullets rendered literally) are broken output, not "good enough." Reference doc: `1odvvOQpOm_m0G7WR8hlwKTzZYxI_j74JoSA8W2d3Trs`.
-- **Do NOT use `create_table_with_data`.** It silently dropped cell content during the 2026-04-23 → 2026-04-29 window — produced structurally-correct tables with empty cells and no error. The new pattern (insert empty table → cell-fill batch → audit) avoids the failure mode entirely. The end-of-run summary lists any meeting whose audit had to retry, so silent regressions surface immediately.
-- Always pass `user_google_email: "philip.bornhurst@doordash.com"` to every google-workspace MCP call. No exceptions.
+- Formatting is non-negotiable: prepends MUST use real Google Docs H1/H2 styles, real Docs tables (inserted empty via `insertTable` then populated cell-by-cell — see step h), real bullet lists, and Arial 11 body. Markdown-as-plaintext inserts (pipe tables, `#` headings, `*` bullets rendered literally) are broken output, not "good enough." Reference doc: `1odvvOQpOm_m0G7WR8hlwKTzZYxI_j74JoSA8W2d3Trs`.
+- **Do NOT insert a populated table in a single request.** The legacy single-call populated-table insert silently dropped cell content during the 2026-04-23 → 2026-04-29 window — produced structurally-correct tables with empty cells and no error. The new pattern (insert empty table via `insertTable` → cell-fill batch → audit) avoids the failure mode entirely. The end-of-run summary lists any meeting whose audit had to retry, so silent regressions surface immediately.

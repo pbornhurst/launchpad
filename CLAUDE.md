@@ -62,8 +62,8 @@
 5. **Always include Store ID + merchant portal link** when referencing a mx.
 6. **Use "mx"** lowercase. Always.
 7. **Show your work** — State filters explicitly: "Filtering for: Account Manager = 'Phil Bornhurst' AND Status = 'Live'"
-8. **google-workspace email** — Every google-workspace call requires `user_google_email: "philip.bornhurst@doordash.com"`. No exceptions.
-9. **Gmail rate limits** — Calendar before gmail. One gmail read per batch.
+8. **Google Workspace = `gws` CLI** — The `google-workspace` MCP is DEAD (blocked by DD admin policy). Sheets/Docs go through the `gws` CLI; Gmail/Calendar/Drive through the claude.ai MCPs. NEVER call `mcp__google-workspace__*`. Full mapping: [`docs/gws-migration.md`](docs/gws-migration.md). Drop `user_google_email` everywhere.
+9. **Gmail** — Use `mcp__claude_ai_Gmail__*`. Draft first, confirm before send.
 10. **Confirm before sending** — Never send Slack/email or modify spreadsheet data without explicit approval. Draft first.
 11. **Timezone** — America/Los_Angeles unless specified.
 12. **Day of week** — Always compute programmatically (`date -j -f "%Y-%m-%d" "YYYY-MM-DD" "+%A"`). Never guess.
@@ -74,6 +74,7 @@
 
 The runtime injects the tool catalog each session. These are the non-obvious rules:
 
+- **Google Workspace — `google-workspace` MCP is DEAD.** Blocked by DD admin policy (`admin_policy_enforced`); will not re-auth. ANY skill/agent instruction that names `mcp__google-workspace__*` or `user_google_email` MUST be translated at runtime per [`docs/gws-migration.md`](docs/gws-migration.md): **Sheets/Docs → `gws` CLI** (e.g. `gws sheets +read --spreadsheet ID --range "Tab!A1:F"`; HTML→Doc via `gws drive files create --json '{"mimeType":"application/vnd.google-apps.document"}' --upload f.html --upload-content-type text/html`), **Gmail/Calendar/Drive → claude.ai MCPs** (`mcp__claude_ai_Gmail__*`, `mcp__claude_ai_Google_Calendar__*`, `mcp__claude_ai_Google_Drive__*`). gws is authed via Phil's `phil-workspace-mcp` GCP project. Strip the `Using keyring backend` stderr line before parsing gws JSON.
 - **Slack `oldest` / `latest`** — Unix epoch seconds, NOT date strings. `"2026-02-14"` silently fails (returns from beginning of channel). Compute first: `date -j -f "%Y-%m-%d %H:%M:%S" "2026-02-14 00:00:00" "+%s"`.
 - **Slack workflow bots** — Pass `include_bots: true` to find install/check-in reports in #pathfinder-mxonboarding.
 - **Snowflake routing** — Default to `ask-data-ai` (`ask_firefly`, `search_data_catalog`, `DescribeTable`, `ask_data_mx`, `ask_finance_ai`, etc.) — fast, no OAuth drops. Fall back to **direct Snowflake** (`python3 scripts/snowflake_query.py --json "SQL"`) for: audit tables, wide scans >30d, queries expected >30s. `mcp__ask-data-ai__ExecuteSnowflakeQuery` drops every ~2min ("Downstream not connected").
@@ -154,7 +155,7 @@ ICP > Tier 1 > Tier 2 > Tier 3. Extra attention on ICP + Tier 1 for proactive ou
 
 ## Google Docs Formatting
 
-When creating Google Docs, use `import_to_google_doc` with `source_format: "html"`. Never `create_doc` with plain text.
+When creating Google Docs, build styled HTML then convert it via `gws`: `gws drive files create --json '{"name":"Title","mimeType":"application/vnd.google-apps.document","parents":["FOLDER_ID"]}' --upload doc.html --upload-content-type "text/html"` (preserves headings + tables). Never create a plain-text doc. For edits to an existing doc, use the `productivity:editing-google-docs` skill. (The old `import_to_google_doc` MCP tool is dead — see [`docs/gws-migration.md`](docs/gws-migration.md).)
 
 - **Headings:** `#2C3E50` (H1/H2), `#34495E` (H3). No red in titles.
 - **Table headers:** `background-color: #2C3E50; color: white;`

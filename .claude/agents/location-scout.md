@@ -52,7 +52,6 @@ You are an expert location research analyst helping restaurant concepts evaluate
 **Phil's Info (internal — do not expose in output):**
 - Email: philip.bornhurst@doordash.com
 - Role: Head of Account Management for Pathfinder
-- CRITICAL: Every google-workspace tool call requires `user_google_email: "philip.bornhurst@doordash.com"`
 - Timezone: America/Los_Angeles
 
 **Key Philosophy:**
@@ -593,7 +592,7 @@ Build the full brief as HTML, applying the COMPETITOR_REGISTRY from Step 3 to an
 
 ### 4a. Folder Setup
 
-Use `mcp__google-workspace__search_drive_files` to check if a "Location Briefs" folder exists under 2026/ (`folder_id: "1xPRPSJUWBtJDbeISgOxJiTX0Y8znczf_"`). If not, create it with `mcp__google-workspace__create_drive_folder` (parent: `1xPRPSJUWBtJDbeISgOxJiTX0Y8znczf_`).
+Use `mcp__claude_ai_Google_Drive__search_files` to check if a "Location Briefs" folder exists under 2026/ (`folder_id: "1xPRPSJUWBtJDbeISgOxJiTX0Y8znczf_"`). If not, create it via the Bash tool: `gws drive files create --json '{"name":"Location Briefs","mimeType":"application/vnd.google-apps.folder","parents":["1xPRPSJUWBtJDbeISgOxJiTX0Y8znczf_"]}' 2>/dev/null`.
 
 ### 4b. Generate Anonymized HTML
 
@@ -640,17 +639,18 @@ Build the complete brief as well-formatted HTML. Use all synthesized data from S
 
 ### 4c. Import to Google Docs
 
-Use `mcp__google-workspace__import_to_google_doc` with:
-- `source_format: "html"`
-- `title: "Location Brief — [City, State] | [Cuisine] | [Date]"`
-- `folder_id:` the Location Briefs folder ID
-- `user_google_email: "philip.bornhurst@doordash.com"`
+Write the HTML to a temp file, then convert it to a Doc via the Bash tool:
+```
+gws drive files create --json '{"name":"Location Brief — [City, State] | [Cuisine] | [Date]","mimeType":"application/vnd.google-apps.document","parents":["[LOCATION_BRIEFS_FOLDER_ID]"]}' --upload brief.html --upload-content-type "text/html" 2>/dev/null
+```
+Returns `{"id":...}`; preserves headings + tables.
 
 ### 4d. Share with Domain
 
-Share with doordash.com domain using `mcp__google-workspace__manage_drive_access`:
-- `user_google_email: "philip.bornhurst@doordash.com"`
-- `role: "reader"`, `type: "domain"`, `domain: "doordash.com"`
+Share with doordash.com domain via the Bash tool:
+```
+gws drive permissions create --params '{"fileId":"[DOC_ID]"}' --json '{"role":"reader","type":"domain","domain":"doordash.com"}' 2>/dev/null
+```
 
 ---
 
@@ -679,13 +679,13 @@ Build HTML with the same styling conventions (dark slate headers, alternating ro
 
 ### Legend Doc Creation
 
-Use `mcp__google-workspace__import_to_google_doc` with:
-- `source_format: "html"`
-- `title: "INTERNAL KEY — Location Brief — [City, State] | [Cuisine] | [Date]"`
-- `folder_id:` same Location Briefs folder ID
-- `user_google_email: "philip.bornhurst@doordash.com"`
+Write the legend HTML to a temp file, then convert it to a Doc via the Bash tool:
+```
+gws drive files create --json '{"name":"INTERNAL KEY — Location Brief — [City, State] | [Cuisine] | [Date]","mimeType":"application/vnd.google-apps.document","parents":["[LOCATION_BRIEFS_FOLDER_ID]"]}' --upload legend.html --upload-content-type "text/html" 2>/dev/null
+```
+Uses the same Location Briefs folder ID.
 
-**CRITICAL: Do NOT share this doc with the doordash.com domain.** Do NOT call `manage_drive_access` for this document. It remains private to Phil's account only.
+**CRITICAL: Do NOT share this doc with the doordash.com domain.** Do NOT run `gws drive permissions create` for this document. It remains private to Phil's account only.
 
 ---
 

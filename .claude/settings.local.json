@@ -2,6 +2,10 @@
   "permissions": {
     "allow": [
       "mcp__google-workspace__*",
+      "Bash(gws *)",
+      "mcp__claude_ai_Gmail__*",
+      "mcp__claude_ai_Google_Calendar__*",
+      "mcp__claude_ai_Google_Drive__*",
       "mcp__slack__*",
       "mcp__ask-data-ai__*",
       "mcp__nanobanana__*",

@@ -13,10 +13,10 @@ The eventual home for this is a Slack workflow — so the output is intentionall
    - Granola meeting ID / transcript
    - Free-text context Phil types directly
 
-2. **Read every source in parallel.** Use the relevant MCP tool for each:
-   - `mcp__google-workspace__get_doc_as_markdown` for docs
+2. **Read every source in parallel.** Use the relevant tool for each:
+   - Bash: `gws docs documents get --params '{"documentId":"ID","includeTabsContent":true}'` for docs
    - `mcp__slack__slack_read_channel` or `slack_read_thread` for Slack
-   - `mcp__google-workspace__get_gmail_thread_content` for email
+   - `mcp__claude_ai_Gmail__get_thread` for email
    - `mcp__granola__get_meeting_transcript` for Granola
 
 3. **Segment the content into these 7 fields.** Be selective — premise is one or two sentences, not a recap. The save is the story, not the threat.
