@@ -98,7 +98,7 @@ For each identified mx call meeting, in order:
 **e. Resolve PRISM-TnA metadata fields:**
 
 - `Date` → `meeting_date` (YYYY-MM-DD). Do NOT include time.
-- `Account Manager` → `"Phil"` unless the Master Hub Account Manager column (I) is clearly a different person for this mx; prefer `"Phil"` for v1.
+- `Account Manager` → derive from the Master Hub Account Manager column (I) for this mx, normalized (`Philip Bornhurst` → `Phil`, `Mallory Thornley` → `Mallory`; first name otherwise). Do NOT hard-code — the skill is team-wide. This `am` value flows into the tracker (col D), both ledgers, and the email signature.
 - `Merchant Contact` → parsed contact from notes. If missing, use DM Name from Master Hub. If still missing, use a non-`@doordash.com` attendee name. If still missing, leave blank.
 - `Business Name` → Master Hub column B value.
 
@@ -240,7 +240,7 @@ Because bullets and font were applied to the original range in Call 1, the forma
   - `A`: `{YYYY-MM-DD} 0:00:00` (matches existing row format, e.g. `2025-07-20 0:00:00`)
   - `B`: Store ID (string)
   - `C`: Business Name (from Master Hub)
-  - `D`: `"Phil"`
+  - `D`: the normalized `am` value (e.g. `Phil` or `Mallory`) — NOT hard-coded
   - `E`: Running Notes URL (full URL from Master Hub column BV)
 
 After successful write, increment `next_row_index` and add `(store_id, meeting_date)` to the in-memory dedupe set so later meetings in the same run also dedupe against it.

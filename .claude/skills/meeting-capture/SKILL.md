@@ -173,7 +173,7 @@ For each identified mx call meeting, in order:
 **e. Resolve PRISM-TnA metadata fields:**
 
 - `Date` → `meeting_date` (YYYY-MM-DD). Do NOT include time.
-- `Account Manager` → `"Phil"` unless the Master Hub Account Manager column (I) is clearly a different person for this mx; prefer `"Phil"` for v1.
+- `Account Manager` → **derive from the Master Hub Account Manager column (I)** for this mx (captured in step 3), normalized to the tracker convention: `Philip Bornhurst` → `Phil`, `Mallory Thornley` → `Mallory` (first name for any other AM). This is the AM who owns the mx and is running the capture. Do NOT hard-code a name — the skill is team-wide (both Phil and Mallory run it; each captures their own book). If column I is blank, fall back to the name of whoever is running the skill. This single `am` value flows into the doc Metadata, the tracker (column D), both ledger appends, and the email signature.
 - `Merchant Contact` → parsed contact from notes. If missing, use DM Name from Master Hub. If still missing, use a non-`@doordash.com` attendee name. If still missing, leave blank.
 - `Business Name` → Master Hub column B value.
 
@@ -353,7 +353,7 @@ The tracker write is the **non-negotiable** finishing step. Doc prepends without
   - `A`: `{YYYY-MM-DD} 0:00:00` (matches existing row format, e.g. `2025-07-20 0:00:00`)
   - `B`: Store ID (string)
   - `C`: Business Name (from Master Hub)
-  - `D`: `"Phil"`
+  - `D`: the normalized `am` value from step 5e (e.g. `Phil` or `Mallory`) — NOT hard-coded
   - `E`: Running Notes URL (full URL from Master Hub column BV)
 
 **i.2 — Verify.** Immediately after the append, run `gws sheets +read --spreadsheet 1OMJ-3KK_ge_aLy_kJZR-2AbehZdKeviOpmHOILmS8lM --range "v2!A{next_row_index}:E{next_row_index}"` and confirm the row landed with the expected Store ID in column B and a non-empty URL in column E.
@@ -461,13 +461,17 @@ On the product feedback side, I've logged the following with our Product team:
 Let me know if I missed anything above. Looking forward to the next one.
 
 Thanks,
-Phil
+{am_first}
 
-Phil Bornhurst
-Head of Account Management, Pathfinder
+{am_full_name}
+{am_title}, Pathfinder
 DoorDash
-philip.bornhurst@doordash.com
+{am_email}
 ```
+
+**AM identity** (resolve from the normalized `am` value in step 5e — the skill is team-wide, do NOT hard-code Phil):
+- `Phil` → `{am_first}=Phil`, `{am_full_name}=Phil Bornhurst`, `{am_title}=Head of Account Management`, `{am_email}=philip.bornhurst@doordash.com`
+- `Mallory` → `{am_first}=Mallory`, `{am_full_name}=Mallory Thornley`, `{am_title}=Account Manager`, `{am_email}=mallory.thornley@doordash.com`
 
 Rules:
 - Plain hyphen `-` only. No em/en dashes. No emojis. No filler.
