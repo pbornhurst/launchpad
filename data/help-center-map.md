@@ -1,6 +1,6 @@
 # DoorDash In-Store Help Center — Map
 
-_Scraped 2026-05-25T07:00:15-0700 from `doordash-instore.zendesk.com`. 2 categories, 81 articles._
+_Scraped 2026-06-01T07:59:59-0700 from `doordash-instore.zendesk.com`. 2 categories, 75 articles._
 
 Use `data/help-center-map.json` for keyword search (each article has a `body` field). 
 This file is the human-readable index.
@@ -26,12 +26,6 @@ This file is the human-readable index.
 ### Gift Cards 
 <https://doordash-instore.zendesk.com/hc/en-us/sections/38970179414932-Gift-Cards>
 
-- [Connecting Your Hardware Scanner to your POS](https://doordash-instore.zendesk.com/hc/en-us/articles/40083271393684-Connecting-Your-Hardware-Scanner-to-your-POS)
-- [Selling Digital Gift Cards](https://doordash-instore.zendesk.com/hc/en-us/articles/39013589593748-Selling-Digital-Gift-Cards)
-- [Gift Card Reporting](https://doordash-instore.zendesk.com/hc/en-us/articles/36170437255316-Gift-Card-Reporting)
-- [Using Gift Cards with your Point of Sale](https://doordash-instore.zendesk.com/hc/en-us/articles/35952498195732-Using-Gift-Cards-with-your-Point-of-Sale)
-- [Gift Card FAQs](https://doordash-instore.zendesk.com/hc/en-us/articles/35788965455252-Gift-Card-FAQs)
-- [Gift Cards: Obtaining your Conversion Reports](https://doordash-instore.zendesk.com/hc/en-us/articles/35742476750740-Gift-Cards-Obtaining-your-Conversion-Reports)
 
 ### Welcome to DoorDash POS!
 <https://doordash-instore.zendesk.com/hc/en-us/sections/36665002489492-Welcome-to-DoorDash-POS>
